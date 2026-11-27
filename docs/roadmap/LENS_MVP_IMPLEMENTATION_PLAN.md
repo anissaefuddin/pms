@@ -246,7 +246,7 @@ Tidak termasuk: proxy isi file, tulis/overwrite, sinkron, provisioning folder ot
 | B5-09 | SMTP dan reminder (R1-05) | SMTP production (SPF/DKIM), due reminder, digest | Smoke e-mail ke provider nyata |
 | B5-10 | Onboarding bergelombang | Setelah GO: gelombang project dengan rekonsiliasi per project | Daftar onboarding ditandatangani pemilik |
 
-> **Status PROMPT #025 (penutupan keamanan lokal B3):** PARTIAL. Pydio listing OFF secara default; AC-12 terverifikasi pada jalur file dan export yang didukung; audit migrasi persisten dan deteksi konflik form ada. Belum selesai: karantina per resource, automation terjadwal, dan tinjauan jalur baca langsung dengan tes lintas Customer. Rincian dan status per task di `docs/qa/releases/v0.14.0/B3_CLOSURE.md`. Operasional: EXTERNAL_BLOCKED (lihat bagian OPS dan B6). Produksi: NOT READY.
+> **Status PROMPT #026 (blocker lokal B3 ditutup):** PARTIAL untuk B3 implementasi dan verifikasi lokal; B4 development GO bersyarat. Stars, baselines, directory, automation terjadwal, report subscription, FILE-07, dan konflik automation/template dites. Belum: isolasi karantina per resource, portfolio/laporan lintas Customer, tinjauan konektor end-to-end. Operasional EXTERNAL_BLOCKED. Produksi: NOT READY. Rincian di `docs/qa/releases/v0.14.0/B3_CLOSURE.md` §11.
 
 ### OPS — Backup, restore, monitoring, deployment (paralel sejak B0)
 

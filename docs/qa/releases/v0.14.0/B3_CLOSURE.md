@@ -104,7 +104,7 @@ Dipindahkan ke tugas OPS dan B6, bukan ditandai PASS:
 - CI remote pada kandidat (AC-01).
 - Playwright E2E terintegrasi (B6-02).
 
-## 8. Keputusan B4
+## 8. Keputusan B4 (diperbarui PROMPT #026: lihat §11)
 
 **B4 development: NO-GO (bersyarat).** Syarat GO:
 1. Quarantine per resource dengan alasan tersimpan, atau keputusan tertulis bahwa refusal-seluruhnya cukup untuk MVP.
@@ -123,3 +123,27 @@ Item 1–3 bersifat lokal. Setelah itu status B4 dapat ditinjau ulang. Blocker e
 ## 10. Git dan verifikasi akhir
 
 Diisi setelah commit PROMPT #025: lihat `git log b5531e3..HEAD`.
+
+## 11. Pembaruan PROMPT #026 (penutupan blocker B3 lokal)
+
+Baseline: HEAD `49e25af`. Status yang berlaku sekarang menggantikan tabel §2 untuk task yang disebut di sini.
+
+| Task | Status | Bukti |
+|---|---|---|
+| B3-02 | PARTIAL | Read path stars, directory, baselines sekarang dites (`TestStarsBaselinesAndDirectoryFollowCurrentAccess`); jalur baca langsung lain belum diaudit penuh |
+| B3-13 | PARTIAL | Automation terjadwal (`TestScheduledAutomationUsesCurrentOwnerAccess`, SCH-01..03); report subscription (`TestReportSubscriptionFollowsCustomerAccessAtSendTime`); queued digest dicek ulang saat kirim (`TestQueuedReportDigestIsNotSentAfterAccessEnds`, kontrol negatif FAIL). Konektor hanya ditinjau dari sumber. |
+| B3-15 | PARTIAL | Stars, directory, baselines (`TestStarsBaselinesAndDirectoryFollowCurrentAccess`, kontrol negatif FAIL). Portfolio dan laporan belum dicakup skenario lintas Customer. |
+| B3-17 | VERIFIED untuk jalur yang didukung | FILE-01..08 termasuk FILE-07 (`TestSpaceExportContainsOnlyTheRequestedCustomersRecords`, membaca sel workbook). Pydio dan link publik default OFF. |
+| B3-18 | PARTIAL | Deteksi konflik: form (`FORM-01`), automation container (`Q-01`), template provenance (`Q-02`). Refusal menulis alasan per resource (`client_scope.quarantine`). Isolasi per resource tidak ada; apply ditolak seluruhnya. |
+| B3-19 | VERIFIED (sintetis) | Audit per perubahan, refusal, rollback saat audit gagal, idempoten, preservasi ID/hierarki/share (`internal/clientscope`). Apply operasional EXTERNAL_BLOCKED. |
+| B3-20 | PARTIAL | Tidak ada penulis ownership selain tool migrasi (dicari). Tidak ada trigger immutability di database. |
+| B3-21 | PARTIAL | Runbook dan rehearsal lokal. Docker restore, RPO/RTO, off-host: EXTERNAL_BLOCKED. |
+| B3-22 | PARTIAL | Lihat `AUTHZ_TRACEABILITY.md` bagian PROMPT #026. |
+
+**Kontrol negatif yang gagal sebagaimana mestinya** (dijalankan lalu dipulihkan dan dibuktikan identik): stars view filter; scheduled owner check (tidak sensitif: pemeriksaan item-level menutup, dicatat); report `canRead` (tidak sensitif terhadap data: analytics per-actor menutup, dan tes diperketat agar memeriksa pengiriman); mail send-time check; automation container mismatch.
+
+**Blocker lokal yang tersisa:** isolasi karantina per resource; portfolio dan laporan lintas Customer; tinjauan konektor end-to-end.
+
+**Blocker eksternal (tidak berubah):** apply operasional dan mapping Customer; backup off-host; Docker restore; RPO/RTO; verifikasi alert; rehearsal migrasi staging; CI remote; E2E terintegrasi.
+
+**B4 development: GO (bersyarat).** Syarat: dokumentasi batas di atas dipertahankan; Pydio listing tetap OFF sampai gerbang B4-07 lulus. Produksi: NOT READY.

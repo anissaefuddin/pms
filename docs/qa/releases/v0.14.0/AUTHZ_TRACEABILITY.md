@@ -17,3 +17,14 @@ di PROMPT #025 ditandai "sebelumnya", dan hasilnya dapat dilihat di `B3_CLOSURE.
 | AC-13 rekonsiliasi, karantina | `internal/clientscope` (`TestApplyWritesDurableAuditOnlyForRealChanges`, `TestRefusedPlanLeavesDurableRefusalRecord`, `TestFormDestinationOwnerIsAConflict`, `TestApplyPreservesIdentifiersHierarchyAndShares`, `TestRecoveryRehearsalRestoresThenReappliesTheSameMapping`) | migrasi sintetis | Karantina per resource belum ada; data operasional tidak diverifikasi (EXTERNAL_BLOCKED) |
 
 Kontrol negatif yang sudah dijalankan untuk gerbang baru: attachment view check (FILE), PYDIO listing guard, Gantt creator reauth, audit apply (catatan: lihat `B3_CLOSURE.md` §3).
+
+## Tambahan PROMPT #026
+
+| Bagian | Tes | Catatan |
+|---|---|---|
+| Stars, baselines, resource directory | `TestStarsBaselinesAndDirectoryFollowCurrentAccess` (`stars_baselines_directory_integration_test.go`) | Kontrol negatif: view filter stars dimatikan → FAIL. Directory hanya berisi data direktori pengguna (admin), tanpa judul atau id resource. |
+| Automation terjadwal | `TestScheduledAutomationUsesCurrentOwnerAccess` (`scheduled_automation_authority_integration_test.go`) | Pemeriksaan owner di engine tidak sensitif (item policy menutup); tercatat. |
+| Report subscription | `TestReportSubscriptionFollowsCustomerAccessAtSendTime` (`report_customer_digest_integration_test.go`) | Subscriber tanpa akses tidak menerima digest; kontrol negatif pada `canRead` → FAIL. |
+| Digest yang diantrikan | `TestQueuedReportDigestIsNotSentAfterAccessEnds` (`internal/mail`) | Pengiriman SMTP dihitung; kontrol negatif → 2 pesan. |
+| FILE-07 | `TestSpaceExportContainsOnlyTheRequestedCustomersRecords` (`file_export_content_integration_test.go`) | Isi sel workbook dibaca; judul dan id Customer B tidak ada. |
+| Konflik automation dan template | `TestAutomationAndTemplateConflictsRefuseAndRecordReasons`; `TestResolvingTheBlockingRecordsReleasesTheMapping` (`internal/clientscope`) | Alasan per resource tersimpan di audit; rilis melalui perbaikan record dan mapping baru. |

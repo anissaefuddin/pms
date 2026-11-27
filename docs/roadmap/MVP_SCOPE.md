@@ -784,3 +784,11 @@ Status: **PARTIAL.** Rincian per task di `docs/qa/releases/v0.14.0/B3_CLOSURE.md
 - **Tidak selesai:** karantina per resource; automation terjadwal dan report subscription; tinjauan jalur baca langsung (`stars`, `resource_directory`, `baselines`) sudah dari sumber tetapi belum ada tes lintas Customer khusus.
 - **Operasional:** EXTERNAL_BLOCKED (mapping, apply, backup off-host, RPO/RTO, Docker restore, alert). Lihat `B3_CLOSURE.md` §7.
 - **B4:** NO-GO bersyarat (tiga syarat di `B3_CLOSURE.md` §8).
+
+## 26. Blocker lokal B3 ditutup (PROMPT #026)
+
+- Stars, baselines, resource directory, automation terjadwal, report subscription, digest yang diantrikan, dan FILE-07 dites dengan tes yang dijalankan (lihat `AUTHZ_TRACEABILITY.md`, bagian PROMPT #026).
+- Digest yang diantrikan diperiksa ulang saat dikirim: `mail.Args` membawa `report_id` dan `recipient_id` (aditif).
+- Konflik automation dan template terdeteksi; alasan per resource tersimpan di audit; apply tetap ditolak seluruhnya.
+- Batas: isolasi karantina per resource, portfolio dan laporan lintas Customer, tinjauan konektor end-to-end.
+- B4: GO bersyarat (lihat `B3_CLOSURE.md` §11). Pydio listing tetap OFF.

@@ -614,3 +614,9 @@ Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MV
 **Migrasi.** Setiap perubahan ownership yang nyata menulis satu baris `audit_events` (`client_scope.classify`) dalam transaksi yang sama. Penolakan (konflik) dicatat dalam transaksi terpisah (`client_scope.refused`). Form dengan destinasi lintas pemilik dihitung sebagai konflik. Karantina per resource belum ada; resource ambigu tetap `unresolved`, yang tertutup di semua handler.
 
 **Batas.** Tidak ada trigger immutability ownership di database. Penulis ownership di kode produksi hanya tool migrasi (dicari, tidak ada yang lain). Lihat `B3_CLOSURE.md` §5 untuk daftar terbuka.
+
+## 7r. Blocker lokal B3 (PROMPT #026)
+
+**Keputusan.** Digest laporan diperiksa ulang saat dikirim oleh worker surat, bukan hanya saat diantrikan. Pemeriksaan sama dengan `canRead`: subscriber aktif dan dapat membaca Space laporan. Konflik automation (container di Customer lain) dan template (dibuat oleh bukan anggota Customer sumber) menolak seluruh rencana migrasi, dan setiap record tercatat sebagai alasan karantina di audit.
+
+**Batas.** Isolasi karantina per resource tidak ada; rilis dilakukan dengan memperbaiki record dan menjalankan mapping baru yang tervalidasi. Tidak ada trigger immutability ownership di database.
