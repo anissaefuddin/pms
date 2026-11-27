@@ -15,6 +15,7 @@ import (
 type fixture struct {
 	t                    *testing.T
 	ctx                  context.Context
+	url                  string
 	pool                 *pgxpool.Pool
 	admin, member, guest string
 	clientA, clientB     string
@@ -25,12 +26,13 @@ type fixture struct {
 func newMigrationFixture(t *testing.T) *fixture {
 	t.Helper()
 	ctx := context.Background()
-	pool, err := database.Open(ctx, testdb.NewMigrated(t))
+	url := testdb.NewMigrated(t)
+	pool, err := database.Open(ctx, url)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	f := &fixture{t: t, ctx: ctx, pool: pool}
+	f := &fixture{t: t, ctx: ctx, pool: pool, url: url}
 	user := func(kind string) string {
 		var id string
 		if err := pool.QueryRow(ctx, `INSERT INTO users(email,user_type,first_name,last_name,password_hash,status)
