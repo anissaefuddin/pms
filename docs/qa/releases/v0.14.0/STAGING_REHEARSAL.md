@@ -94,3 +94,37 @@ Migrasi maju tidak boleh dibatalkan dengan binary lama tanpa rollback database. 
 - Off-host backup: **BLOCKED**.
 - Onboarding operasional: **NO-GO** sampai smoke dan matriks dijalankan.
 - Produksi: **NOT READY**.
+
+## 9. Verifikasi akses di staging (sesi PROMPT #030, 2026-11-27)
+
+Akun admin staging yang diberikan pemilik dipakai hanya untuk membuat akun dan fixture uji. Password tidak dicatat di dokumen ini.
+
+**Akun uji (9, aktif, domain `.invalid`, dibuat lewat `POST /users/invitations` dan aktivasi):** `qa-admin` (admin), `qa-management`, `qa-pm-a`, `qa-pm-b`, `qa-editor-a`, `qa-member-only`, `qa-no-membership` (regular), `qa-reader-a` (viewer), `qa-limited-a` (external). Kredensial tersimpan di file 0600 di host staging, di luar repo. SMTP kosong, sehingga email undangan hanya dicatat di log (job `send_invitation_email` 9 `completed`, tidak ada pengiriman).
+
+**Fixture:** Customer `QA-CUST-A` dan `QA-CUST-B`. Space `QA Asset Integrity` dan `QA Pipeline Inspection` (Customer A), `QA Process Safety` (Customer B), `QA Internal Development` (internal). Project 5, task 21, dependensi FS 16. Target awal 30–60 task belum tercapai.
+
+**Batasan kelayakan:** `eligible()` hanya menerima `admin` dan `regular` (`server/internal/clients/membership.go:15`). Akun viewer dan external tidak bisa diberi kelayakan Customer, sehingga `qa-reader-a` dan `qa-limited-a` hanya diuji pada Space internal.
+
+**Hasil pemeriksaan akses (25 dari 25 lulus, status HTTP dicatat):**
+
+| Area | Pemeriksaan | Hasil |
+|---|---|---|
+| Flag publik mati | `/public/gantt`, `/public/dashboards`, `/public/forms` tanpa sesi | 404 ×3 |
+| Listing Pydio mati | `/items/{id}/pydio-files` | 503 `pydio_listing_disabled` |
+| Isolasi Customer A | Project A1 dan task A1 dibaca `qa-pm-a`, `qa-editor-a` (200); `qa-management`, `qa-member-only`, `qa-no-membership`, `qa-pm-b`, `qa-reader-a`, `qa-limited-a` (404) | sesuai |
+| Isolasi Customer B | Project B1 dibaca `qa-pm-b` (200); `qa-pm-a`, `qa-editor-a` (404) | sesuai |
+| Share internal | `qa-reader-a`, `qa-limited-a` membaca (200); `qa-member-only` (404) | sesuai |
+| Share hanya-baca | `qa-reader-a` PATCH | 403 |
+| Space unresolved | `/spaces/{id}` oleh `qa-admin` dan `qa-pm-a` | 404 |
+| Privasi Space pribadi | item Space pribadi admin dibaca `qa-pm-a` | 404 |
+
+**Catatan keterbatasan:**
+- Pemeriksaan "admin tanpa akses otomatis" (D-17.1) **tidak membuktikan apa-apa**: `qa-admin` yang membuat semua Space ini dan memegang grant eksplisit, sehingga 200 wajar. Pembuktian yang benar membutuhkan Space yang dibuat admin lain.
+- Matriks SM-01..20, STG-01..16 dan DMS-01..10 dalam PROMPT #030 **belum dijalankan dalam bentuk lengkap**. Teks kasus tidak ada di repo, sehingga pemeriksaan di atas hanya mencakup area akses. Alur bisnis (edit, komentar, ekspor, webhook, laporan), STG-14 (token lama), dan Pydio live (DMS) belum diuji.
+- Listing Pydio dan link publik tetap mati. Tidak ada perubahan pada Pydio, ACL, atau akun asli.
+
+**Temuan baru:**
+- Item `r3 quick task psi` berstatus `unresolved` di dalam Space pribadi internal. Ia fail-closed dan tersembunyi, tetapi scope-nya tidak mengikuti Space. Tidak diubah.
+- URL aktivasi sembilan akun ada di log container. Sudah dipakai, tetapi ini perlu masuk tinjauan keamanan.
+- `qa-management` tidak memiliki kapabilitas `manage_users` dan bukan peran Workspace Admin sungguhan.
+- Basis data `pms_rehearsal2` masih ada dan belum dihapus.
