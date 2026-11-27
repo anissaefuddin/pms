@@ -263,3 +263,54 @@ Tidak ditemukan P0 security (kebocoran, bypass otorisasi, atau pelanggaran kepem
 | Kesiapan pengembangan B5 | NO-GO sampai keputusan GRANT-01, POLICY-01, OWN-01 |
 | Onboarding operasional | NO-GO (tidak ada backup off-host; LOG-01) |
 | Produksi | NOT READY |
+
+## 11. Koreksi konsolidasi PROMPT #031 (2026-11-27)
+
+Kandidat yang berjalan: `pms:candidate-888e4c57e51c7de656634b5bebab2805a0f9aa05` (image ID `sha256:93a30a85c1f4…`), revisi terverifikasi `0.14.0-candidate.888e4c57…` dari `/api/v1/version`. Schema tetap 364 (tidak ada migrasi baru). Health `healthy`, 0 restart, `/api/v1/readyz` 200. Kandidat sebelumnya `pms:candidate-2628f41` (image ID `sha256:04471259e823…`). `.env` sebelum perubahan disimpan sebagai `.env.bak-pre-031-*`. Checkpoint sebelum deploy: `20261127T060906Z` (database dan file, checksum OK).
+
+Commit lokal: `888e4c5` (koreksi kode dan tes). Commit dokumen ini menyusul. Push: **SKIPPED**.
+
+### 11.1 Hasil per temuan
+
+| Temuan | Status | Bukti |
+|---|---|---|
+| LOCK-01 | **FIXED dan terverifikasi live** | `PUT /items/{id}/locations` sekarang mewajibkan `If-Match` dan membandingkan versi di bawah kunci baris. Keberhasilan menaikkan versi. Live: versi usang 409, tanpa header 428, versi terkini 200, versi naik 4→5. Tes: `TestLocationEdit*` (4 tes, termasuk dua penulis bersamaan: tepat satu 200 dan satu 409) |
+| LOG-01 | **FIXED** | Jalur SMTP-mati hanya mencatat template dan subjek, tanpa tautan atau alamat penerima (`logUnsentEmail`). Tautan bootstrap dicetak ke keluaran perintah, bukan log aplikasi. Tes: `TestUnsentEmailLogHasNoLinkOrAddress` |
+| GRANT-01 | **TERVERIFIKASI** | Creator memegang grant eksplisit (`space_admins`). Mencabut membership menolak Space dan item (404). Admin tanpa membership tidak bisa membuat Space Customer dan tidak punya akses ke Space orang lain (`TestCreatorGrantNeedsMembershipAndEndsWithIt`, `TestWorkspaceAdminWithoutMembership…`) |
+| POLICY-01 | **TERVERIFIKASI** | Viewer dan external ditolak sebagai anggota Customer (`TestViewerAndExternalCannotBecomeCustomerMembers`). Read Only dan Limited tampil tetapi tidak bisa mengubah (`TestReadOnlyAndLimitedGrants…`) |
+| OWN-01 | **Koreksi label** | Label ini saya buat sendiri di laporan sebelumnya dan tidak ada di ledger mana pun. Disposisi berdasarkan data: `owner_id` hanya dipakai untuk project (kontrak API: "Hanya project"). Data: task 1.880 tanpa owner, folder 102 tanpa owner (sesuai desain), project 57 dengan 33 owner dan 24 tanpa owner. **Tidak ada perubahan data.** Yang tersisa: 24 project tanpa owner, data-quality P2, untuk ditinjau pemilik |
+| DATA-01 | Tetap, fail-closed, tidak diubah | Item `r3 quick task psi` |
+| 18 Space unresolved | Tetap, tidak diubah | Tidak ada klasifikasi |
+| 5 item Space pribadi | Diterima (keputusan PO) | Satu lokasi, scope internal, audit ada |
+
+### 11.2 Koreksi fixture
+
+- `qa-reader-a` dan `qa-limited-a` diubah dari `viewer`/`external` menjadi `regular` (hanya akun sintetis). Keduanya diberi membership Customer A dan grant eksplisit: Read Only pada A1 dan Limited pada A2. Live: GET 200, PATCH 403.
+- Tidak ada perubahan pada akun bisnis.
+
+### 11.3 Tes yang dijalankan
+
+- Regresi paket terdampak (`items`, `automation`, `mail`, `httpserver`, `cmd/pms`): semua **ok** (exit 0) setelah koreksi.
+- `go vet`, `gofmt`: bersih untuk paket yang diubah. `npm run typecheck`: lulus.
+- Tes sapuan endpoint (`TestEveryProtectedEndpoint…`) menemukan helper uji yang salah. Helper sekarang mengambil versi terkini untuk `PUT …/locations` tanpa `If-Match` (klien web juga mengirim versi ini).
+- STG-01..16 ulang di build baru: **15 PASS, 0 FAIL, 1 BLOCKED** (STG-14).
+
+### 11.4 Yang belum dijalankan dan alasannya
+
+- **UAT browser:** built-in browser sudah berisi sesi admin nyata milik pemilik (bukan akun sintetis). Saya tidak keluar dari sesi itu dan tidak login sebagai persona, karena itu berarti mengubah sesi pemilik. Perlu keputusan: pemilik login sendiri ke persona di browser, atau memberi izin untuk login terpisah. Sampai itu, SM-13 dan UI lain tetap belum terverifikasi.
+- **Pydio:** DMS-02..08, DMS-10 tetap BLOCKED (akun uji dan folder yang disetujui belum ada; `PMS_PYDIO_LINK_*` belum diisi).
+- **STG-14:** tetap BLOCKED (tidak ada token lama; tautan publik tidak boleh diaktifkan).
+
+### 11.5 Rotasi dan invalidasi
+
+- Password admin yang dikirim di chat: **perlu diganti** lewat mekanisme aman, belum saya lakukan.
+- Tautan aktivasi sembilan akun sintetis di log container lama: sudah dipakai, tetapi log lama harus diperlakukan sensitif. Redaksi berlaku mulai build ini.
+- Tautan bootstrap yang mungkin pernah tercetak di log container sebelum build ini: periksa dan invalidasi undangan yang belum terpakai.
+
+### 11.6 Backlog B5 (prioritas)
+
+1. Pertahankan kontrak versi untuk endpoint mutasi lain yang belum diperiksa.
+2. Verifikasi UI browser dengan sesi persona terpisah (lihat 11.4).
+3. Pydio live setelah akun dan folder disetujui.
+4. Tinjau 24 project tanpa owner.
+5. Backup off-host (OPS-02) sebelum onboarding.
