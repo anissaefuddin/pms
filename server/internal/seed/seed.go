@@ -40,6 +40,11 @@ var seeds = map[string]definition{
 		{input: items.CustomFieldCreate{Name: "Pydio Folder", Type: "text"}},
 		{input: items.CustomFieldCreate{Name: "Contract Value", Type: "currency", Config: items.CustomFieldConfig{Currency: "IDR", Decimals: &zero}}, restricted: true},
 	}},
+	// B5-04: the project code. A separate seed, because project-master has already run on instances that exist. It is an
+	// ordinary text field for project editors; a field that already exists under this name is reused, not duplicated.
+	"project-code": {fields: []field{
+		{input: items.CustomFieldCreate{Name: "Project Code", Type: "text"}},
+	}},
 }
 
 // Parse splits PMS_SEED and rejects an unknown name, so a typo fails the start instead of silently seeding nothing.

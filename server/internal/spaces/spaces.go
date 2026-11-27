@@ -55,6 +55,16 @@ type Space struct {
 	// HasActiveAdmin is set when one shared Space is read: false means nobody can archive it or name an admin for now.
 	HasActiveAdmin *bool               `json:"has_active_admin,omitempty"`
 	MyCapabilities []policy.Capability `json:"my_capabilities"`
+	// Customer is set on a Customer Space. It is derived from the Space's stable ownership, never edited separately (B5-01).
+	Customer *CustomerRef `json:"customer,omitempty"`
+}
+
+// CustomerRef identifies the Customer that owns a Customer Space.
+type CustomerRef struct {
+	ID       string `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	Archived bool   `json:"archived"`
 }
 
 func toSpace(a policy.SpaceAccess) Space {
@@ -95,7 +105,43 @@ func (s *Service) List(ctx context.Context, actor policy.Actor) ([]Space, error)
 			out = append(out, toSpace(a))
 		}
 	}
+	ids := make([]string, 0, len(out))
+	for _, sp := range out {
+		ids = append(ids, sp.ID)
+	}
+	customers, err := s.customerRefs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range out {
+		if c, ok := customers[out[i].ID]; ok {
+			out[i].Customer = &c
+		}
+	}
 	return out, nil
+}
+
+// customerRefs returns the Customer of each Space in ids that has one. One query covers the whole list.
+func (s *Service) customerRefs(ctx context.Context, ids []string) (map[string]CustomerRef, error) {
+	out := map[string]CustomerRef{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := s.pool.Query(ctx, `SELECT sp.id::text, c.id::text, c.code, c.name, c.archived_at IS NOT NULL
+FROM spaces sp JOIN clients c ON c.id = sp.client_id WHERE sp.id = ANY($1::uuid[])`, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var spaceID string
+		var c CustomerRef
+		if err := rows.Scan(&spaceID, &c.ID, &c.Code, &c.Name, &c.Archived); err != nil {
+			return nil, err
+		}
+		out[spaceID] = c
+	}
+	return out, rows.Err()
 }
 
 func sortByName(list []policy.SpaceAccess) {
@@ -125,6 +171,13 @@ WHERE a.space_id=$1 AND u.status='active' AND u.user_type IN ('admin','regular')
 			return Space{}, err
 		}
 		space.HasActiveAdmin = &active
+	}
+	customers, err := s.customerRefs(ctx, []string{id})
+	if err != nil {
+		return Space{}, err
+	}
+	if c, ok := customers[id]; ok {
+		space.Customer = &c
 	}
 	return space, nil
 }

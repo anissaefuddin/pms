@@ -103,6 +103,10 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const kind: CreateKind = lockedKind || kinds.includes(chosenKind) ? chosenKind : kinds[0] ?? chosenKind;
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
+  // The Customer is server-derived from the Space; an archived Customer receives no new items (its Spaces are shown but disabled).
+  const scopeLabel = (space: { customer?: { name: string; archived: boolean } | null }) => space.customer
+    ? `${space.customer.name}${space.customer.archived ? ` (${t("views.project.archivedCustomer")})` : ""}`
+    : t("views.project.internal");
   const directory = trail.at(-1);
   const parents = useQuery({
     queryKey: directory ? itemKeys.children(directory.id) : itemKeys.root(spaceID),
@@ -196,7 +200,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
 
   const summary = [
     t(`items.${kind}`),
-    selected?.name ?? t("items.chooseSpace"),
+    selected ? `${selected.name} · ${scopeLabel(selected)}` : t("items.chooseSpace"),
     parentLabel,
     kind !== "task" ? t(`views.types.${view}`) : null,
   ].filter(Boolean).join(" · ");
@@ -215,7 +219,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
             <select value={selected?.id ?? ""} aria-invalid={!!fieldErrors.location} className={selectClass}
               onChange={(e) => { setSpaceID(e.target.value); setParentID(""); setTrail([]); setShares([]); setBlueprintID(""); }}>
               <option value="">{t("items.chooseSpace")}</option>
-              {choices.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
+              {choices.map((space) => <option key={space.id} value={space.id} disabled={!!space.customer?.archived}>{`${space.name} · ${scopeLabel(space)}`}</option>)}
             </select>
           </label>
           <div className="space-y-1">

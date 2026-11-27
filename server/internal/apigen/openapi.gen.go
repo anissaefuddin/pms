@@ -5131,6 +5131,14 @@ type CustomRoleList struct {
 	Items []CustomRole `json:"items"`
 }
 
+// CustomerRef Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+type CustomerRef struct {
+	Archived bool               `json:"archived"`
+	Code     string             `json:"code"`
+	Id       openapi_types.UUID `json:"id"`
+	Name     string             `json:"name"`
+}
+
 // Dashboard defines model for Dashboard.
 type Dashboard struct {
 	Id      openapi_types.UUID  `json:"id"`
@@ -6669,8 +6677,11 @@ type SidebarKey string
 // Space defines model for Space.
 type Space struct {
 	// Archived Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)
-	Archived    *bool   `json:"archived,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Archived *bool `json:"archived,omitempty"`
+
+	// Customer Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+	Customer    *CustomerRef `json:"customer,omitempty"`
+	Description *string      `json:"description,omitempty"`
 
 	// HasActiveAdmin Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan
 	HasActiveAdmin *bool `json:"has_active_admin,omitempty"`
@@ -34872,7 +34883,10 @@ type GetOverview200JSONResponse struct {
 	} `json:"kpis"`
 	NextCursor *string `json:"next_cursor,omitempty"`
 	Spaces     []struct {
-		Archived        bool                                                `json:"archived"`
+		Archived bool `json:"archived"`
+
+		// Customer Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+		Customer        *CustomerRef                                        `json:"customer,omitempty"`
 		DoneTaskCount   int                                                 `json:"done_task_count"`
 		EffectiveAccess GetOverview200JSONResponseBodySpacesEffectiveAccess `json:"effective_access"`
 		Health          GetOverview200JSONResponseBodySpacesHealth          `json:"health"`

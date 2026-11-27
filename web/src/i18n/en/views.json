@@ -273,33 +273,33 @@
     "help": "Calendar help",
     "moreOn": "More items on {{date}}",
     "closeMore": "Close more items",
-    "navigate": "Calendar navigation"
-    ,"choosePeriod": "Choose calendar period"
-    ,"yearInput": "Year"
-    ,"go": "Go"
-    ,"chooseDate": "Choose date"
-    ,"density": "Density"
-    ,"comfortable": "Comfortable"
-    ,"compact": "Compact"
-    ,"dayDetails": "Day details"
-    ,"scheduledCount_one": "{{count}} scheduled item"
-    ,"scheduledCount_other": "{{count}} scheduled items"
-    ,"newItem": "New item"
-    ,"openWeek": "Open week"
-    ,"itemsOnDate": "Items on this date"
-    ,"noItemsDate": "No scheduled items in this period."
-    ,"weekAgenda": "This week's agenda"
-    ,"monthSummary": "{{deadlines}} due · {{milestones}} milestones · {{overdue}} overdue"
-    ,"activity": "{{active}} active · {{boundaries}} starts or deadlines"
-    ,"options": "Customize calendar"
-    ,"showWeekends": "Show weekends"
-    ,"showWeekNumbers": "Show week numbers"
-    ,"showSubitems": "Show subitems"
-    ,"colorBy": "Color by"
-    ,"colorStatus": "Status"
-    ,"colorType": "Item type"
-    ,"maxItems": "Maximum visible items"
-    ,"weekShort": "Wk"
+    "navigate": "Calendar navigation",
+    "choosePeriod": "Choose calendar period",
+    "yearInput": "Year",
+    "go": "Go",
+    "chooseDate": "Choose date",
+    "density": "Density",
+    "comfortable": "Comfortable",
+    "compact": "Compact",
+    "dayDetails": "Day details",
+    "scheduledCount_one": "{{count}} scheduled item",
+    "scheduledCount_other": "{{count}} scheduled items",
+    "newItem": "New item",
+    "openWeek": "Open week",
+    "itemsOnDate": "Items on this date",
+    "noItemsDate": "No scheduled items in this period.",
+    "weekAgenda": "This week's agenda",
+    "monthSummary": "{{deadlines}} due · {{milestones}} milestones · {{overdue}} overdue",
+    "activity": "{{active}} active · {{boundaries}} starts or deadlines",
+    "options": "Customize calendar",
+    "showWeekends": "Show weekends",
+    "showWeekNumbers": "Show week numbers",
+    "showSubitems": "Show subitems",
+    "colorBy": "Color by",
+    "colorStatus": "Status",
+    "colorType": "Item type",
+    "maxItems": "Maximum visible items",
+    "weekShort": "Wk"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",
@@ -348,7 +348,15 @@
     "percent": "{{value}}%",
     "summary": "Summary",
     "directScope": "Direct children of this project only",
-    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded"
+    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded",
+    "customer": "Customer",
+    "internal": "Internal",
+    "archivedCustomer": "archived",
+    "projectManager": "Project Manager",
+    "unassigned": "Unassigned",
+    "health": "Health",
+    "noHealth": "Not set",
+    "lastUpdate": "Last update"
   },
   "searchPlaceholder": "Search",
   "chip": {
@@ -394,5 +402,11 @@
   "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded.",
   "card.overdue": "Overdue",
   "addToGroup": "Add item to {{name}}",
-  "columnResize": "Resize column {{name}}"
+  "columnResize": "Resize column {{name}}",
+  "ownerFilter": {
+    "label": "Project Manager",
+    "any": "Any",
+    "none": "Unassigned",
+    "mine": "Mine"
+  }
 }

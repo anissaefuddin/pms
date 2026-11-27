@@ -1940,6 +1940,8 @@ paths:
                         health: { type: string, enum: [empty, attention, on_track] }
                         last_activity: { type: string, format: date-time, nullable: true }
                         effective_access: { type: string, enum: [space_admin, full, editor, limited, read] }
+                        customer:
+                          $ref: '#/components/schemas/CustomerRef'
                   next_cursor: { type: string, nullable: true }
                   total: { type: integer }
         '404': { $ref: '#/components/responses/Problem' }
@@ -8422,6 +8424,17 @@ components:
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
+        customer:
+          $ref: '#/components/schemas/CustomerRef'
+    CustomerRef:
+      type: object
+      description: 'Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah'
+      required: [id, code, name, archived]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        archived: { type: boolean }
     SpaceMember:
       type: object
       required: [user_id, name, role, capped_by_user_type, sources]

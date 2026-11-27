@@ -63,6 +63,11 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
   });
   const milestones = upcomingMilestones(subtree.data ?? [], today);
   const range = [item.start_date, item.due_date].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");
+  // The Customer comes from the project's Space. A Space that is not a Customer Space is Internal; an archived Customer is marked.
+  const customer = space.data?.customer;
+  const customerLabel = !space.data ? "…"
+    : customer ? `${customer.name}${customer.archived ? ` (${t("views.project.archivedCustomer")})` : ""}`
+    : t("views.project.internal");
   const meta = [workflow?.name, range].filter(Boolean).join(" · ");
   const detailsId = useId();
   const percent = (value: number) => t("views.project.percent", { value });
@@ -89,6 +94,17 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
   </>;
   return <WorkspaceHeader breadcrumb={breadcrumb} icon={<TypeIcon name="folder-kanban" />} title={item.title} starItemId={item.id}
     meta={meta ? <p className="mt-1 text-sm text-muted-foreground">{meta}</p> : undefined} actions={actions}>
+    {/* B5-01/B5-04: Customer is derived from the Space that holds the project; the Project Manager is the project owner. */}
+    <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      <div className="flex gap-1"><dt className="text-muted-foreground">{t("views.project.customer")}</dt>
+        <dd className="font-medium">{customerLabel}</dd></div>
+      <div className="flex gap-1"><dt className="text-muted-foreground">{t("views.project.projectManager")}</dt>
+        <dd className="font-medium">{item.owner?.name ?? t("views.project.unassigned")}</dd></div>
+      <div className="flex gap-1"><dt className="text-muted-foreground">{t("views.project.health")}</dt>
+        <dd className="font-medium">{item.progress_risk ? t(`items.progress.risk.${item.progress_risk}`) : t("views.project.noHealth")}</dd></div>
+      <div className="flex gap-1"><dt className="text-muted-foreground">{t("views.project.lastUpdate")}</dt>
+        <dd className="font-medium tabular-nums">{item.updated_at ? formatDate(item.updated_at.slice(0, 10), profile) : "—"}</dd></div>
+    </dl>
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
       <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.progress")} </span><strong className="font-semibold">{percent(progress)}</strong></span>
       <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.workItems")} </span><strong className="font-semibold">{counts?.total ?? placeholder}</strong></span>

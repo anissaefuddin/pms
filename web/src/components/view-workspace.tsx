@@ -54,11 +54,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const sort = search.sort ?? "manual";
   const filter = search.filter ?? "";
   const fieldFilter = search.field ?? "";
+  const ownerFilter = search.owner ?? "";
   const preset = search.preset ?? "";
   const typeFilter = typeof search.type === "string" ? search.type : "";
   const viewKey = ["views", base];
   const listKey = parent ? itemKeys.children(parent.id) : itemKeys.root(spaceId);
-  const sortedKey = sort === "manual" && !fieldFilter && !preset && !typeFilter ? listKey : [...listKey, sort, fieldFilter, preset, typeFilter];
+  const sortedKey = sort === "manual" && !fieldFilter && !ownerFilter && !preset && !typeFilter ? listKey : [...listKey, sort, fieldFilter, ownerFilter, preset, typeFilter];
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
@@ -79,7 +80,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     // flash, this preserves open toolbar popovers so users can adjust several options at once.
     placeholderData: (previous) => previous,
     queryFn: async () => {
-      const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined);
+      const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined, ownerFilter || undefined);
       const top = await query(base + (parent ? "/children" : "/items"));
       // Space-level Boards and Calendars keep their top-level cards (projects); the walk applies inside a project or folder.
       return flat && parent ? listSubtree(top, (id) => subtreeChildren(qc, id)) : top;
@@ -234,7 +235,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     }
   }
 
-  const hasFilters = !!(filter.trim() || fieldFilter || preset || typeFilter);
+  const hasFilters = !!(filter.trim() || fieldFilter || ownerFilter || preset || typeFilter);
   function clearFilters() {
     const url = new URL(window.location.href);
     for (const key of ["filter", "field", "preset", "type"]) url.searchParams.delete(key);
@@ -257,7 +258,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string, typeKey?: string, assignee?: { id: string; name: string }) => setCreating({ status, typeKey, assignee }), onPatch: patch, onBulkPatch: bulkPatch,
   };
   const toolbar = {
-    filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data?.filter((def) => !def.space_id || def.space_id === spaceId), setSearch: (key: string, value: string) => setSearch(key, value),
+    filter, preset, typeFilter, sort, fieldFilter, ownerFilter, meId: me?.id, customFields, itemTypes: itemTypes.data?.filter((def) => !def.space_id || def.space_id === spaceId), setSearch: (key: string, value: string) => setSearch(key, value),
     group: group ?? (swimlanes ? "assignee" : "none"),
   };
   return <section className="min-w-0 space-y-2 text-[13px]">
@@ -312,7 +313,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           description={t("views.noItems.description")} canCreate={canCreate}
           primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
         : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} prefs={boardPrefs} onQuickCreate={quickCreate} />)
-        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder}
+        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !ownerFilter && !preset} onReorder={reorder}
           renderToolbar={(controls) => <ViewToolbar {...toolbar} groups={tableGroups} columns={<>{!!spaceId && <ColumnPicker key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}{!!parent && (parent.type === "project" || parent.type === "folder") && <Button size="sm" variant="outline" onClick={() => setExportingTable(true)}><FileSpreadsheet />{t("excel.exportTable")}</Button>}{controls}</>} />} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}

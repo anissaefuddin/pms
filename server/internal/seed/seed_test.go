@@ -94,3 +94,34 @@ WHERE f.name='Contract Value' AND g.subject_kind='group' AND gr.name='Contract M
 		t.Fatalf("seed_runs = %d, want 1", n)
 	}
 }
+
+// B5-04: the project-code seed adds one ordinary text field, reuses a field of the same name, and never grants access.
+func TestProjectCodeSeed(t *testing.T) {
+	ctx := context.Background()
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	count := func(sql string) int {
+		t.Helper()
+		var n int
+		if err := pool.QueryRow(ctx, sql).Scan(&n); err != nil {
+			t.Fatalf("%s: %v", sql, err)
+		}
+		return n
+	}
+	if err := seed.Apply(ctx, pool, []string{"project-code"}); err != nil {
+		t.Fatal(err)
+	}
+	// A second run is a no-op: the seed is recorded once.
+	if err := seed.Apply(ctx, pool, []string{"project-code"}); err != nil {
+		t.Fatal(err)
+	}
+	if n := count("SELECT count(*) FROM custom_fields WHERE space_id IS NULL AND lower(name)='project code' AND type='text'"); n != 1 {
+		t.Fatalf("Project Code fields = %d, want exactly one text field", n)
+	}
+	if n := count("SELECT count(*) FROM custom_field_grants g JOIN custom_fields f ON f.id=g.field_id WHERE lower(f.name)='project code'"); n != 0 {
+		t.Fatalf("Project Code grants = %d, want none: project editors see the field with the item", n)
+	}
+}

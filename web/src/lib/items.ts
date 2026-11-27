@@ -52,7 +52,7 @@ export async function listSubtree(start: Item[], childrenOf: (id: string) => Pro
   return out;
 }
 
-export async function listItems(path: string, sort?: string, type?: string, field?: string, preset?: string): Promise<Item[]> {
+export async function listItems(path: string, sort?: string, type?: string, field?: string, preset?: string, owner?: string): Promise<Item[]> {
   const items: Item[] = [];
   const seen = new Set<string>();
   let cursor: string | null | undefined;
@@ -62,6 +62,7 @@ export async function listItems(path: string, sort?: string, type?: string, fiel
     if (sort) params.set("sort", sort);
     if (type) params.set("type", type);
     if (field) params.set("field", field);
+    if (owner) params.set("owner", owner); // projects by Project Manager: "none" or a user id (B5-03)
     if (preset) { params.set("status_group", "active"); if (preset === "mine") params.set("assignee", "me"); }
     const query = params.size ? `?${params.toString()}` : "";
     const page: ItemPage = await api<ItemPage>(path + query);

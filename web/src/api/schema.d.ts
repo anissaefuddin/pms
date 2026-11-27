@@ -6102,6 +6102,15 @@ export interface components {
             /** @description Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan */
             has_active_admin?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
+            customer?: components["schemas"]["CustomerRef"];
+        };
+        /** @description Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah */
+        CustomerRef: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: string;
+            archived: boolean;
         };
         SpaceMember: {
             /** Format: uuid */
@@ -10767,6 +10776,7 @@ export interface operations {
                             last_activity: string | null;
                             /** @enum {string} */
                             effective_access: "space_admin" | "full" | "editor" | "limited" | "read";
+                            customer?: components["schemas"]["CustomerRef"];
                         }[];
                         next_cursor?: string | null;
                         total: number;

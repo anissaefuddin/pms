@@ -269,32 +269,32 @@
     "help": "Bantuan kalender",
     "moreOn": "Item lainnya pada {{date}}",
     "closeMore": "Tutup item lainnya",
-    "navigate": "Navigasi kalender"
-    ,"choosePeriod": "Pilih periode kalender"
-    ,"yearInput": "Tahun"
-    ,"go": "Buka"
-    ,"chooseDate": "Pilih tanggal"
-    ,"density": "Kepadatan"
-    ,"comfortable": "Nyaman"
-    ,"compact": "Ringkas"
-    ,"dayDetails": "Detail hari"
-    ,"scheduledCount": "{{count}} item terjadwal"
-    ,"newItem": "Item baru"
-    ,"openWeek": "Buka minggu"
-    ,"itemsOnDate": "Item pada tanggal ini"
-    ,"noItemsDate": "Tidak ada item terjadwal pada periode ini."
-    ,"weekAgenda": "Agenda minggu ini"
-    ,"monthSummary": "{{deadlines}} tenggat · {{milestones}} milestone · {{overdue}} terlambat"
-    ,"activity": "{{active}} aktif · {{boundaries}} mulai atau tenggat"
-    ,"options": "Sesuaikan kalender"
-    ,"showWeekends": "Tampilkan akhir pekan"
-    ,"showWeekNumbers": "Tampilkan nomor minggu"
-    ,"showSubitems": "Tampilkan subitem"
-    ,"colorBy": "Warna berdasarkan"
-    ,"colorStatus": "Status"
-    ,"colorType": "Tipe item"
-    ,"maxItems": "Maksimum item terlihat"
-    ,"weekShort": "Mg"
+    "navigate": "Navigasi kalender",
+    "choosePeriod": "Pilih periode kalender",
+    "yearInput": "Tahun",
+    "go": "Buka",
+    "chooseDate": "Pilih tanggal",
+    "density": "Kepadatan",
+    "comfortable": "Nyaman",
+    "compact": "Ringkas",
+    "dayDetails": "Detail hari",
+    "scheduledCount": "{{count}} item terjadwal",
+    "newItem": "Item baru",
+    "openWeek": "Buka minggu",
+    "itemsOnDate": "Item pada tanggal ini",
+    "noItemsDate": "Tidak ada item terjadwal pada periode ini.",
+    "weekAgenda": "Agenda minggu ini",
+    "monthSummary": "{{deadlines}} tenggat · {{milestones}} milestone · {{overdue}} terlambat",
+    "activity": "{{active}} aktif · {{boundaries}} mulai atau tenggat",
+    "options": "Sesuaikan kalender",
+    "showWeekends": "Tampilkan akhir pekan",
+    "showWeekNumbers": "Tampilkan nomor minggu",
+    "showSubitems": "Tampilkan subitem",
+    "colorBy": "Warna berdasarkan",
+    "colorStatus": "Status",
+    "colorType": "Tipe item",
+    "maxItems": "Maksimum item terlihat",
+    "weekShort": "Mg"
   },
   "priority": "Prioritas",
   "predecessors": "Pendahulu",
@@ -342,7 +342,15 @@
     "percent": "{{value}}%",
     "summary": "Ringkasan",
     "directScope": "Hanya anak langsung proyek ini",
-    "subtreeScope": "Tugas di proyek ini beserta folder dan subproyeknya; milestone tidak termasuk"
+    "subtreeScope": "Tugas di proyek ini beserta folder dan subproyeknya; milestone tidak termasuk",
+    "customer": "Customer",
+    "internal": "Internal",
+    "archivedCustomer": "diarsipkan",
+    "projectManager": "Project Manager",
+    "unassigned": "Belum ditugaskan",
+    "health": "Kesehatan",
+    "noHealth": "Belum diatur",
+    "lastUpdate": "Pembaruan terakhir"
   },
   "searchPlaceholder": "Cari",
   "chip": {
@@ -388,5 +396,11 @@
   "chartScope": "Tugas yang dapat dikerjakan di proyek ini dan subtree-nya. Milestone dan folder tidak termasuk.",
   "card.overdue": "Terlambat",
   "addToGroup": "Tambah item ke {{name}}",
-  "columnResize": "Ubah lebar kolom {{name}}"
+  "columnResize": "Ubah lebar kolom {{name}}",
+  "ownerFilter": {
+    "label": "Project Manager",
+    "any": "Semua",
+    "none": "Belum ditugaskan",
+    "mine": "Milik saya"
+  }
 }

@@ -157,12 +157,20 @@ function SpaceTable({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void })
   const [text, setText] = useState("");
   const [health, setHealth] = useState<(typeof STATUS_FILTERS)[number]>("all");
   const [spaceId, setSpaceId] = useState("");
+  // B5-03: "" = every Customer and Space, "internal" = Spaces without a Customer, otherwise one Customer id.
+  const [customerKey, setCustomerKey] = useState("");
   const q = useOverviewPages(sort);
   const rows: OverviewSpace[] = useMemo(() => q.data?.pages.flatMap((page) => page.spaces) ?? [], [q.data]);
+  const customers = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const space of rows) if (space.customer) seen.set(space.customer.id, space.customer.name);
+    return [...seen].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [rows]);
   const shown = useMemo(() => rows.filter((space) =>
     (!text || space.name.toLowerCase().includes(text.trim().toLowerCase())) &&
     (health === "all" || space.health === health) &&
-    (!spaceId || space.id === spaceId)), [rows, text, health, spaceId]);
+    (!spaceId || space.id === spaceId) &&
+    (!customerKey || (customerKey === "internal" ? !space.customer : space.customer?.id === customerKey))), [rows, text, health, spaceId, customerKey]);
   if (q.isPending) return <p role="status" className="text-sm text-muted-foreground">{t("dashboards.overview.loading")}</p>;
   if (q.isError) return <div><p role="alert">{t("dashboards.overview.error")}</p>
     <Button variant="outline" className="mt-3" onClick={() => q.refetch()}>{t("dashboards.overview.retry")}</Button></div>;
@@ -177,6 +185,12 @@ function SpaceTable({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void })
       <label className="block text-sm">{t("dashboards.overview.filter.health")}
         <select className={select} value={health} onChange={(e) => setHealth(e.target.value as (typeof STATUS_FILTERS)[number])}>
           {STATUS_FILTERS.map((key) => <option key={key} value={key}>{t(`dashboards.overview.filter.${key}`)}</option>)}
+        </select></label>
+      <label className="block text-sm">{t("dashboards.overview.filter.customer")}
+        <select className={select} value={customerKey} onChange={(e) => setCustomerKey(e.target.value)}>
+          <option value="">{t("dashboards.overview.filter.customerAll")}</option>
+          <option value="internal">{t("dashboards.overview.filter.customerInternal")}</option>
+          {customers.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
         </select></label>
       <label className="block text-sm">{t("dashboards.overview.filter.space")}
         <select className={select} value={spaceId} onChange={(e) => setSpaceId(e.target.value)}>
