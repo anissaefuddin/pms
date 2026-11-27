@@ -314,3 +314,26 @@ Commit lokal: `888e4c5` (koreksi kode dan tes). Commit dokumen ini menyusul. Pus
 3. Pydio live setelah akun dan folder disetujui.
 4. Tinjau 24 project tanpa owner.
 5. Backup off-host (OPS-02) sebelum onboarding.
+
+## 12. UAT browser sesi PROMPT #031 (2026-11-27)
+
+Browser dijalankan dengan akun sintetis (`qa-pm-a`, `qa-reader-a`, `qa-limited-a`) setelah pemilik memberi izin login. Sesi admin pemilik di browser digantikan. Kredensial tidak dicatat di sini.
+
+| Pemeriksaan | Hasil |
+|---|---|
+| Login dan logout (SM-01) | PASS |
+| Gantt dan kalender (SM-12, SM-13) | PASS: render item terjadwal dan hierarki |
+| Portfolio (SM-14) | PASS: 26 item terjadwal untuk `qa-pm-a` |
+| Membuat task bertingkat lewat UI (SM-07, SM-08) | PASS: `QA UI nested task` tersimpan di bawah project |
+| Status lewat UI (SM-09) | PASS: tersimpan `In Progress` |
+| Tanggal mulai lewat UI (SM-10) | PASS: `2026-12-02` tersimpan. Tanggal selesai belum diuji |
+| Penugasan lewat UI (SM-11) | PASS: `qa-editor-a` tersimpan |
+| Membuat Customer Space lewat UI (SM-05) | PASS: scope client, `QA-CUST-A`, creator tercatat sebagai space admin |
+| Read Only (`qa-reader-a`) | Status dropdown nonaktif (4/4). Tombol **New item** terlihat tetapi tidak membuka dialog. Catat sebagai P2 UI |
+| Limited (`qa-limited-a`) | Melihat A2 saja. Status bisa diubah lewat API (200), judul ditolak (403). Perlu konfirmasi bahwa Limited memang hanya boleh status |
+
+Objek uji untuk pembersihan nanti (akun sintetis):
+- Space `QA UI Customer Space`: `3f1c321d-6459-4a15-a939-acd3adfc0fcc`
+- Task `QA UI nested task`: `01a21bad-0e8b-7ad4-8ccb-5382e73e8846`
+
+Belum diuji lewat UI: Project baru (SM-06), tanggal selesai (SM-10), pembuatan task dan penugasan di luar item uji, dan Pydio (tetap BLOCKED).
