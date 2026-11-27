@@ -517,6 +517,40 @@ func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id stri
 
 type shareKey struct{ principalType, principalID string }
 
+// checkRecipients refuses a new or changed direct user share on a client-owned resource unless the user is an active member of
+// that Customer (B3-11). Membership is eligibility, never a grant. A group is not checked here: the access gate already limits a
+// client resource to members. An unresolved resource takes no new share. Removals are never refused.
+func checkRecipients(ctx context.Context, tx pgx.Tx, target, id string, existing, desired map[shareKey]policy.Role) error {
+	table := "spaces"
+	if target == "item" {
+		table = "items"
+	}
+	var scope string
+	var client *string
+	if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM "+table+" WHERE id=$1::uuid", id).Scan(&scope, &client); err != nil {
+		return err
+	}
+	for key, role := range desired {
+		if existing[key] == role || key.principalType != "user" || scope == "internal" {
+			continue
+		}
+		if scope != "client" || client == nil {
+			return ValidationError{"this resource has no verified owner yet, so it cannot be shared"}
+		}
+		var one int
+		err := tx.QueryRow(ctx, `SELECT 1 FROM client_memberships m JOIN users u ON u.id=m.user_id
+WHERE m.client_id=$1::uuid AND m.user_id=$2::uuid AND m.status='active' AND u.status='active' AND u.user_type IN ('admin','regular')
+FOR SHARE OF m`, *client, key.principalID).Scan(&one)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ValidationError{"a recipient must be an active member of this resource's customer"}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // writeShares replaces the Space's share list with want inside tx. grantable is what the caller may hand out: a role is
 // refused when it holds a capability outside it, unless the role is already unchanged on the Space.
 func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Actor, want []ShareInput, grantable policy.Caps, batch *notifications.Batch) error {
@@ -585,6 +619,9 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if !grantable.Contains(caps) {
 			return forbidden("you cannot grant a role above your own capabilities")
 		}
+	}
+	if err := checkRecipients(ctx, tx, target, spaceID, existing, desired); err != nil {
+		return err
 	}
 	if target == "space" {
 		if err := guardSpaceShareChange(ctx, tx, existing, desired, grantable); err != nil {

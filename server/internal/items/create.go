@@ -461,6 +461,22 @@ func addInitialShares(ctx context.Context, tx pgx.Tx, id uuid.UUID, actor policy
 			return Invalid("duplicate share principal")
 		}
 		seen[key] = true
+		if sh.PrincipalType == "user" { // a direct share on a client item needs an active member of its Customer (B3-11)
+			var scope string
+			var client *string
+			if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM items WHERE id=$1", id).Scan(&scope, &client); err != nil {
+				return err
+			}
+			own, err := storedOwnership(scope, client)
+			if err != nil {
+				return err
+			}
+			if err := checkNewAssignees(ctx, tx, "", own, []uuid.UUID{sh.PrincipalID}); errors.Is(err, ErrAssigneeIneligible) {
+				return Invalid("a share recipient must be an active member of this item's customer")
+			} else if err != nil {
+				return err
+			}
+		}
 		if ok, err := policy.LockedAllows(ctx, tx, id.String(), sh.PrincipalType, sh.PrincipalID.String()); err != nil {
 			return err
 		} else if !ok {

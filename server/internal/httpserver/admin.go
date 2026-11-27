@@ -234,6 +234,15 @@ VALUES($1,$2,$3,$4) RETURNING id::text`, in.Email, in.UserType, in.Message, acto
 			}
 		}
 		for _, share := range in.Share {
+			// A new invitee has no Customer membership yet, so a share on a client-owned resource cannot be given (B3-11).
+			var clientOwned bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM spaces WHERE id=$1::uuid AND scope_state<>'internal' AND $2='space')
+OR EXISTS(SELECT 1 FROM items WHERE id=$1::uuid AND scope_state<>'internal' AND $2='item')`, share.ID, share.Type).Scan(&clientOwned); err != nil {
+				return err
+			}
+			if clientOwned {
+				return adminError{422, "validation_failed", "an invitation cannot share a client-owned resource"}
+			}
 			if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
 VALUES($1,$2,'user',$3,$4,$5)`, share.Type, share.ID, id, share.Role, actorOf(r).ID); err != nil {
 				var pg *pgconn.PgError
