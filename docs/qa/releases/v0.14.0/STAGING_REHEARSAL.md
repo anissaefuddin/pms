@@ -340,3 +340,61 @@ Objek uji untuk pembersihan nanti (akun sintetis):
 
 Tersisa: pembuatan task dan penugasan di luar item uji, dan Pydio (tetap BLOCKED).
 Objek uji tambahan: project `QA UI Project` (ID dicatat di database, nama unik).
+
+## 13. PROMPT #032 — fitur MVP B4/B5 (2026-11-27)
+
+Kandidat yang berjalan: `pms:candidate-036e633e53586af5b4061fda78781448aa8c6c5e` (image ID `sha256:d57e6c7dc8aa…`), revisi `0.14.0-candidate.036e633e…` dari `/api/v1/version`. Schema 364, tidak ada migrasi baru. Health `healthy`, 0 restart, `/api/v1/readyz` 200, `SMTP_HOST` kosong. Kandidat sebelumnya `pms:candidate-888e4c57…`. Checkpoint sebelum deploy: `20261127T070201Z` (database dan file, checksum OK).
+
+Commit lokal: `036e633`. Push: **SKIPPED**.
+
+### 13.1 Fitur yang diimplementasikan dan diverifikasi
+
+| Deliverable | Status | Bukti |
+|---|---|---|
+| Read Only: tombol New item disembunyikan tanpa capability Create | Diperbaiki | `spaces.$spaceId.tsx`; `menuAllows` tidak lagi menampilkan semua jenis saat menu belum dimuat |
+| B5-01 Customer turunan | Diimplementasikan | Field `customer` pada Space, daftar Space, dan overview (`CustomerRef`). Header project menampilkan `QA Customer A` (dicek di browser). Space Internal tidak punya field ini. Tes `TestCustomerSpaceCarriesItsCustomer…` |
+| B5-04 field operasional di header | Diimplementasikan | Customer, Project Manager (owner), Health (dari `progress_risk`, label yang sudah ada), Last update. Dicek di browser: `Red risk`, `2026-11-27` |
+| B5-02 pemilihan Space di Create Item | Diimplementasikan | Opsi Space menampilkan cakupan Customer atau Internal. Space di bawah Customer yang diarsipkan dinonaktifkan |
+| B5-03 filter Customer (overview) | Diimplementasikan | Filter Customer dan Internal di tabel Space overview |
+| B5-03 filter Project Manager | Diimplementasikan | `owner=none` atau id pengguna, hanya project. Tes `TestOwnerFilterListsProjectsByProjectManager`. Di toolbar: Any, Unassigned, Mine |
+| B5-05 seed Project Code | Diimplementasikan, **belum aktif di staging** | Seed `project-code`, idempoten, tanpa grant. Tes `TestProjectCodeSeed`. Staging tidak meneruskan `PMS_SEED` di compose |
+| B4 dokumen Pydio | **Belum** | Perlu root Customer yang disetujui; tanpa itu tetap "konfigurasi tidak tersedia" |
+
+Catatan: `customer_reference_integration_test.go` (rekomendasi MVP-02) sempat tertimpa oleh tes baru dan sudah dikembalikan dari HEAD secara byte-for-byte. Tes baru ada di `customer_space_reference_integration_test.go`.
+
+### 13.2 Tes yang dijalankan
+
+- Paket terdampak (`seed`, `items`, `spaces`, `overview`, `mail`, `httpserver`, `apigen`, `cmd/pms`): semua **ok**, exit 0.
+- Tes baru lulus: `TestCustomerSpaceCarries…`, `TestOwnerFilter…`, `TestProjectCodeSeed`, `TestCustomerReferenceRecipe` (tes lama, sudah dikembalikan).
+- Web: typecheck, lint, `lint:tokens`, build, 127 tes unit lulus.
+- Live: revisi, Customer, Space Internal tanpa Customer, filter owner, dan 422 untuk owner tidak valid.
+
+### 13.3 Rekonsiliasi set project sintetis (read-only, hanya Space QA sintetis)
+
+| Metrik | Nilai | Keterangan |
+|---|---|---|
+| Project | 7 | 5 fixture + `QA SM Project` + `QA UI Project` |
+| Task | 42 | 37 fixture + task SM + task UI + 2 task impor + task UI bertingkat |
+| Task dengan parent | 39 | 3 task akar (impor) |
+| Milestone | 6 | 5 akhir project + `M2 Client sign-off` |
+| Task dengan assignee | 34 | 8 tanpa assignee |
+| Task dengan tanggal mulai dan selesai | 42 | |
+| Dependensi | 17 | 16 fixture + 1 SM |
+| Status | New 32, In Progress 6, Completed 4 | |
+
+Legacy Space `QA | …` yang unresolved tidak ikut dihitung. Angka ini cocok dengan fixture yang dibuat.
+
+### 13.4 Kredensial
+
+- Kredensial 9 akun sintetis **sudah dirotasi** lewat `POST /auth/password/change` (9 × 204). Semua kredensial tersimpan di file 0600 dan bisa login. Sesi lama yang dicabut oleh rotasi termasuk sesi browser (sudah login ulang).
+- Tidak ada token undangan atau reset yang masih terbuka (`user_tokens` kosong).
+- **Password admin belum dirotasi**: perlu dipilih dan diberikan oleh pemilik lewat jalur aman.
+- Log lama memuat tautan aktivasi sembilan akun sintetis yang sudah terpakai. Perlakukan sebagai sensitif.
+
+### 13.5 Yang belum
+
+- Dokumen Pydio (B4): tunggu root Customer yang disetujui.
+- Seed Project Code aktif di staging: tambahkan `PMS_SEED` ke environment `app` di compose, lalu restart. Itu perubahan konfigurasi deploy tersendiri.
+- Verifikasi browser ulang untuk Read Only pada build ini belum dilakukan. Logikanya diuji lewat typecheck dan perubahan kode.
+- Tinjau 24 project tanpa owner (keputusan pemilik).
+- Operasional: backup off-host (OPS-02), rehearsal Docker recovery, RPO/RTO, CI jarak jauh, STG-14, dan rilis final.
