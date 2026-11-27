@@ -354,7 +354,7 @@ func saveForm(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, spaceID uu
 	if resp.AssigneeIDs == nil {
 		resp.AssigneeIDs = []uuid.UUID{}
 	}
-	if err := checkDestination(ctx, tx, actor, resp); err != nil {
+	if err := checkDestination(ctx, tx, actor, spaceID, resp); err != nil {
 		return err
 	}
 	if !creating {
@@ -376,7 +376,7 @@ VALUES($1,$2,$3,$4,$5,$6,$7::uuid,$7::uuid)`, id, spaceID, name, description, de
 
 // checkDestination makes sure the form author may create items where submissions will land, and that the
 // status, assignees, and approvers exist. Submitters have no rights there, so the author vouches for the destination.
-func checkDestination(ctx context.Context, tx pgx.Tx, actor policy.Actor, resp forms.Response) error {
+func checkDestination(ctx context.Context, tx pgx.Tx, actor policy.Actor, formSpace uuid.UUID, resp forms.Response) error {
 	const spaceField, parentField = "response.location.space_id", "response.location.parent_item_id"
 	space := resp.Location.SpaceID.String()
 	decision, access, err := policy.CanOnSpace(ctx, tx, actor, policy.Create, space)
@@ -385,6 +385,27 @@ func checkDestination(ctx context.Context, tx pgx.Tx, actor policy.Actor, resp f
 	}
 	if decision != policy.Allowed || access.Kind != "shared" {
 		return forms.Error{Field: spaceField, Message: "choose a shared Space where you can create items"}
+	}
+	// B3-12: the destination must have a verified owner, the same owner as the form, and an active Customer if it is client-owned.
+	var scope string
+	var client, customerStatus *string
+	if err := tx.QueryRow(ctx, `SELECT s.scope_state, s.client_id::text, c.status FROM spaces s LEFT JOIN clients c ON c.id=s.client_id WHERE s.id=$1`,
+		space).Scan(&scope, &client, &customerStatus); err != nil {
+		return err
+	}
+	if scope != "internal" && scope != "client" {
+		return forms.Error{Field: spaceField, Message: "choose a Space with a verified owner"}
+	}
+	if customerStatus != nil && *customerStatus != "active" {
+		return forms.Error{Field: spaceField, Message: "the customer is archived and receives no new work"}
+	}
+	var sameOwner bool
+	if err := tx.QueryRow(ctx, `SELECT a.scope_state=b.scope_state AND a.client_id IS NOT DISTINCT FROM b.client_id
+FROM spaces a JOIN spaces b ON b.id=$2 WHERE a.id=$1`, space, formSpace).Scan(&sameOwner); err != nil {
+		return err
+	}
+	if !sameOwner {
+		return forms.Error{Field: spaceField, Message: "the destination must belong to the same owner as the form"}
 	}
 	var workflow uuid.UUID
 	if parent := resp.Location.ParentItemID; parent != nil {
@@ -436,6 +457,17 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 	}
 	if distinct := len(uniqueIDs(people)); active != distinct {
 		return forms.Error{Field: field, Message: "assignees and approvers must be active users"}
+	}
+	// A client destination takes only active members of its Customer as assignees and approvers (B3-06, B3-12).
+	if client != nil {
+		var members int
+		if err := tx.QueryRow(ctx, `SELECT count(DISTINCT u.id) FROM users u JOIN client_memberships m ON m.user_id=u.id AND m.client_id=$1::uuid AND m.status='active'
+WHERE u.status='active' AND u.user_type IN ('admin','regular') AND u.id=ANY($2::uuid[])`, *client, people).Scan(&members); err != nil {
+			return err
+		}
+		if members != len(uniqueIDs(people)) {
+			return forms.Error{Field: field, Message: "assignees and approvers must be active members of the destination's customer"}
+		}
 	}
 	if resp.Approval == nil {
 		return nil
