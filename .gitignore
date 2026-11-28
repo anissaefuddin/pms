@@ -9,3 +9,6 @@ deploy/.env
 deploy/backups/
 /pms
 *.tsbuildinfo
+# local QA run artefacts (videos, raw evidence), too large for git
+outputs/
+test-results/
