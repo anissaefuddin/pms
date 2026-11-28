@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilesIllustration, ProjectIllustration } from "@/components/ui/empty-illustrations";
 import { statusDotClass } from "@/lib/status-colors";
 import { AddFile } from "@/components/project-files-add";
+import { FileActions } from "@/components/project-file-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,6 +25,12 @@ const REVIEWS = Object.keys(reviewKey);
 const SCOPES = [["", "all"], ["direct", "direct"], ["subitems", "subitems"]] as const;
 const noFilters = { q: "", scope: "", kind: "", review: "", project: "" };
 const selectClass = "block h-9 rounded-md border border-input bg-background px-2 focus-visible:outline-ring";
+
+// A short type from the extension (PDF, DOCX); the content type says too much for a row.
+function shortType(filename: string, contentType: string) {
+  const extension = /\.([A-Za-z0-9]{1,8})$/.exec(filename)?.[1];
+  return (extension ?? contentType.split(/[;/]/)[1] ?? contentType).toUpperCase();
+}
 
 /**
  * Files view of a Space, project or folder: the documents of its items that the viewer may see. A Space holds no files itself, so
@@ -53,8 +60,9 @@ export function ProjectFiles({ project, spaceId, onOpen }: { project?: Item; spa
   const change = (update: Partial<typeof noFilters>) => { setFilters((current) => ({ ...current, ...update })); setPage(0); };
   const filtered = Object.values(filters).some(Boolean);
   const dmsURL = dms.data?.state === "linked" ? dms.data.open_url : undefined;
+  const changed = (itemId: string) => Promise.all([client.invalidateQueries({ queryKey: ["project-files", owner] }), client.invalidateQueries({ queryKey: ["item-attachments", itemId] })]);
   const add = project?.my_capabilities.includes("attach") && <AddFile itemId={owner} destination={t(folder ? "views.files.addedToFolder" : "views.files.addedToProject")}
-    onAdded={() => Promise.all([client.invalidateQueries({ queryKey: ["project-files", owner] }), client.invalidateQueries({ queryKey: ["item-attachments", owner] })])} />;
+    onAdded={() => changed(owner)} />;
   const dmsLink = dmsURL && <a href={dmsURL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline">
     <ExternalLink aria-hidden="true" className="size-4" />{t(folder ? "views.files.openFolder" : "views.files.openProject")}</a>;
   if (!data.counts.all) return <div className="space-y-3" data-files-view>{add}
@@ -90,23 +98,29 @@ export function ProjectFiles({ project, spaceId, onOpen }: { project?: Item; spa
     {data.items.length === 0 ? <p role="status" className="py-4 text-sm text-muted-foreground">{t("views.files.noMatch")}</p>
       : <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t("views.files.listRegion")}><table aria-label={t("views.types.files")} className="w-full text-left text-sm">
         <thead><tr>
-          <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.type")}</th><th className="p-2">{t("views.files.version")}</th><th className="p-2">{t("items.reviewLabel")}</th><th className="p-2">{t("views.files.location")}</th><th className="p-2">{t("views.files.size")}</th>
-          <th className="p-2">{t("views.files.uploader")}</th><th className="p-2">{t("views.files.added")}</th></tr></thead>
-        <tbody>{data.items.map((file) => <tr key={file.id} className="border-t">
-          {/* Link attachments have no file to download: they open their URL instead (E2). */}
-          <td className="p-2">{file.link_url
-            ? <a className="underline" href={file.link_url} rel="noopener noreferrer" target="_blank">{file.filename || t("views.files.linkOnly")}</a>
-            : <a className="underline" href={`/api/v1/attachments/${file.id}/download`} download>{file.filename}</a>}</td>
-          <td className="p-2 text-muted-foreground">{file.link_url ? t("views.files.linkOnly") : file.content_type}</td>
-          <td className="p-2">{file.version && !file.link_url ? t("views.files.versionNumber", { version: file.version }) : "—"}</td>
-          {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
-          <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
-          <td className="p-2">{file.item_id === project?.id ? here
-            : <button type="button" className="text-left underline" onClick={() => onOpen({ id: file.item_id, title: file.item_title } as Item)}>{file.path.join(" › ") || file.item_title}</button>}</td>
-          <td className="p-2 whitespace-nowrap">{file.link_url ? t("views.files.dash") : t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })}</td>
-          <td className="p-2">{file.uploader.name}</td>
-          <td className="p-2 whitespace-nowrap">{formatDate(file.created_at, profile)}</td>
-        </tr>)}</tbody>
+          <th className="p-2">{t("views.files.name")}</th><th className="hidden p-2 md:table-cell">{t("views.files.location")}</th><th className="p-2">{t("items.reviewLabel")}</th>
+          <th className="hidden p-2 md:table-cell">{t("views.files.added")}</th><th className="p-2 text-right">{t("views.files.actions")}</th></tr></thead>
+        <tbody>{data.items.map((file) => {
+          const open = file.item_id === project?.id ? undefined : () => onOpen({ id: file.item_id, title: file.item_title } as Item);
+          const location = open ? <button type="button" className="text-left underline" onClick={open}>{file.path.join(" › ") || file.item_title}</button> : here;
+          const details = [file.link_url ? t("views.files.linkOnly") : shortType(file.filename, file.content_type),
+            ...(file.link_url ? [] : [t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })]),
+            ...(file.version && !file.link_url ? [t("views.files.versionNumber", { version: file.version })] : [])].join(" · ");
+          return <tr key={file.id} className="border-t align-top">
+            {/* Link attachments have no file to download: they open their URL instead (E2). */}
+            <td className="min-w-40 p-2">{file.link_url
+              ? <a className="break-all font-medium underline" href={file.link_url} rel="noopener noreferrer" target="_blank">{file.filename || t("views.files.linkOnly")}</a>
+              : <a className="break-all font-medium underline" href={`/api/v1/attachments/${file.id}/download`} download>{file.filename}</a>}
+              <span className="block text-xs text-muted-foreground">{details}</span>
+              <span className="block text-xs text-muted-foreground md:hidden">{location}</span></td>
+            <td className="hidden p-2 md:table-cell">{location}</td>
+            {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
+            <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
+            <td className="hidden p-2 md:table-cell"><span className="whitespace-nowrap">{formatDate(file.created_at, profile)}</span>
+              <span className="block text-xs text-muted-foreground">{file.uploader.name}</span></td>
+            <td className="p-2"><FileActions file={file} onOpenOwner={open} onChanged={() => changed(file.item_id)} /></td>
+          </tr>;
+        })}</tbody>
       </table></div>}
     {data.truncated && <p className="text-sm text-muted-foreground">{t("views.files.truncated")}</p>}
     <div className="flex flex-wrap items-center gap-2 text-sm">

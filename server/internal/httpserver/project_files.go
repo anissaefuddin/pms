@@ -221,6 +221,9 @@ func (s *Server) listFiles(w http.ResponseWriter, r *http.Request, scope fileSco
 			Filename     string  `json:"filename"`
 			LinkURL      *string `json:"link_url"`
 			ReviewStatus string  `json:"review_status"`
+			Uploader     struct {
+				ID string `json:"id"`
+			} `json:"uploader"`
 		}
 		var body map[string]any
 		if err := errors.Join(json.Unmarshal(f.Body, &fields), json.Unmarshal(f.Body, &body)); err != nil {
@@ -256,6 +259,10 @@ func (s *Server) listFiles(w http.ResponseWriter, r *http.Request, scope fileSco
 		total++
 		if total > query.offset && (query.limit == 0 || len(out) < query.limit) {
 			body["path"] = path
+			// The same rules as the attachment endpoints, which check them again.
+			attach := caps[f.ItemID].Has(policy.Attach)
+			body["can_delete"] = caps[f.ItemID].Has(policy.Delete) || (attach && fields.Uploader.ID == actor.ID)
+			body["can_upload_version"] = attach && fields.LinkURL == nil
 			out = append(out, body)
 		}
 	}

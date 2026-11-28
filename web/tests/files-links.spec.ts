@@ -25,8 +25,8 @@ test("link attachments open their URL; file attachments keep the download link",
   } });
   await page.goto(`/tasks/${projectId}?view=${view}`);
   const table = page.getByRole("table", { name: "Files" });
-  await expect(table.getByRole("link", { name: "Design board" })).toHaveAttribute("href", "https://example.com/board");
-  await expect(table.getByRole("link", { name: "Design board" })).toHaveAttribute("target", "_blank");
-  await expect(table.getByRole("link", { name: "brief.pdf" })).toHaveAttribute("href", "/api/v1/attachments/f1/download");
-  await expect(table.getByRole("row", { name: /brief\.pdf application\/pdf v2/ })).toBeVisible();
+  await expect(table.getByRole("link", { name: "Design board", exact: true })).toHaveAttribute("href", "https://example.com/board");
+  await expect(table.getByRole("link", { name: "Design board", exact: true })).toHaveAttribute("target", "_blank");
+  await expect(table.getByRole("link", { name: "brief.pdf", exact: true })).toHaveAttribute("href", "/api/v1/attachments/f1/download");
+  await expect(table.getByRole("row", { name: /brief\.pdf PDF · 2 KB · v2/ })).toBeVisible();
 });

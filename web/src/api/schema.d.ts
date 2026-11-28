@@ -7666,6 +7666,10 @@ export interface components {
         };
         ProjectFile: components["schemas"]["Attachment"] & {
             item_title: string;
+            /** @description Pemanggil boleh menghapus: hak Delete pada item, atau pengunggahnya dengan hak Attach */
+            can_delete: boolean;
+            /** @description Pemanggil boleh mengunggah versi baru (hak Attach; bukan lampiran tautan) */
+            can_upload_version: boolean;
             /** @description Judul dari bawah item yang dibuka sampai pemilik file; kosong bila menempel langsung. Leluhur yang tidak boleh dilihat tidak disebut */
             path: string[];
             /**

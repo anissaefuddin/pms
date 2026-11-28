@@ -221,3 +221,47 @@ VALUES (gen_random_uuid(),$1,$2,$3,'text/plain',1,$4,decode(repeat('00',32),'hex
 	f.want(f.call(admin, "POST", "/views", map[string]any{"scope_space_id": open, "type": "files", "name": "Files", "visibility": "public"}), 201, "files view on a Space")
 	f.want(f.call(admin, "POST", "/views", map[string]any{"scope_space_id": open, "type": "chart", "name": "Chart", "visibility": "public"}), 422, "chart on a Space")
 }
+
+// Each row says what the caller may do with it, by the same rules the attachment endpoints apply.
+func TestFileRowsCarryTheCallersRights(t *testing.T) {
+	f := newFixture(t)
+	full, contributor, reader := f.person("admin"), f.person("regular"), f.person("regular")
+	space := f.space("Rights")
+	f.share(space, "user", full.id, "full")
+	f.share(space, "user", contributor.id, "limited")
+	f.share(space, "user", reader.id, "read")
+	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", full.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, space)
+	attach := func(name string, uploader *person, link any) string {
+		return f.queryID(`INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,link_url)
+VALUES (gen_random_uuid(),$1,$2,$3,'text/plain',1,$3,decode(repeat('00',32),'hex'),$4) RETURNING id::text`, project, uploader.id, name, link)
+	}
+	attach("theirs.txt", full, nil)
+	own := attach("mine.txt", contributor, nil)
+	attach("board", full, "https://example.com/board")
+	for _, path := range []string{"/items/" + project + "/files", "/spaces/" + space + "/files"} {
+		for _, tc := range []struct {
+			who  *person
+			want map[string]string // filename: delete,upload
+		}{
+			{full, map[string]string{"theirs.txt": "true,true", "mine.txt": "true,true", "board": "true,false"}},
+			{contributor, map[string]string{"theirs.txt": "false,true", "mine.txt": "true,true", "board": "false,false"}},
+			{reader, map[string]string{"theirs.txt": "false,false", "mine.txt": "false,false", "board": "false,false"}},
+		} {
+			got := f.call(tc.who, "GET", path, nil)
+			f.want(got, 200, "list "+path)
+			for _, row := range got.items() {
+				name := row["filename"].(string)
+				if rights := fmt.Sprintf("%v,%v", row["can_delete"], row["can_upload_version"]); rights != tc.want[name] {
+					t.Errorf("%s %s: rights of %s = %s, want %s", tc.who.id, path, name, rights, tc.want[name])
+				}
+			}
+			if len(got.items()) != 3 {
+				t.Fatalf("rows: %v", got.items())
+			}
+		}
+	}
+	// The flag tells the truth: what it refuses, the endpoint refuses too.
+	f.want(f.call(reader, "DELETE", "/attachments/"+own, nil), 403, "a reader cannot delete")
+	f.want(f.call(contributor, "DELETE", "/attachments/"+own, nil), 204, "the uploader deletes their own file")
+}

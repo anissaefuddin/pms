@@ -10030,9 +10030,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/Attachment'
         - type: object
-          required: [item_title, path]
+          required: [item_title, path, can_delete, can_upload_version]
           properties:
             item_title: { type: string }
+            can_delete: { type: boolean, description: 'Pemanggil boleh menghapus: hak Delete pada item, atau pengunggahnya dengan hak Attach' }
+            can_upload_version: { type: boolean, description: Pemanggil boleh mengunggah versi baru (hak Attach; bukan lampiran tautan) }
             path: { type: array, items: { type: string }, description: 'Judul dari bawah item yang dibuka sampai pemilik file; kosong bila menempel langsung. Leluhur yang tidak boleh dilihat tidak disebut' }
             review_status:
               type: string

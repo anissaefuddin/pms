@@ -6502,6 +6502,12 @@ type Problem struct {
 
 // ProjectFile defines model for ProjectFile.
 type ProjectFile struct {
+	// CanDelete Pemanggil boleh menghapus: hak Delete pada item, atau pengunggahnya dengan hak Attach
+	CanDelete bool `json:"can_delete"`
+
+	// CanUploadVersion Pemanggil boleh mengunggah versi baru (hak Attach; bukan lampiran tautan)
+	CanUploadVersion bool `json:"can_upload_version"`
+
 	// ContentType Hasil deteksi server
 	ContentType string             `json:"content_type"`
 	CreatedAt   time.Time          `json:"created_at"`

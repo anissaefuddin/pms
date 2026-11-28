@@ -24,8 +24,8 @@ test("project Files lists files across items and Chart counts items by status; p
   await page.goto(`/spaces/${marketing.id}`);
   await page.getByRole("button", { name: "Campaign", exact: true }).click();
   await page.getByRole("radio", { name: "Files", exact: true }).click();
-  await expect(page.getByRole("link", { name: "banner.png" })).toHaveAttribute("href", "/api/v1/attachments/f1/download");
-  await expect(page.getByRole("row", { name: /banner\.png .*Banner 2 KB Ada Lovelace/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "banner.png", exact: true })).toHaveAttribute("href", "/api/v1/attachments/f1/download");
+  await expect(page.getByRole("row", { name: /banner\.png PNG · 2 KB .*Banner .*Ada Lovelace/ })).toBeVisible();
   expect((await new AxeBuilder({ page }).include("table").analyze()).violations).toEqual([]);
   await page.getByRole("radio", { name: "Chart", exact: true }).click();
   await expect(page.getByRole("img", { name: "In review: 1" })).toBeVisible();
