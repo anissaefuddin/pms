@@ -43,7 +43,7 @@ export function OnboardingWizard({ me }: { me: CurrentUser }) {
   }
   const build = () => guarded(async () => {
     await post("/api/v1/account", { name: org.trim() }, "PATCH");
-    made.current.space ??= (await api<Space>("/api/v1/spaces", { method: "POST", body: JSON.stringify({ name: org.trim() }) })).id;
+    made.current.space ??= (await api<Space>("/api/v1/spaces", { method: "POST", body: JSON.stringify({ name: org.trim(), scope_state: "internal" }) })).id; // the first workspace Space is internal by explicit choice (B3-SC)
     const space = made.current.space;
     made.current.project ??= (await post("/api/v1/items", { type: "project", title: project.trim(), default_view_type: view, owner_id: me.id, locations: [{ space_id: space }] })).id;
     const titles = tasks.map((title) => title.trim()).filter(Boolean);

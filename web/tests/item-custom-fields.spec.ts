@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { CustomField, CustomFieldValue } from "../src/lib/custom-fields";
 import type { Item, ItemUpdate } from "../src/lib/items";
-import { me, problem } from "./mock-api";
+import { me, problem, type Handler } from "./mock-api";
 import { ALL, grace, marketing, mockSpaces, ops } from "./spaces-mock";
 
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -11,7 +11,7 @@ const inactive = { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Grace Murr
 const otherInactive = { ...grace, id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", last_name: "Jones", status: "deactivated" };
 const itemPath = `/items/${id}`;
 
-async function mockItem(page: Page, field: CustomField, value: CustomFieldValue, locale = "en-US") {
+async function mockItem(page: Page, field: CustomField, value: CustomFieldValue, locale = "en-US", more: Record<string, Handler> = {}) {
   const item = {
     id, type: "task", title: "Design review", seq: 1, version: 1, assignees: [],
     locations: [{ space_id: marketing.id, parent_item_id: null }], my_capabilities: ALL,
@@ -39,6 +39,7 @@ async function mockItem(page: Page, field: CustomField, value: CustomFieldValue,
       item.version++;
       return response();
     },
+    ...more,
   } });
   await page.goto(`/tasks/${id}`);
   return { calls, item, patches: () => calls.filter((call) => call.method === "PATCH" && call.path === itemPath) };
@@ -138,4 +139,68 @@ test("a field with a view grant only is shown without an edit control, and a fie
   await page.reload();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toBeVisible();
   await expect(page.getByText("Budget line")).toHaveCount(0);
+});
+
+// MVP-04/MVP-13: a Pydio folder link in a text field opens in a new tab, and its files can be listed read-only.
+const linkId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+const linkField: CustomField = { id: linkId, space_id: marketing.id, type: "text", name: "Pydio Folder", position: 0, options: [], config: { pydio_folder: true } };
+
+test("shows a Pydio folder link and lists its files on demand", async ({ page }) => {
+  const folder = "https://dms.example.com/projects/PTM";
+  const { calls } = await mockItem(page, linkField, folder, "en-US", {
+    [`GET ${itemPath}/pydio-files`]: (_body, req) => req.query.get("field") === linkId
+      ? { body: { folder_url: folder, truncated: true, items: [
+        { name: "Drawings", folder: true, url: `${folder}/Drawings` },
+        { name: "HAZOP report.pdf", folder: false, size: 2048, modified_at: "2026-11-21T08:30:00Z", url: `${folder}/HAZOP%20report.pdf` },
+      ] } } : problem(404, "not found"),
+  });
+  const section = page.getByRole("region", { name: "Custom fields" });
+  const link = section.getByRole("link", { name: folder });
+  await expect(link).toHaveAttribute("href", folder);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  expect(calls.some((call) => call.path.endsWith("/pydio-files"))).toBe(false); // nothing is fetched until asked
+
+  await section.getByRole("button", { name: "Show Pydio files" }).click();
+  const list = section.getByRole("list", { name: "Files in the Pydio folder" });
+  await expect(list.getByRole("link", { name: "Drawings/" })).toHaveAttribute("href", `${folder}/Drawings`);
+  await expect(list.getByRole("link", { name: "HAZOP report.pdf" })).toHaveAttribute("href", `${folder}/HAZOP%20report.pdf`);
+  await expect(list.getByText("2 kB", { exact: false })).toBeVisible();
+  await expect(list.getByRole("link", { name: "More files: open the folder in Pydio" })).toHaveAttribute("href", folder);
+  await section.getByRole("button", { name: "Hide Pydio files" }).click();
+  await expect(list).toBeHidden();
+});
+
+test("explains a link that is not an allowed Pydio folder", async ({ page }) => {
+  await mockItem(page, linkField, "https://elsewhere.example.com/x", "en-US", {
+    [`GET ${itemPath}/pydio-files`]: problem(422, "not allowed", "pydio_link_not_allowed"),
+  });
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await section.getByRole("button", { name: "Show Pydio files" }).click();
+  await expect(section.getByRole("alert")).toHaveText("This link is not a project folder in the connected Pydio.");
+});
+
+test("says that listing is turned off", async ({ page }) => {
+  await mockItem(page, linkField, "https://dms.example.com/projects/PTM", "en-US", {
+    [`GET ${itemPath}/pydio-files`]: problem(503, "disabled", "pydio_listing_disabled"),
+  });
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await section.getByRole("button", { name: "Show Pydio files" }).click();
+  await expect(section.getByRole("alert")).toHaveText("Pydio file listing is turned off. Open the folder with its link.");
+});
+
+test("offers no listing for a link in an ordinary text field", async ({ page }) => {
+  const link = "https://example.com/spec";
+  await mockItem(page, { ...linkField, name: "Notes", config: {} }, link);
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await expect(section.getByRole("link", { name: link })).toBeVisible();
+  await expect(section.getByRole("button", { name: "Show Pydio files" })).toHaveCount(0);
+});
+
+test("a javascript: value stays plain text", async ({ page }) => {
+  await mockItem(page, linkField, "javascript:alert(1)");
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await expect(section.getByText("javascript:alert(1)")).toBeVisible();
+  await expect(section.getByRole("link")).toHaveCount(0);
+  await expect(section.getByRole("button", { name: "Show Pydio files" })).toHaveCount(0);
 });

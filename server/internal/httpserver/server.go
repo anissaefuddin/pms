@@ -25,6 +25,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/directory"
+	"github.com/anissaefuddin/pms/server/internal/items"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
@@ -61,6 +62,7 @@ type Server struct {
 	events              *realtime.Hub
 	eventEpoch          string
 	sseConnections      prometheus.Gauge
+	pydioCache          pydioCache
 }
 
 type contextKey string
@@ -176,6 +178,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("POST /api/v1/notifications/read-all", s.requireUser(func(w http.ResponseWriter, r *http.Request) { s.bulkNotifications(w, r, false) }))
 	mux.HandleFunc("POST /api/v1/notifications/archive-all", s.requireUser(func(w http.ResponseWriter, r *http.Request) { s.bulkNotifications(w, r, true) }))
 	s.adminRoutes(mux)
+	s.clientRoutes(mux)
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
 	s.dashboardRoutes(mux)
@@ -199,6 +202,17 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
+	// Every Pydio folder reference written by any path is checked against the link settings in force (B4-02). Listing is separate.
+	items.PydioFolderCheck = func(value string) error {
+		rt := s.pydioNow(context.Background())
+		if rt.client == nil {
+			return items.ErrPydioFolderUnconfigured
+		}
+		_, err := rt.client.Folder(value)
+		return err
+	}
+	s.pydioRoutes(mux)
+	s.pydioSettingsRoutes(mux)
 	s.connectorRoutes(mux)
 	s.OAuthRoutes(mux)
 	s.bookmarkRoutes(mux)

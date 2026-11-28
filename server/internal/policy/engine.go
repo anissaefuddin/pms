@@ -65,6 +65,14 @@ LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (
     OR (sh.principal_type = 'group' AND sh.principal_id IN (SELECT group_id FROM group_members WHERE user_id = $1::uuid)))
 LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE (s.deleted_at IS NULL OR $3::boolean) AND ($2::uuid IS NULL OR s.id = $2::uuid)
+  -- B3-04 eligibility, evaluated before any grant. Unresolved or inconsistent ownership matches neither branch and is hidden.
+  -- A client-owned Space needs an active membership of an active internal user. An archived Customer keeps its history:
+  -- its status is not checked here, so only membership and the resource rights below decide.
+  AND ((s.scope_state = 'internal' AND s.client_id IS NULL)
+    OR (s.scope_state = 'client' AND s.client_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM client_memberships m JOIN users u ON u.id = m.user_id
+          WHERE m.client_id = s.client_id AND m.user_id = $1::uuid AND m.status = 'active'
+            AND u.status = 'active' AND u.user_type IN ('admin', 'regular'))))
 GROUP BY s.id`
 
 // VisibleSpaces returns the Spaces the actor can see, each with the actor's capabilities. spaceID narrows it to one Space.

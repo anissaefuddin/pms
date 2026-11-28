@@ -19,7 +19,7 @@ type SyncResult struct {
 	Unchanged int `json:"unchanged"`
 }
 
-// Sync applies the policy in docs/DECISIONS.md (DEC-INT-02): a side that changed alone wins; if both sides changed
+// Sync applies the policy in docs/architecture/DECISIONS.md (DEC-INT-02): a side that changed alone wins; if both sides changed
 // since the last sync and differ, nothing is written on either side and a conflict is recorded for a person to resolve.
 func (s *Service) Sync(ctx context.Context, id string) (SyncResult, error) {
 	c, cfg, secrets, err := s.load(ctx, s.Pool, id)

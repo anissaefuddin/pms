@@ -68,8 +68,8 @@ func Run(ctx context.Context, pool *pgxpool.Pool, accountName, adminEmail string
 		if _, err := tx.Exec(ctx, "UPDATE account SET owner_id=$1 WHERE id=1", adminID); err != nil {
 			return Result{}, err
 		}
-		// The first administrator owns General explicitly (D-17.1, D-SA1): without a share and an admin nobody could ever open it.
-		if _, err := tx.Exec(ctx, `WITH general AS (INSERT INTO spaces(name,kind) VALUES ('General','shared') RETURNING id),
+		// The first administrator owns General explicitly (D-17.1, D-SA1): without a share and an admin nobody could ever open it. General is internal by explicit choice (B3-SC): a fresh instance has no client to own it.
+		if _, err := tx.Exec(ctx, `WITH general AS (INSERT INTO spaces(name,kind,scope_state) VALUES ('General','shared','internal') RETURNING id),
 owner AS (INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by) SELECT 'space',id,'user',$1::uuid,'full',$1::uuid FROM general)
 INSERT INTO space_admins(space_id,user_id,granted_by) SELECT id,$1::uuid,$1::uuid FROM general`, adminID); err != nil {
 			return Result{}, err

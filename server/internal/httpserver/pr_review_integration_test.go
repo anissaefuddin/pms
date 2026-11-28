@@ -9,10 +9,10 @@ import (
 
 // DEC-10 as clarified: Full at the destination alone does not let someone take others' work away from where it is.
 func TestFullAtTheDestinationDoesNotTransferOthersWork(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	task := c.make("task", "theirs", "", c.teammate.id)
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine"})
 	f.want(own, 201, "own space")
 	mine := map[string]any{"space_id": own.body["id"]}
 	put := func(p *person, locations ...map[string]any) reply {
@@ -40,7 +40,7 @@ func TestInvitationCannotOpenAnItemOfALockedSpace(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.spaceWithoutAdmins("Locked")
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','P',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space)
 	f.share2(item, admin.id, "full") // may share the item, but does not reach the Space
 	f.exec("UPDATE spaces SET locked=true WHERE id=$1", space)
@@ -59,7 +59,7 @@ func TestInvitationCannotOpenAnItemOfALockedSpace(t *testing.T) {
 
 // DEF-048: purging the folder of a binned task and then restoring the task must not drop it at the root with its assignment.
 func TestPurgedFolderThenRestoreKeepsTheBoundary(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	box := c.folder("Box", c.g)
 	task := c.make("task", "in box", box, c.teammate.id)
@@ -90,7 +90,7 @@ func TestPurgedFolderThenRestoreKeepsTheBoundary(t *testing.T) {
 func TestAssignmentRightCannotBeRevokedUnderACreate(t *testing.T) {
 	f := newFixture(t)
 	lead, mate := f.person("regular"), f.person("regular")
-	space := f.spaceWithoutAdmins("Race")
+	space := f.scopedSpace("Race", "internal", "")
 	f.share(space, "user", lead.id, "full")
 	f.share(space, "user", mate.id, "editor")
 	ctx := context.Background()
@@ -138,7 +138,7 @@ func TestAssignmentRightCannotBeRevokedUnderACreate(t *testing.T) {
 func TestAssignmentRightCannotBeRevokedUnderAnEdit(t *testing.T) {
 	f := newFixture(t)
 	lead, mate := f.person("regular"), f.person("regular")
-	space := f.spaceWithoutAdmins("Race edit")
+	space := f.scopedSpace("Race edit", "internal", "")
 	f.share(space, "user", lead.id, "full")
 	f.share(space, "user", mate.id, "editor")
 	made := f.call(lead, "POST", "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]string{{"space_id": space}}})
@@ -186,7 +186,7 @@ func TestAssignmentRightCannotBeRevokedUnderAnEdit(t *testing.T) {
 
 // DEF-048 (review of the first fix): an item's own direct share does not authorize carrying itself to the Space root.
 func TestRestoreIsNotAuthorizedByTheShareItCarries(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	task := c.make("task", "inside", c.g, c.teammate.id)
 	got := f.call(c.editor, "GET", "/items/"+task+"/shares", nil)

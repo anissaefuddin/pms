@@ -3,10 +3,11 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { RelationDisplay, RelationEditor, useItemRelations } from "@/components/relation-field";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
+import { PydioFolderFiles } from "@/components/pydio-folder-files";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { api, type CurrentUser } from "@/lib/api";
-import { formatCustomNumber, type CustomField, type CustomFieldValue } from "@/lib/custom-fields";
+import { formatCustomNumber, webLink, type CustomField, type CustomFieldValue } from "@/lib/custom-fields";
 import { formatMinutes } from "@/lib/time-entries";
 import type { Item } from "@/lib/items";
 
@@ -76,7 +77,8 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
                 {field.name}
                 {field.archived_at && <span className="ms-2 text-xs font-normal text-muted-foreground">{t("spaces.customFields.archived")}</span>}
               </p>
-              {field.type === "relation" ? <RelationDisplay group={relationOf(field.id)} /> : <CustomFieldDisplay field={field} value={value} people={people} profile={profile} />}
+              {field.type === "relation" ? <RelationDisplay group={relationOf(field.id)} /> : <CustomFieldDisplay field={field} value={value} people={people} profile={profile} links />}
+              {field.config?.pydio_folder && typeof value === "string" && webLink(value) && <PydioFolderFiles itemId={item.id} fieldId={field.id} profile={profile} />}
               {field.config?.project_budget && actual.data && <p className="text-sm text-muted-foreground">
                 {t(actual.data.scope === "project" ? "time.actual" : "time.actualVisible", { duration: formatMinutes(actual.data.actual_minutes) })}
               </p>}

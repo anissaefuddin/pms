@@ -1,6 +1,6 @@
 # Gate G2b — File, analitik, dan integrasi (M11, S11.4.1)
 
-**Tanggal:** 14 November 2026. **Hasil: BELUM LULUS.** Bukti otomatis untuk 18 requirement M11 tersedia; UAT oleh orang belum dilakukan, dan uji konektor dengan akun GitHub dan Google sungguhan belum dijalankan. [G0](G0_STABILIZATION.md), [G1a](G1A_CONFIG.md), [G1b](G1B_AUTOMATION_APPROVALS.md) dan [G2a](G2A_RESOURCE_SCHEDULE_COST.md) juga belum lulus, sehingga gate ini mencatat bukti dan tidak menyatakan lulus. Bukti rinci ada di [TESTING.md](../../TESTING.md) (bagian "M11").
+**Tanggal:** 14 November 2026. **Hasil: BELUM LULUS.** Bukti otomatis untuk 18 requirement M11 tersedia; UAT oleh orang belum dilakukan, dan uji konektor dengan akun GitHub dan Google sungguhan belum dijalankan. [G0](G0_STABILIZATION.md), [G1a](G1A_CONFIG.md), [G1b](G1B_AUTOMATION_APPROVALS.md) dan [G2a](G2A_RESOURCE_SCHEDULE_COST.md) juga belum lulus, sehingga gate ini mencatat bukti dan tidak menyatakan lulus. Bukti rinci ada di [TESTING.md](../../quality/TESTING.md) (bagian "M11").
 
 ## Requirement M11
 

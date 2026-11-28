@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchResults } from "@/lib/search";
 import { Input } from "@/components/ui/input";
 import { TopbarTitle } from "@/components/topbar-title";
+import { PortfolioMonitor } from "@/components/portfolio-monitor";
 
 export const Route = createFileRoute("/_app/portfolio")({ component: Portfolio });
 
@@ -49,6 +50,7 @@ function Portfolio() {
   return <main className="min-w-0 space-y-5 p-4 sm:p-8">
     <TopbarTitle>{t("settings.portfolio.portfolioGantt")}</TopbarTitle>
     <header><p className="text-sm text-muted-foreground">{t("settings.portfolio.compareVisibleProjectSchedulesAndTheirCrossProjectDependencies")}</p></header>
+    <PortfolioMonitor />
     <form className="max-w-3xl space-y-3" onSubmit={event => {
       event.preventDefault();
       const ids = selected.map(project => project.id);

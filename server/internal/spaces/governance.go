@@ -373,7 +373,7 @@ func (s *Service) Join(ctx context.Context, actor policy.Actor, id string) (Spac
 		return Space{}, err
 	}
 	if !member {
-		if _, err := tx.Exec(ctx, "INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by) VALUES ('space',$1,'user',$2,'read',$2) ON CONFLICT DO NOTHING", id, actor.ID); err != nil {
+		if _, err := tx.Exec(ctx, "INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by) SELECT 'space',$1,'user',$2,'read',$2 WHERE EXISTS(SELECT 1 FROM spaces WHERE id=$1 AND scope_state='internal') ON CONFLICT DO NOTHING", id, actor.ID); err != nil {
 			return Space{}, err
 		}
 		if _, err := tx.Exec(ctx, "UPDATE spaces SET version=version+1 WHERE id=$1", id); err != nil {

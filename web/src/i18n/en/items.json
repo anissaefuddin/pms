@@ -132,7 +132,20 @@
     "invalidNumber_other": "Enter a number from −{{max}} to {{max}} with up to {{count}} decimal places.",
     "invalidPercent": "Enter a percentage from 0 to {{max}} with up to six decimal places.",
     "invalidDuration": "Enter a whole number of days from 0 to {{max}}.",
-    "invalidText": "Enter no more than 5,000 characters."
+    "invalidText": "Enter no more than 5,000 characters.",
+    "pydio": {
+      "show": "Show Pydio files",
+      "hide": "Hide Pydio files",
+      "loading": "Loading the Pydio folder…",
+      "empty": "The folder is empty.",
+      "listLabel": "Files in the Pydio folder",
+      "truncated": "More files: open the folder in Pydio",
+      "error": "Pydio did not answer. Try again later.",
+      "pydio_listing_disabled": "Pydio file listing is turned off. Open the folder with its link.",
+      "pydio_not_configured": "Pydio file listing is not turned on for this workspace.",
+      "pydio_link_not_allowed": "This link is not a project folder in the connected Pydio.",
+      "pydio_folder_not_found": "The folder does not exist in Pydio, or PMS may not read it."
+    }
   },
   "comments": "Comments",
   "comment": "Comment",

@@ -21,14 +21,16 @@ function Chip({ label, icon, active, children }: { label: string; icon: ReactNod
 }
 
 /** One-row view toolbar: chips with popovers; all state lives in the URL through `setSearch`. */
-export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilter, customFields, itemTypes, groups, setSearch, columns, filterOnly = false }: {
+export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilter, ownerFilter = "", meId, customFields, itemTypes, groups, setSearch, columns, filterOnly = false }: {
   filter: string; preset: string; typeFilter: string; sort: string; group: string; fieldFilter: string;
+  /** Project Manager filter: "" any, "none" unassigned, or the signed-in user's id (B5-03). */
+  ownerFilter?: string; meId?: string;
   customFields: CustomField[]; itemTypes?: { id: string; key: string; name: string }[]; groups?: readonly string[];
   setSearch: (key: string, value: string) => void; columns?: ReactNode; filterOnly?: boolean;
 }) {
   const { t } = useTranslation();
   return <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-1 rounded-lg border bg-card p-1 text-[13px] md:flex-nowrap">
-    <Chip label={t("views.chip.filter")} icon={<Filter />} active={!!(preset || typeFilter || fieldFilter)}>
+    <Chip label={t("views.chip.filter")} icon={<Filter />} active={!!(preset || typeFilter || fieldFilter || ownerFilter)}>
       <label className="block space-y-1"><span>{t("views.preset.label")}</span>
         <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)} className={selectClass}>
           {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
@@ -38,6 +40,12 @@ export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilt
           <option value="">{t("views.typeAny")}</option>
           {typeFilter && !itemTypes?.some((entry) => entry.key === typeFilter) && <option value={typeFilter}>{typeFilter}</option>}
           {itemTypes?.map((entry) => <option key={entry.id} value={entry.key}>{entry.name}</option>)}
+        </select></label>}
+      {!filterOnly && <label className="block space-y-1"><span>{t("views.ownerFilter.label")}</span>
+        <select aria-label={t("views.ownerFilter.label")} value={ownerFilter} onChange={(event) => setSearch("owner", event.target.value)} className={selectClass}>
+          <option value="">{t("views.ownerFilter.any")}</option>
+          <option value="none">{t("views.ownerFilter.none")}</option>
+          {meId && <option value={meId}>{t("views.ownerFilter.mine")}</option>}
         </select></label>}
       <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter} onChange={(value) => setSearch("field", value)} />
     </Chip>

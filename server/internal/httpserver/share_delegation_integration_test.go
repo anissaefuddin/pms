@@ -17,7 +17,7 @@ func TestItemShareDowngradeAndUpgradeAgainstOwnRights(t *testing.T) {
 	space := f.space("Shared")
 	f.share(space, "user", admin.id, "full")
 	f.share(space, "user", actor.id, "read")
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Plan',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Plan',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	path := "/items/" + item + "/shares"
 	role := newRole(f, admin, "sharer without delete (downgrade)", "view", "share")

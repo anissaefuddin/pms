@@ -464,6 +464,11 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 			use.OnlyAssignee = actor.ID
 		}
 	}
+	// The copy takes the destination's owner (B3-09). A destination that is archived or unresolved is refused here, before any write.
+	own, err := creationOwnership(ctx, tx, use.Locations)
+	if err != nil {
+		return Detail{}, err
+	}
 	anchor, err := blueprintAnchor(tree, use.StartDate, use.FinishDate)
 	if err != nil {
 		return Detail{}, err
@@ -507,8 +512,14 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 		fields["importance"] = marshalJSON(n.Importance)
 		assignees := []uuid.UUID{}
 		for _, u := range n.AssigneeIDs {
-			if active[u] && (use.OnlyAssignee == "" || u.String() == use.OnlyAssignee) {
+			if !active[u] || (use.OnlyAssignee != "" && u.String() != use.OnlyAssignee) {
+				continue
+			}
+			// A client destination keeps only its Customer's active members; anyone else is dropped, not refused (B3-09).
+			if err := checkNewAssignees(ctx, tx, "", own, []uuid.UUID{u}); err == nil {
 				assignees = append(assignees, u)
+			} else if !errors.Is(err, ErrAssigneeIneligible) {
+				return Detail{}, err
 			}
 		}
 		fields["assignee_ids"] = marshalJSON(assignees)

@@ -424,5 +424,13 @@
   "spaceSettings.breadcrumb": "Jejak navigasi",
   "spaceSettings.blueprints.emptyTitle": "Belum ada blueprint",
   "spaceSettings.backAll": "Kembali ke semua Space",
-  "spaceSettings.backSpace": "Kembali ke Space"
+  "spaceSettings.backSpace": "Kembali ke Space",
+  "form.ownership.label": "Kepemilikan",
+  "form.ownership.internal": "Internal",
+  "form.ownership.internalHint": "Dibagikan di dalam workspace, tidak terikat pada Customer.",
+  "form.ownership.customer": "Customer",
+  "form.ownership.customerHint": "Hanya terlihat oleh anggota Customer yang dipilih.",
+  "form.ownership.customerPick": "Customer untuk Space ini",
+  "form.ownership.required": "Pilih apakah Space ini internal atau milik Customer",
+  "form.ownership.customerRequired": "Pilih Customer untuk Space ini"
 }

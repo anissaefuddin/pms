@@ -6,7 +6,7 @@
 #   ./migrate-pilot.sh import BUNDLE     TARGET (stack already up: docker compose up -d): check checksum, restore
 #                                        the set with restore.sh, then run verify.
 #   ./migrate-pilot.sh verify [COUNTS]   TARGET: compare live counts with the bundle's counts file and check access.
-# Rollback plan: docs/PILOT_RUNBOOK.md, "Migrasi pilot ke instance klien".
+# Rollback plan: docs/operations/PILOT_RUNBOOK.md, "Migrasi pilot ke instance klien".
 set -eu
 umask 077 # migration bundles hold the whole database
 

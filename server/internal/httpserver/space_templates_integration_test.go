@@ -16,7 +16,7 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 	for _, tpl := range list.items() {
 		id := tpl["id"].(string)
 		counts := tpl["counts"].(map[string]any)
-		got := f.call(regular, "POST", "/space-templates/"+id+"/spaces", map[string]any{"request_id": uuid.NewString(), "name": "From " + id})
+		got := f.call(regular, "POST", "/space-templates/"+id+"/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString(), "name": "From " + id})
 		if got.status != 201 {
 			t.Fatalf("%s: %+v", id, got)
 		}
@@ -49,8 +49,8 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 	}
 	// Retry with the same request_id: the same Space comes back and nothing is duplicated.
 	key := uuid.NewString()
-	first := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": key, "name": "Once"})
-	again := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": key, "name": "Twice"})
+	first := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": key, "name": "Once"})
+	again := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": key, "name": "Twice"})
 	if first.status != 201 || again.status != 200 || again.body["id"] != first.body["id"] {
 		t.Fatalf("replay: %+v / %+v", first, again)
 	}
@@ -58,10 +58,10 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 		t.Fatalf("duplicate Spaces: %s", n)
 	}
 	// Another user cannot replay (or probe) the key; viewers cannot create Spaces at all.
-	if got := f.call(admin, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": key}); got.status != 404 {
+	if got := f.call(admin, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": key}); got.status != 404 {
 		t.Fatalf("foreign replay: %+v", got)
 	}
-	if got := f.call(guest, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": uuid.NewString()}); got.status != 403 {
+	if got := f.call(guest, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString()}); got.status != 403 {
 		t.Fatalf("guest: %+v", got)
 	}
 	for name, body := range map[string]map[string]any{"no key": {}, "bad key": {"request_id": "x"}} {
@@ -69,7 +69,7 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 			t.Fatalf("%s: %+v", name, got)
 		}
 	}
-	if got := f.call(regular, "POST", "/space-templates/unknown/spaces", map[string]any{"request_id": uuid.NewString()}); got.status != 404 {
+	if got := f.call(regular, "POST", "/space-templates/unknown/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString()}); got.status != 404 {
 		t.Fatalf("unknown template: %+v", got)
 	}
 	// A failure rolls everything back: a name that is too long fails after the run row was written.
@@ -78,7 +78,7 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 		long[i] = 'x'
 	}
 	bad := uuid.NewString()
-	if got := f.call(regular, "POST", "/space-templates/hr-onboarding/spaces", map[string]any{"request_id": bad, "name": string(long)}); got.status != 422 {
+	if got := f.call(regular, "POST", "/space-templates/hr-onboarding/spaces", map[string]any{"scope_state": "internal", "request_id": bad, "name": string(long)}); got.status != 422 {
 		t.Fatalf("long name: %+v", got)
 	}
 	if n := f.queryID("SELECT count(*)::text FROM space_template_runs WHERE request_id=$1", bad); n != "0" {
@@ -154,7 +154,7 @@ func TestSaveSpaceAsTemplate(t *testing.T) {
 		t.Fatalf("visible to author and to people who see the source only: %v %v %v", listed(owner), listed(editor), listed(outsider))
 	}
 	use := func(p *person) reply {
-		return f.call(p, "POST", "/space-templates/"+id+"/spaces", map[string]any{"request_id": uuid.NewString(), "name": "Copy"})
+		return f.call(p, "POST", "/space-templates/"+id+"/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString(), "name": "Copy"})
 	}
 	f.want(use(outsider), 404, "outsider cannot use it")
 	made := use(editor)

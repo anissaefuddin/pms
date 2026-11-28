@@ -795,6 +795,42 @@ func (e Capability) Valid() bool {
 	}
 }
 
+// Defines values for ClientStatus.
+const (
+	ClientStatusActive   ClientStatus = "active"
+	ClientStatusArchived ClientStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ClientStatus enum.
+func (e ClientStatus) Valid() bool {
+	switch e {
+	case ClientStatusActive:
+		return true
+	case ClientStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ClientMembershipStatus.
+const (
+	ClientMembershipStatusActive  ClientMembershipStatus = "active"
+	ClientMembershipStatusRevoked ClientMembershipStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the ClientMembershipStatus enum.
+func (e ClientMembershipStatus) Valid() bool {
+	switch e {
+	case ClientMembershipStatusActive:
+		return true
+	case ClientMembershipStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ConnectorConflictResolution.
 const (
 	ConnectorConflictResolutionItem   ConnectorConflictResolution = "item"
@@ -2190,6 +2226,27 @@ func (e PublicDashboardLayout) Valid() bool {
 	}
 }
 
+// Defines values for PydioSettingsSource.
+const (
+	PydioSettingsSourceDatabase    PydioSettingsSource = "database"
+	PydioSettingsSourceEnvironment PydioSettingsSource = "environment"
+	PydioSettingsSourceNone        PydioSettingsSource = "none"
+)
+
+// Valid indicates whether the value is a known member of the PydioSettingsSource enum.
+func (e PydioSettingsSource) Valid() bool {
+	switch e {
+	case PydioSettingsSourceDatabase:
+		return true
+	case PydioSettingsSourceEnvironment:
+		return true
+	case PydioSettingsSourceNone:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RealtimeEventType.
 const (
 	CommentCreated      RealtimeEventType = "comment.created"
@@ -2610,6 +2667,24 @@ func (e SpaceMemberSourcesKind) Valid() bool {
 	case SpaceMemberSourcesKindDirect:
 		return true
 	case SpaceMemberSourcesKindGroup:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SpaceScopeState.
+const (
+	SpaceScopeStateClient   SpaceScopeState = "client"
+	SpaceScopeStateInternal SpaceScopeState = "internal"
+)
+
+// Valid indicates whether the value is a known member of the SpaceScopeState enum.
+func (e SpaceScopeState) Valid() bool {
+	switch e {
+	case SpaceScopeStateClient:
+		return true
+	case SpaceScopeStateInternal:
 		return true
 	default:
 		return false
@@ -3060,6 +3135,45 @@ func (e GetBlueprint200JSONResponseBodyScope) Valid() bool {
 	}
 }
 
+// Defines values for ListClientsParamsStatus.
+const (
+	ListClientsParamsStatusActive   ListClientsParamsStatus = "active"
+	ListClientsParamsStatusAll      ListClientsParamsStatus = "all"
+	ListClientsParamsStatusArchived ListClientsParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListClientsParamsStatus enum.
+func (e ListClientsParamsStatus) Valid() bool {
+	switch e {
+	case ListClientsParamsStatusActive:
+		return true
+	case ListClientsParamsStatusAll:
+		return true
+	case ListClientsParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListEligibleClientsParamsScope.
+const (
+	Administrative ListEligibleClientsParamsScope = "administrative"
+	Membership     ListEligibleClientsParamsScope = "membership"
+)
+
+// Valid indicates whether the value is a known member of the ListEligibleClientsParamsScope enum.
+func (e ListEligibleClientsParamsScope) Valid() bool {
+	switch e {
+	case Administrative:
+		return true
+	case Membership:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResolveConnectorConflictJSONBodyResolution.
 const (
 	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
@@ -3189,6 +3303,30 @@ func (e SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool
 	case SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
 		return true
 	case SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetPydioReference200JSONResponseBodyState.
+const (
+	GetPydioReference200JSONResponseBodyStateInvalid          GetPydioReference200JSONResponseBodyState = "invalid"
+	GetPydioReference200JSONResponseBodyStateLinked           GetPydioReference200JSONResponseBodyState = "linked"
+	GetPydioReference200JSONResponseBodyStateNotConfigured    GetPydioReference200JSONResponseBodyState = "not_configured"
+	GetPydioReference200JSONResponseBodyStateRootsUnavailable GetPydioReference200JSONResponseBodyState = "roots_unavailable"
+)
+
+// Valid indicates whether the value is a known member of the GetPydioReference200JSONResponseBodyState enum.
+func (e GetPydioReference200JSONResponseBodyState) Valid() bool {
+	switch e {
+	case GetPydioReference200JSONResponseBodyStateInvalid:
+		return true
+	case GetPydioReference200JSONResponseBodyStateLinked:
+		return true
+	case GetPydioReference200JSONResponseBodyStateNotConfigured:
+		return true
+	case GetPydioReference200JSONResponseBodyStateRootsUnavailable:
 		return true
 	default:
 		return false
@@ -3618,6 +3756,108 @@ func (e GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess) Valid() boo
 	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessRead:
 		return true
 	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessSpaceAdmin:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsHealth.
+const (
+	ListPortfolioProjectsParamsHealthGreen  ListPortfolioProjectsParamsHealth = "green"
+	ListPortfolioProjectsParamsHealthNone   ListPortfolioProjectsParamsHealth = "none"
+	ListPortfolioProjectsParamsHealthRed    ListPortfolioProjectsParamsHealth = "red"
+	ListPortfolioProjectsParamsHealthYellow ListPortfolioProjectsParamsHealth = "yellow"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsHealth enum.
+func (e ListPortfolioProjectsParamsHealth) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsHealthGreen:
+		return true
+	case ListPortfolioProjectsParamsHealthNone:
+		return true
+	case ListPortfolioProjectsParamsHealthRed:
+		return true
+	case ListPortfolioProjectsParamsHealthYellow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsStatus.
+const (
+	ListPortfolioProjectsParamsStatusActive    ListPortfolioProjectsParamsStatus = "active"
+	ListPortfolioProjectsParamsStatusCancelled ListPortfolioProjectsParamsStatus = "cancelled"
+	ListPortfolioProjectsParamsStatusCompleted ListPortfolioProjectsParamsStatus = "completed"
+	ListPortfolioProjectsParamsStatusDeferred  ListPortfolioProjectsParamsStatus = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsStatus enum.
+func (e ListPortfolioProjectsParamsStatus) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsStatusActive:
+		return true
+	case ListPortfolioProjectsParamsStatusCancelled:
+		return true
+	case ListPortfolioProjectsParamsStatusCompleted:
+		return true
+	case ListPortfolioProjectsParamsStatusDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsSort.
+const (
+	ListPortfolioProjectsParamsSortCustomer ListPortfolioProjectsParamsSort = "customer"
+	ListPortfolioProjectsParamsSortFinish   ListPortfolioProjectsParamsSort = "finish"
+	ListPortfolioProjectsParamsSortHealth   ListPortfolioProjectsParamsSort = "health"
+	ListPortfolioProjectsParamsSortOverdue  ListPortfolioProjectsParamsSort = "overdue"
+	ListPortfolioProjectsParamsSortOwner    ListPortfolioProjectsParamsSort = "owner"
+	ListPortfolioProjectsParamsSortProgress ListPortfolioProjectsParamsSort = "progress"
+	ListPortfolioProjectsParamsSortTitle    ListPortfolioProjectsParamsSort = "title"
+	ListPortfolioProjectsParamsSortUpdated  ListPortfolioProjectsParamsSort = "updated"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsSort enum.
+func (e ListPortfolioProjectsParamsSort) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsSortCustomer:
+		return true
+	case ListPortfolioProjectsParamsSortFinish:
+		return true
+	case ListPortfolioProjectsParamsSortHealth:
+		return true
+	case ListPortfolioProjectsParamsSortOverdue:
+		return true
+	case ListPortfolioProjectsParamsSortOwner:
+		return true
+	case ListPortfolioProjectsParamsSortProgress:
+		return true
+	case ListPortfolioProjectsParamsSortTitle:
+		return true
+	case ListPortfolioProjectsParamsSortUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsOrder.
+const (
+	Asc  ListPortfolioProjectsParamsOrder = "asc"
+	Desc ListPortfolioProjectsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsOrder enum.
+func (e ListPortfolioProjectsParamsOrder) Valid() bool {
+	switch e {
+	case Asc:
+		return true
+	case Desc:
 		return true
 	default:
 		return false
@@ -4763,6 +5003,71 @@ type BlueprintTreeNodesType string
 // Capability defines model for Capability.
 type Capability string
 
+// Client defines model for Client.
+type Client struct {
+	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
+	ArchivedBy *openapi_types.UUID `json:"archived_by,omitempty"`
+
+	// Code Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah
+	Code      string             `json:"code"`
+	CreatedAt time.Time          `json:"created_at"`
+	CreatedBy openapi_types.UUID `json:"created_by"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	ShortName *string            `json:"short_name,omitempty"`
+	Status    ClientStatus       `json:"status"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+// ClientStatus defines model for Client.Status.
+type ClientStatus string
+
+// ClientCreate defines model for ClientCreate.
+type ClientCreate struct {
+	Code      string  `json:"code"`
+	Name      string  `json:"name"`
+	ShortName *string `json:"short_name,omitempty"`
+}
+
+// ClientMembership defines model for ClientMembership.
+type ClientMembership struct {
+	ClientId  openapi_types.UUID     `json:"client_id"`
+	GrantedAt time.Time              `json:"granted_at"`
+	GrantedBy openapi_types.UUID     `json:"granted_by"`
+	Id        openapi_types.UUID     `json:"id"`
+	RevokedAt *time.Time             `json:"revoked_at,omitempty"`
+	RevokedBy *openapi_types.UUID    `json:"revoked_by,omitempty"`
+	Status    ClientMembershipStatus `json:"status"`
+	UserId    openapi_types.UUID     `json:"user_id"`
+
+	// UserName Hanya pada daftar
+	UserName *string `json:"user_name,omitempty"`
+}
+
+// ClientMembershipStatus defines model for ClientMembership.Status.
+type ClientMembershipStatus string
+
+// ClientMembershipGrant defines model for ClientMembershipGrant.
+type ClientMembershipGrant struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ClientOption Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource
+type ClientOption struct {
+	Code string             `json:"code"`
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+
+	// ShortName Hanya bila ada
+	ShortName *string `json:"short_name,omitempty"`
+}
+
+// ClientUpdate Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak
+type ClientUpdate struct {
+	Name      *string `json:"name,omitempty"`
+	ShortName *string `json:"short_name,omitempty"`
+}
+
 // Comment defines model for Comment.
 type Comment struct {
 	Author UserRef `json:"author"`
@@ -4866,6 +5171,9 @@ type CustomFieldConfig struct {
 
 	// ProjectBudget Khusus Currency dan hanya menerima nilai pada Project
 	ProjectBudget *bool `json:"project_budget,omitempty"`
+
+	// PydioFolder Khusus Text: referensi folder Pydio, divalidasi saat ditulis. Dihilangkan pada update berarti tidak berubah
+	PydioFolder *bool `json:"pydio_folder,omitempty"`
 
 	// TargetTypeKey Khusus Relation; batasi target ke satu tipe item (kosong = semua)
 	TargetTypeKey *string `json:"target_type_key,omitempty"`
@@ -4971,6 +5279,14 @@ type CustomRoleInput struct {
 // CustomRoleList defines model for CustomRoleList.
 type CustomRoleList struct {
 	Items []CustomRole `json:"items"`
+}
+
+// CustomerRef Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+type CustomerRef struct {
+	Archived bool               `json:"archived"`
+	Code     string             `json:"code"`
+	Id       openapi_types.UUID `json:"id"`
+	Name     string             `json:"name"`
 }
 
 // Dashboard defines model for Dashboard.
@@ -6103,6 +6419,64 @@ type PublicGanttSnapshot struct {
 	ProjectTitle string             `json:"project_title"`
 }
 
+// PydioEntry defines model for PydioEntry.
+type PydioEntry struct {
+	Folder     bool       `json:"folder"`
+	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+	Name       string     `json:"name"`
+
+	// Size Byte; tidak ada untuk folder
+	Size *int64 `json:"size,omitempty"`
+
+	// Url Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna
+	Url string `json:"url"`
+}
+
+// PydioListing defines model for PydioListing.
+type PydioListing struct {
+	// FolderUrl Alamat folder di Cells
+	FolderUrl string       `json:"folder_url"`
+	Items     []PydioEntry `json:"items"`
+
+	// Truncated Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio
+	Truncated bool `json:"truncated"`
+}
+
+// PydioSettings defines model for PydioSettings.
+type PydioSettings struct {
+	BaseUrl       string              `json:"base_url"`
+	CustomerRoots map[string][]string `json:"customer_roots"`
+	Enabled       bool                `json:"enabled"`
+
+	// ListingEnabled PMS_PYDIO_LISTING; hanya diatur operator
+	ListingEnabled bool `json:"listing_enabled"`
+
+	// ListingTokenAvailable Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL
+	ListingTokenAvailable bool                `json:"listing_token_available"`
+	Roots                 []string            `json:"roots"`
+	Source                PydioSettingsSource `json:"source"`
+
+	// Version 0 bila belum ada pengaturan tersimpan
+	Version int `json:"version"`
+}
+
+// PydioSettingsSource defines model for PydioSettings.Source.
+type PydioSettingsSource string
+
+// PydioSettingsInput defines model for PydioSettingsInput.
+type PydioSettingsInput struct {
+	// BaseUrl Alamat https Cells tanpa kredensial dan path
+	BaseUrl string `json:"base_url"`
+
+	// CustomerRoots Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
+	CustomerRoots map[string][]string `json:"customer_roots"`
+	Enabled       bool                `json:"enabled"`
+
+	// Roots Path workspace yang boleh ditautkan
+	Roots   []string `json:"roots"`
+	Version int      `json:"version"`
+}
+
 // RealtimeEvent defines model for RealtimeEvent.
 type RealtimeEvent struct {
 	// AffectedItems Item yang dapat dilihat penerima dalam event item.updated untuk satu perubahan jadwal
@@ -6488,8 +6862,11 @@ type SidebarKey string
 // Space defines model for Space.
 type Space struct {
 	// Archived Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)
-	Archived    *bool   `json:"archived,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Archived *bool `json:"archived,omitempty"`
+
+	// Customer Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+	Customer    *CustomerRef `json:"customer,omitempty"`
+	Description *string      `json:"description,omitempty"`
 
 	// HasActiveAdmin Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan
 	HasActiveAdmin *bool `json:"has_active_admin,omitempty"`
@@ -6531,11 +6908,16 @@ type SpaceBookmarkInput struct {
 	Url         string  `json:"url"`
 }
 
-// SpaceCreate defines model for SpaceCreate.
+// SpaceCreate Pemilihan kepemilikan wajib (B3-SC). Tidak ada default; tanpa scope_state permintaan ditolak
 type SpaceCreate struct {
-	Description *string       `json:"description,omitempty"`
-	Name        string        `json:"name"`
-	Shares      *[]ShareInput `json:"shares,omitempty"`
+	// ClientId Wajib untuk client; harus Customer aktif tempat pembuat menjadi anggota aktif
+	ClientId    *openapi_types.UUID `json:"client_id,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Name        string              `json:"name"`
+
+	// ScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+	ScopeState SpaceScopeState `json:"scope_state"`
+	Shares     *[]ShareInput   `json:"shares,omitempty"`
 }
 
 // SpaceDefaultWorkflows defines model for SpaceDefaultWorkflows.
@@ -6575,6 +6957,9 @@ type SpaceMember struct {
 
 // SpaceMemberSourcesKind defines model for SpaceMember.Sources.Kind.
 type SpaceMemberSourcesKind string
+
+// SpaceScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+type SpaceScopeState string
 
 // SpaceTemplate defines model for SpaceTemplate.
 type SpaceTemplate struct {
@@ -7352,6 +7737,32 @@ type PreviewBlueprintJSONBody struct {
 	Title *string `json:"title,omitempty"`
 }
 
+// ListClientsParams defines parameters for ListClients.
+type ListClientsParams struct {
+	Status *ListClientsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Limit  *Limit                   `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListClientsParamsStatus defines parameters for ListClients.
+type ListClientsParamsStatus string
+
+// ListEligibleClientsParams defines parameters for ListEligibleClients.
+type ListEligibleClientsParams struct {
+	Scope *ListEligibleClientsParamsScope `form:"scope,omitempty" json:"scope,omitempty"`
+
+	// Q Cari nama, kode, atau nama pendek
+	Q     *string `form:"q,omitempty" json:"q,omitempty"`
+	Limit *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListEligibleClientsParamsScope defines parameters for ListEligibleClients.
+type ListEligibleClientsParamsScope string
+
+// ListClientMembersParams defines parameters for ListClientMembers.
+type ListClientMembersParams struct {
+	IncludeRevoked *bool `form:"include_revoked,omitempty" json:"include_revoked,omitempty"`
+}
+
 // UpdateCommentJSONBody defines parameters for UpdateComment.
 type UpdateCommentJSONBody struct {
 	// Body Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
@@ -7635,6 +8046,15 @@ type ReplaceItemLocationsJSONBody struct {
 	Locations []Location `json:"locations"`
 }
 
+// ListPydioFilesParams defines parameters for ListPydioFiles.
+type ListPydioFilesParams struct {
+	// Field Field text yang berisi tautan folder
+	Field openapi_types.UUID `form:"field" json:"field"`
+}
+
+// GetPydioReference200JSONResponseBodyState defines parameters for GetPydioReference.
+type GetPydioReference200JSONResponseBodyState string
+
 // ReorderItemJSONBody defines parameters for ReorderItem.
 type ReorderItemJSONBody struct {
 	// AfterItemId Taruh setelah item ini; null berarti paling atas
@@ -7869,6 +8289,32 @@ type GetOverviewTimelineParams struct {
 // GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess defines parameters for GetOverviewTimeline.
 type GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess string
 
+// ListPortfolioProjectsParams defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParams struct {
+	// Customer id Customer, atau internal untuk proyek tanpa Customer
+	Customer *string `form:"customer,omitempty" json:"customer,omitempty"`
+
+	// Owner id user Project Manager, atau none
+	Owner  *string                            `form:"owner,omitempty" json:"owner,omitempty"`
+	Health *ListPortfolioProjectsParamsHealth `form:"health,omitempty" json:"health,omitempty"`
+	Status *ListPortfolioProjectsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Q      *string                            `form:"q,omitempty" json:"q,omitempty"`
+	Sort   *ListPortfolioProjectsParamsSort   `form:"sort,omitempty" json:"sort,omitempty"`
+	Order  *ListPortfolioProjectsParamsOrder  `form:"order,omitempty" json:"order,omitempty"`
+}
+
+// ListPortfolioProjectsParamsHealth defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsHealth string
+
+// ListPortfolioProjectsParamsStatus defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsStatus string
+
+// ListPortfolioProjectsParamsSort defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsSort string
+
+// ListPortfolioProjectsParamsOrder defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsOrder string
+
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
@@ -8003,11 +8449,17 @@ type SaveSpaceTemplateJSONBody struct {
 
 // CreateSpaceFromTemplateJSONBody defines parameters for CreateSpaceFromTemplate.
 type CreateSpaceFromTemplateJSONBody struct {
+	// ClientId Wajib untuk scope_state client; kosong untuk internal
+	ClientId *openapi_types.UUID `json:"client_id,omitempty"`
+
 	// Name Default nama template
 	Name *string `json:"name,omitempty"`
 
 	// RequestId Kunci idempotensi dari klien
 	RequestId openapi_types.UUID `json:"request_id"`
+
+	// ScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+	ScopeState SpaceScopeState `json:"scope_state"`
 }
 
 // DiscoverSpacesParams defines parameters for DiscoverSpaces.
@@ -8443,6 +8895,15 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // PreviewBlueprintJSONRequestBody defines body for PreviewBlueprint for application/json ContentType.
 type PreviewBlueprintJSONRequestBody PreviewBlueprintJSONBody
 
+// CreateClientJSONRequestBody defines body for CreateClient for application/json ContentType.
+type CreateClientJSONRequestBody = ClientCreate
+
+// UpdateClientJSONRequestBody defines body for UpdateClient for application/json ContentType.
+type UpdateClientJSONRequestBody = ClientUpdate
+
+// GrantClientMemberJSONRequestBody defines body for GrantClientMember for application/json ContentType.
+type GrantClientMemberJSONRequestBody = ClientMembershipGrant
+
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
@@ -8613,6 +9074,9 @@ type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
 
 // SubmitPublicFormMultipartRequestBody defines body for SubmitPublicForm for multipart/form-data ContentType.
 type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
+
+// PutPydioSettingsJSONRequestBody defines body for PutPydioSettings for application/json ContentType.
+type PutPydioSettingsJSONRequestBody = PydioSettingsInput
 
 // CreateRateJSONRequestBody defines body for CreateRate for application/json ContentType.
 type CreateRateJSONRequestBody CreateRateJSONBody
@@ -9267,6 +9731,33 @@ type ServerInterface interface {
 	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
 	// (GET /branding)
 	GetWorkspaceBranding(w http.ResponseWriter, r *http.Request)
+	// ListClients Daftar klien (Customer Master). Hanya Workspace Admin
+	// (GET /clients)
+	ListClients(w http.ResponseWriter, r *http.Request, params ListClientsParams)
+	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+	// (POST /clients)
+	CreateClient(w http.ResponseWriter, r *http.Request)
+	// ListEligibleClients Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+	// (GET /clients/eligible)
+	ListEligibleClients(w http.ResponseWriter, r *http.Request, params ListEligibleClientsParams)
+	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+	// (GET /clients/{clientId})
+	GetClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// UpdateClient Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+	// (PATCH /clients/{clientId})
+	UpdateClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// ArchiveClient Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+	// (POST /clients/{clientId}/archive)
+	ArchiveClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// ListClientMembers Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+	// (GET /clients/{clientId}/members)
+	ListClientMembers(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, params ListClientMembersParams)
+	// GrantClientMember Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (POST /clients/{clientId}/members)
+	GrantClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// RevokeClientMember Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (DELETE /clients/{clientId}/members/{userId})
+	RevokeClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, userId openapi_types.UUID)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -9540,6 +10031,12 @@ type ServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+	// (GET /items/{itemId}/pydio-files)
+	ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams)
+	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+	// (GET /items/{itemId}/pydio-reference)
+	GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -9690,6 +10187,9 @@ type ServerInterface interface {
 	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
 	// (GET /overview/timeline)
 	GetOverviewTimeline(w http.ResponseWriter, r *http.Request, params GetOverviewTimelineParams)
+	// ListPortfolioProjects Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan
+	// (GET /portfolio/projects)
+	ListPortfolioProjects(w http.ResponseWriter, r *http.Request, params ListPortfolioProjectsParams)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(w http.ResponseWriter, r *http.Request)
@@ -9705,6 +10205,15 @@ type ServerInterface interface {
 	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
 	// (GET /public/gantt/{token})
 	GetPublicGanttSnapshot(w http.ResponseWriter, r *http.Request, token string)
+	// DeletePydioSettings Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+	// (DELETE /pydio/settings)
+	DeletePydioSettings(w http.ResponseWriter, r *http.Request)
+	// GetPydioSettings Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+	// (GET /pydio/settings)
+	GetPydioSettings(w http.ResponseWriter, r *http.Request)
+	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+	// (PUT /pydio/settings)
+	PutPydioSettings(w http.ResponseWriter, r *http.Request)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(w http.ResponseWriter, r *http.Request)
@@ -12222,6 +12731,306 @@ func (siw *ServerInterfaceWrapper) GetWorkspaceBranding(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetWorkspaceBranding(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListClients operation middleware
+func (siw *ServerInterfaceWrapper) ListClients(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListClientsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListClients(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateClient operation middleware
+func (siw *ServerInterfaceWrapper) CreateClient(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEligibleClients operation middleware
+func (siw *ServerInterfaceWrapper) ListEligibleClients(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListEligibleClientsParams
+
+	// ------------- Optional query parameter "scope" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scope", r.URL.Query(), &params.Scope, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scope"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scope", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEligibleClients(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetClient operation middleware
+func (siw *ServerInterfaceWrapper) GetClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateClient operation middleware
+func (siw *ServerInterfaceWrapper) UpdateClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveClient operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListClientMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListClientMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListClientMembersParams
+
+	// ------------- Optional query parameter "include_revoked" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_revoked", r.URL.Query(), &params.IncludeRevoked, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_revoked"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_revoked", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListClientMembers(w, r, clientId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrantClientMember operation middleware
+func (siw *ServerInterfaceWrapper) GrantClientMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrantClientMember(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeClientMember operation middleware
+func (siw *ServerInterfaceWrapper) RevokeClientMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeClientMember(w, r, clientId, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14900,6 +15709,74 @@ func (siw *ServerInterfaceWrapper) ReplaceItemLocations(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ListPydioFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListPydioFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPydioFilesParams
+
+	// ------------- Required query parameter "field" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "field", r.URL.Query(), &params.Field, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "field"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "field", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPydioFiles(w, r, itemId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioReference operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioReference(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioReference(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListItemRelations operation middleware
 func (siw *ServerInterfaceWrapper) ListItemRelations(w http.ResponseWriter, r *http.Request) {
 
@@ -16535,6 +17412,117 @@ func (siw *ServerInterfaceWrapper) GetOverviewTimeline(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListPortfolioProjects operation middleware
+func (siw *ServerInterfaceWrapper) ListPortfolioProjects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPortfolioProjectsParams
+
+	// ------------- Optional query parameter "customer" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "customer", r.URL.Query(), &params.Customer, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "customer"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "customer", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "owner" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "owner", r.URL.Query(), &params.Owner, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "owner"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "health" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "health", r.URL.Query(), &params.Health, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "health"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "health", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "order", r.URL.Query(), &params.Order, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "order"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPortfolioProjects(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPortfolioTimeline operation middleware
 func (siw *ServerInterfaceWrapper) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
 
@@ -16644,6 +17632,48 @@ func (siw *ServerInterfaceWrapper) GetPublicGanttSnapshot(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPublicGanttSnapshot(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) DeletePydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutPydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) PutPydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutPydioSettings(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21382,6 +22412,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/github-webhook", wrapper.GithubConnectorWebhook)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-files", wrapper.ListPydioFiles)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-reference", wrapper.GetPydioReference)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
@@ -21394,6 +22426,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/grants", wrapper.ListOAuthGrants)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/grants/{id}", wrapper.RevokeOAuthGrant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/portfolio/projects", wrapper.ListPortfolioProjects)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.DeleteDashboardPublicLink)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.GetDashboardPublicLink)
@@ -21445,6 +22478,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/account/ownership", wrapper.TransferAccountOwnership)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/access-policy", wrapper.GetAccessPolicy)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/access-policy", wrapper.PutAccessPolicy)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/pydio/settings", wrapper.DeletePydioSettings)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pydio/settings", wrapper.GetPydioSettings)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/pydio/settings", wrapper.PutPydioSettings)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
@@ -21507,6 +22543,15 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/settings/work-schedule", wrapper.ReplaceWorkSchedule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users", wrapper.ListUsers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/types", wrapper.ListUserTypes)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients", wrapper.ListClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.CreateClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/eligible", wrapper.ListEligibleClients)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/{clientId}", wrapper.GetClient)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/clients/{clientId}", wrapper.UpdateClient)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients/{clientId}/archive", wrapper.ArchiveClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/{clientId}/members", wrapper.ListClientMembers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients/{clientId}/members", wrapper.GrantClientMember)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/clients/{clientId}/members/{userId}", wrapper.RevokeClientMember)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
@@ -25967,6 +27012,806 @@ func (response GetWorkspaceBranding200JSONResponse) VisitGetWorkspaceBrandingRes
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientsRequestObject struct {
+	Params ListClientsParams
+}
+
+type ListClientsResponseObject interface {
+	VisitListClientsResponse(w http.ResponseWriter) error
+}
+
+type ListClients200JSONResponse struct {
+	Items []Client `json:"items"`
+}
+
+func (response ListClients200JSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListClients400ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients401ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients403ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients422ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClientRequestObject struct {
+	Body *CreateClientJSONRequestBody
+}
+
+type CreateClientResponseObject interface {
+	VisitCreateClientResponse(w http.ResponseWriter) error
+}
+
+type CreateClient201JSONResponse Client
+
+func (response CreateClient201JSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateClient400ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient401ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient403ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient409ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient422ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClientsRequestObject struct {
+	Params ListEligibleClientsParams
+}
+
+type ListEligibleClientsResponseObject interface {
+	VisitListEligibleClientsResponse(w http.ResponseWriter) error
+}
+
+type ListEligibleClients200JSONResponse struct {
+	Items []ClientOption `json:"items"`
+}
+
+func (response ListEligibleClients200JSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListEligibleClients400ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients401ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients403ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients422ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+}
+
+type GetClientResponseObject interface {
+	VisitGetClientResponse(w http.ResponseWriter) error
+}
+
+type GetClient200JSONResponse Client
+
+func (response GetClient200JSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetClient400ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient401ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient403ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient404ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Body     *UpdateClientJSONRequestBody
+}
+
+type UpdateClientResponseObject interface {
+	VisitUpdateClientResponse(w http.ResponseWriter) error
+}
+
+type UpdateClient200JSONResponse Client
+
+func (response UpdateClient200JSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateClient400ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient401ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient403ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient404ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient409ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient422ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+}
+
+type ArchiveClientResponseObject interface {
+	VisitArchiveClientResponse(w http.ResponseWriter) error
+}
+
+type ArchiveClient200JSONResponse Client
+
+func (response ArchiveClient200JSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveClient400ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient401ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient403ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient404ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembersRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Params   ListClientMembersParams
+}
+
+type ListClientMembersResponseObject interface {
+	VisitListClientMembersResponse(w http.ResponseWriter) error
+}
+
+type ListClientMembers200JSONResponse struct {
+	Items []ClientMembership `json:"items"`
+}
+
+func (response ListClientMembers200JSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListClientMembers400ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers401ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers403ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers404ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMemberRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Body     *GrantClientMemberJSONRequestBody
+}
+
+type GrantClientMemberResponseObject interface {
+	VisitGrantClientMemberResponse(w http.ResponseWriter) error
+}
+
+type GrantClientMember200JSONResponse ClientMembership
+
+func (response GrantClientMember200JSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GrantClientMember400ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember401ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember401ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember403ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember403ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember404ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember409ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember409ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember422ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember422ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMemberRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	UserId   openapi_types.UUID `json:"userId"`
+}
+
+type RevokeClientMemberResponseObject interface {
+	VisitRevokeClientMemberResponse(w http.ResponseWriter) error
+}
+
+type RevokeClientMember200JSONResponse ClientMembership
+
+func (response RevokeClientMember200JSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeClientMember400ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember401ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember401ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember403ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember403ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember404ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -31363,6 +33208,157 @@ func (response ReplaceItemLocations422ApplicationProblemPlusJSONResponse) VisitR
 	return err
 }
 
+type ListPydioFilesRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+	Params ListPydioFilesParams
+}
+
+type ListPydioFilesResponseObject interface {
+	VisitListPydioFilesResponse(w http.ResponseWriter) error
+}
+
+type ListPydioFiles200JSONResponse PydioListing
+
+func (response ListPydioFiles200JSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPydioFiles401ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles404ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles422ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles502ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles502ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles503ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReferenceRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type GetPydioReferenceResponseObject interface {
+	VisitGetPydioReferenceResponse(w http.ResponseWriter) error
+}
+
+type GetPydioReference200JSONResponse struct {
+	// OpenUrl Hanya pada status linked
+	OpenUrl *string                                   `json:"open_url,omitempty"`
+	State   GetPydioReference200JSONResponseBodyState `json:"state"`
+}
+
+func (response GetPydioReference200JSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReference401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioReference401ApplicationProblemPlusJSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReference404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioReference404ApplicationProblemPlusJSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListItemRelationsRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 }
@@ -33359,7 +35355,10 @@ type GetOverview200JSONResponse struct {
 	} `json:"kpis"`
 	NextCursor *string `json:"next_cursor,omitempty"`
 	Spaces     []struct {
-		Archived        bool                                                `json:"archived"`
+		Archived bool `json:"archived"`
+
+		// Customer Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah
+		Customer        *CustomerRef                                        `json:"customer,omitempty"`
 		DoneTaskCount   int                                                 `json:"done_task_count"`
 		EffectiveAccess GetOverview200JSONResponseBodySpacesEffectiveAccess `json:"effective_access"`
 		Health          GetOverview200JSONResponseBodySpacesHealth          `json:"health"`
@@ -33609,6 +35608,58 @@ func (response GetOverviewTimeline404ApplicationProblemPlusJSONResponse) VisitGe
 type GetOverviewTimeline422ApplicationProblemPlusJSONResponse Problem
 
 func (response GetOverviewTimeline422ApplicationProblemPlusJSONResponse) VisitGetOverviewTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPortfolioProjectsRequestObject struct {
+	Params ListPortfolioProjectsParams
+}
+
+type ListPortfolioProjectsResponseObject interface {
+	VisitListPortfolioProjectsResponse(w http.ResponseWriter) error
+}
+
+type ListPortfolioProjects200JSONResponse map[string]interface{}
+
+func (response ListPortfolioProjects200JSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPortfolioProjects401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPortfolioProjects401ApplicationProblemPlusJSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPortfolioProjects422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPortfolioProjects422ApplicationProblemPlusJSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -33938,6 +35989,196 @@ func (response GetPublicGanttSnapshot404ApplicationProblemPlusJSONResponse) Visi
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioSettingsRequestObject struct {
+}
+
+type DeletePydioSettingsResponseObject interface {
+	VisitDeletePydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type DeletePydioSettings204Response struct {
+}
+
+func (response DeletePydioSettings204Response) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePydioSettings401ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioSettings403ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioSettings404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioSettings404ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettingsRequestObject struct {
+}
+
+type GetPydioSettingsResponseObject interface {
+	VisitGetPydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetPydioSettings200JSONResponse PydioSettings
+
+func (response GetPydioSettings200JSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioSettings401ApplicationProblemPlusJSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioSettings403ApplicationProblemPlusJSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettingsRequestObject struct {
+	Body *PutPydioSettingsJSONRequestBody
+}
+
+type PutPydioSettingsResponseObject interface {
+	VisitPutPydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type PutPydioSettings200JSONResponse PydioSettings
+
+func (response PutPydioSettings200JSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutPydioSettings401ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings403ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings409ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings409ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings422ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -43806,6 +46047,33 @@ type StrictServerInterface interface {
 	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
 	// (GET /branding)
 	GetWorkspaceBranding(ctx context.Context, request GetWorkspaceBrandingRequestObject) (GetWorkspaceBrandingResponseObject, error)
+	// ListClients Daftar klien (Customer Master). Hanya Workspace Admin
+	// (GET /clients)
+	ListClients(ctx context.Context, request ListClientsRequestObject) (ListClientsResponseObject, error)
+	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+	// (POST /clients)
+	CreateClient(ctx context.Context, request CreateClientRequestObject) (CreateClientResponseObject, error)
+	// ListEligibleClients Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+	// (GET /clients/eligible)
+	ListEligibleClients(ctx context.Context, request ListEligibleClientsRequestObject) (ListEligibleClientsResponseObject, error)
+	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+	// (GET /clients/{clientId})
+	GetClient(ctx context.Context, request GetClientRequestObject) (GetClientResponseObject, error)
+	// UpdateClient Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+	// (PATCH /clients/{clientId})
+	UpdateClient(ctx context.Context, request UpdateClientRequestObject) (UpdateClientResponseObject, error)
+	// ArchiveClient Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+	// (POST /clients/{clientId}/archive)
+	ArchiveClient(ctx context.Context, request ArchiveClientRequestObject) (ArchiveClientResponseObject, error)
+	// ListClientMembers Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+	// (GET /clients/{clientId}/members)
+	ListClientMembers(ctx context.Context, request ListClientMembersRequestObject) (ListClientMembersResponseObject, error)
+	// GrantClientMember Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (POST /clients/{clientId}/members)
+	GrantClientMember(ctx context.Context, request GrantClientMemberRequestObject) (GrantClientMemberResponseObject, error)
+	// RevokeClientMember Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (DELETE /clients/{clientId}/members/{userId})
+	RevokeClientMember(ctx context.Context, request RevokeClientMemberRequestObject) (RevokeClientMemberResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -44079,6 +46347,12 @@ type StrictServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(ctx context.Context, request ReplaceItemLocationsRequestObject) (ReplaceItemLocationsResponseObject, error)
+	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+	// (GET /items/{itemId}/pydio-files)
+	ListPydioFiles(ctx context.Context, request ListPydioFilesRequestObject) (ListPydioFilesResponseObject, error)
+	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+	// (GET /items/{itemId}/pydio-reference)
+	GetPydioReference(ctx context.Context, request GetPydioReferenceRequestObject) (GetPydioReferenceResponseObject, error)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(ctx context.Context, request ListItemRelationsRequestObject) (ListItemRelationsResponseObject, error)
@@ -44229,6 +46503,9 @@ type StrictServerInterface interface {
 	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
 	// (GET /overview/timeline)
 	GetOverviewTimeline(ctx context.Context, request GetOverviewTimelineRequestObject) (GetOverviewTimelineResponseObject, error)
+	// ListPortfolioProjects Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan
+	// (GET /portfolio/projects)
+	ListPortfolioProjects(ctx context.Context, request ListPortfolioProjectsRequestObject) (ListPortfolioProjectsResponseObject, error)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(ctx context.Context, request GetPortfolioTimelineRequestObject) (GetPortfolioTimelineResponseObject, error)
@@ -44244,6 +46521,15 @@ type StrictServerInterface interface {
 	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
 	// (GET /public/gantt/{token})
 	GetPublicGanttSnapshot(ctx context.Context, request GetPublicGanttSnapshotRequestObject) (GetPublicGanttSnapshotResponseObject, error)
+	// DeletePydioSettings Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+	// (DELETE /pydio/settings)
+	DeletePydioSettings(ctx context.Context, request DeletePydioSettingsRequestObject) (DeletePydioSettingsResponseObject, error)
+	// GetPydioSettings Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+	// (GET /pydio/settings)
+	GetPydioSettings(ctx context.Context, request GetPydioSettingsRequestObject) (GetPydioSettingsResponseObject, error)
+	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+	// (PUT /pydio/settings)
+	PutPydioSettings(ctx context.Context, request PutPydioSettingsRequestObject) (PutPydioSettingsResponseObject, error)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(ctx context.Context, request ListRatesRequestObject) (ListRatesResponseObject, error)
@@ -46849,6 +49135,261 @@ func (sh *strictHandler) GetWorkspaceBranding(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetWorkspaceBrandingResponseObject); ok {
 		if err := validResponse.VisitGetWorkspaceBrandingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListClients operation middleware
+func (sh *strictHandler) ListClients(w http.ResponseWriter, r *http.Request, params ListClientsParams) {
+	var request ListClientsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListClients(ctx, request.(ListClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListClientsResponseObject); ok {
+		if err := validResponse.VisitListClientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateClient operation middleware
+func (sh *strictHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
+	var request CreateClientRequestObject
+
+	var body CreateClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateClient(ctx, request.(CreateClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateClientResponseObject); ok {
+		if err := validResponse.VisitCreateClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListEligibleClients operation middleware
+func (sh *strictHandler) ListEligibleClients(w http.ResponseWriter, r *http.Request, params ListEligibleClientsParams) {
+	var request ListEligibleClientsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListEligibleClients(ctx, request.(ListEligibleClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListEligibleClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListEligibleClientsResponseObject); ok {
+		if err := validResponse.VisitListEligibleClientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetClient operation middleware
+func (sh *strictHandler) GetClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request GetClientRequestObject
+
+	request.ClientId = clientId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetClient(ctx, request.(GetClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetClientResponseObject); ok {
+		if err := validResponse.VisitGetClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateClient operation middleware
+func (sh *strictHandler) UpdateClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request UpdateClientRequestObject
+
+	request.ClientId = clientId
+
+	var body UpdateClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateClient(ctx, request.(UpdateClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateClientResponseObject); ok {
+		if err := validResponse.VisitUpdateClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveClient operation middleware
+func (sh *strictHandler) ArchiveClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request ArchiveClientRequestObject
+
+	request.ClientId = clientId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveClient(ctx, request.(ArchiveClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveClientResponseObject); ok {
+		if err := validResponse.VisitArchiveClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListClientMembers operation middleware
+func (sh *strictHandler) ListClientMembers(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, params ListClientMembersParams) {
+	var request ListClientMembersRequestObject
+
+	request.ClientId = clientId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListClientMembers(ctx, request.(ListClientMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListClientMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListClientMembersResponseObject); ok {
+		if err := validResponse.VisitListClientMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GrantClientMember operation middleware
+func (sh *strictHandler) GrantClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request GrantClientMemberRequestObject
+
+	request.ClientId = clientId
+
+	var body GrantClientMemberJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GrantClientMember(ctx, request.(GrantClientMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GrantClientMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GrantClientMemberResponseObject); ok {
+		if err := validResponse.VisitGrantClientMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeClientMember operation middleware
+func (sh *strictHandler) RevokeClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, userId openapi_types.UUID) {
+	var request RevokeClientMemberRequestObject
+
+	request.ClientId = clientId
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeClientMember(ctx, request.(RevokeClientMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeClientMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeClientMemberResponseObject); ok {
+		if err := validResponse.VisitRevokeClientMemberResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -49479,6 +52020,59 @@ func (sh *strictHandler) ReplaceItemLocations(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// ListPydioFiles operation middleware
+func (sh *strictHandler) ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams) {
+	var request ListPydioFilesRequestObject
+
+	request.ItemId = itemId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPydioFiles(ctx, request.(ListPydioFilesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPydioFiles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPydioFilesResponseObject); ok {
+		if err := validResponse.VisitListPydioFilesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioReference operation middleware
+func (sh *strictHandler) GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request GetPydioReferenceRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioReference(ctx, request.(GetPydioReferenceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioReference")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioReferenceResponseObject); ok {
+		if err := validResponse.VisitGetPydioReferenceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListItemRelations operation middleware
 func (sh *strictHandler) ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId) {
 	var request ListItemRelationsRequestObject
@@ -50841,6 +53435,32 @@ func (sh *strictHandler) GetOverviewTimeline(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// ListPortfolioProjects operation middleware
+func (sh *strictHandler) ListPortfolioProjects(w http.ResponseWriter, r *http.Request, params ListPortfolioProjectsParams) {
+	var request ListPortfolioProjectsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPortfolioProjects(ctx, request.(ListPortfolioProjectsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPortfolioProjects")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPortfolioProjectsResponseObject); ok {
+		if err := validResponse.VisitListPortfolioProjectsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetPortfolioTimeline operation middleware
 func (sh *strictHandler) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
 	var request GetPortfolioTimelineRequestObject
@@ -50997,6 +53617,85 @@ func (sh *strictHandler) GetPublicGanttSnapshot(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetPublicGanttSnapshotResponseObject); ok {
 		if err := validResponse.VisitGetPublicGanttSnapshotResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePydioSettings operation middleware
+func (sh *strictHandler) DeletePydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request DeletePydioSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePydioSettings(ctx, request.(DeletePydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePydioSettingsResponseObject); ok {
+		if err := validResponse.VisitDeletePydioSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioSettings operation middleware
+func (sh *strictHandler) GetPydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request GetPydioSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioSettings(ctx, request.(GetPydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioSettingsResponseObject); ok {
+		if err := validResponse.VisitGetPydioSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutPydioSettings operation middleware
+func (sh *strictHandler) PutPydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request PutPydioSettingsRequestObject
+
+	var body PutPydioSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPydioSettings(ctx, request.(PutPydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutPydioSettingsResponseObject); ok {
+		if err := validResponse.VisitPutPydioSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

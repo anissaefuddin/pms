@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/anissaefuddin/pms/server/internal/previews"
 	"github.com/anissaefuddin/pms/server/internal/storage"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/housekeeping"
+	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/projectexcel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,7 +39,10 @@ type Args struct {
 	Subject  string       `json:"subject,omitempty"` // report_digest only
 	HTML     string       `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
 	Data     TemplateData `json:"data,omitempty"`
-	Brand    EmailBrand   `json:"brand,omitempty"`
+	// report_digest only: the report and recipient are rechecked when the mail is sent, not only when it was queued (PROMPT #026).
+	ReportID    string     `json:"report_id,omitempty"`
+	RecipientID string     `json:"recipient_id,omitempty"`
+	Brand       EmailBrand `json:"brand,omitempty"`
 	// Form confirmation branding (FORM-04, request_received only); every value is escaped when rendered.
 	SenderName string `json:"sender_name,omitempty"`
 	LogoURL    string `json:"logo_url,omitempty"`
@@ -74,14 +79,24 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
 }
 
 func (w *Worker) deliver(ctx context.Context, args Args) error {
+	if args.Template == "report_digest" {
+		readable, err := w.reportReadable(ctx, args.RecipientID, args.ReportID)
+		if err != nil {
+			return err
+		}
+		if !readable {
+			// Access ended after the digest was queued: nothing is sent, and nothing about the report leaves (PROMPT #026).
+			slog.Info("report digest not sent: the subscriber can no longer read the report")
+			return nil
+		}
+	}
 	args.Brand = w.brand(ctx)
 	subject, text, html, err := render(args)
 	if err != nil {
 		return err
 	}
 	if w.cfg.SMTPHost == "" {
-		// Log mode for instances without SMTP; the link is a one-time secret, so only run like this on trusted logs.
-		slog.Warn("SMTP is not configured; email logged instead of sent", "to", args.To, "subject", subject, "url", args.URL)
+		logUnsentEmail(args, subject)
 		return nil
 	}
 	sender := w.cfg.SMTPFrom
@@ -368,4 +383,36 @@ func sweepDir(backend, dir string) string {
 		return dir
 	}
 	return ""
+}
+
+// reportReadable repeats, at send time, the check reportdigest made when it queued the digest: the recipient is still active and can
+// read the report (a private report only by its owner, a shared one by View on its Space). Missing identifiers fail closed.
+func (w *Worker) reportReadable(ctx context.Context, recipient, report string) (bool, error) {
+	if recipient == "" || report == "" {
+		return false, nil
+	}
+	var userType, sharing string
+	var space, owner *string
+	err := w.pool.QueryRow(ctx, `SELECT u.user_type::text, r.sharing, r.space_id::text, r.owner_id::text
+FROM users u JOIN reports r ON r.id=$2::uuid WHERE u.id=$1::uuid AND u.status='active'`, recipient, report).Scan(&userType, &sharing, &space, &owner)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if sharing == "private" || space == nil {
+		return owner != nil && *owner == recipient, nil
+	}
+	access, found, err := policy.SpaceAccessFor(ctx, w.pool, policy.Actor{ID: recipient, Type: policy.UserType(userType)}, *space)
+	if err != nil {
+		return false, err
+	}
+	return found && access.Caps.Has(policy.View), nil
+}
+
+// logUnsentEmail records that a message was not sent, without its link, recipient address or body (LOG-01). The link is a one-time
+// secret and the address is personal data; the template and subject are enough to follow the queue.
+func logUnsentEmail(args Args, subject string) {
+	slog.Warn("SMTP is not configured; email not sent", "template", args.Template, "subject", subject)
 }

@@ -13,14 +13,14 @@ func TestItemLists(t *testing.T) {
 	admin := f.person("admin")
 	space := f.space("List")
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
-	parent := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Parent',$1) RETURNING id::text", admin.id)
+	parent := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','Parent',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", parent, space)
 	active := f.queryID("SELECT id::text FROM statuses WHERE name='New'")
 	completed := f.queryID("SELECT id::text FROM statuses WHERE name='Completed'")
 	f.exec(`
 WITH inserted AS (
- INSERT INTO items(type,title,created_by,status_id,due_date)
- VALUES ('task','Zulu',$1,$2,NULL),('task','Alpha',$1,$3,'2026-11-12')
+ INSERT INTO items(type,title,created_by,status_id,due_date,scope_state)
+ VALUES ('task','Zulu',$1,$2,NULL,'internal'),('task','Alpha',$1,$3,'2026-11-12','internal')
  RETURNING id,title
 )
 INSERT INTO item_locations(item_id,space_id,parent_item_id,rank)
@@ -61,8 +61,8 @@ func TestItemListFiveHundred(t *testing.T) {
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.exec(`
 WITH batch AS (
- INSERT INTO items(type,title,created_by)
- SELECT 'task','Item '||n,$1 FROM generate_series(1,500) n RETURNING id,seq
+ INSERT INTO items(type,title,created_by,scope_state)
+ SELECT 'task','Item '||n,$1,'internal' FROM generate_series(1,500) n RETURNING id,seq
 )
 INSERT INTO item_locations(item_id,space_id,rank)
 SELECT id,$2,lpad(seq::text,12,'0') FROM batch`, admin.id, space)

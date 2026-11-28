@@ -24,7 +24,9 @@ func (s *Server) GanttSnapshotRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/items/{projectId}/gantt-snapshots", s.requireUser(s.createGanttSnapshot))
 	mux.HandleFunc("DELETE /api/v1/gantt-snapshots/{snapshotId}", s.requireUser(s.revokeGanttSnapshot))
 	// No requireUser: a stranger holds the token, and no cookie is read.
-	mux.HandleFunc("GET /api/v1/public/gantt/{token}", s.getPublicGanttSnapshot)
+	if s.cfg.PublicLinks { // B3-17: public Gantt snapshots are off by default
+		mux.HandleFunc("GET /api/v1/public/gantt/{token}", s.getPublicGanttSnapshot)
+	}
 }
 
 type ganttSnapshotItem struct {
@@ -220,7 +222,26 @@ func (s *Server) getPublicGanttSnapshot(w http.ResponseWriter, r *http.Request) 
 	}
 	hash := snapshotHash(token)
 	var payload json.RawMessage
-	if err := s.pool.QueryRow(r.Context(), "SELECT payload FROM gantt_snapshots WHERE token_hash=$1 AND expires_at>now()", hash[:]).Scan(&payload); err != nil {
+	var project string
+	var creator, creatorType *string
+	err := s.pool.QueryRow(r.Context(), `SELECT g.payload, g.project_id::text, u.id::text, u.user_type::text
+FROM gantt_snapshots g LEFT JOIN users u ON u.id=g.created_by AND u.status='active'
+WHERE g.token_hash=$1 AND g.expires_at>now()`, hash[:]).Scan(&payload, &project, &creator, &creatorType)
+	// The token alone is not enough: the person who created the snapshot must still be able to view its project (B3-17).
+	// A deleted or deactivated creator, or one whose Customer access has ended, makes the link return not found.
+	if err == nil {
+		if creator == nil || creatorType == nil {
+			err = items.ErrNotFound
+		} else {
+			caps, cerr := policy.ItemCaps(r.Context(), s.pool, policy.Actor{ID: *creator, Type: policy.UserType(*creatorType)}, project)
+			if cerr != nil {
+				err = cerr
+			} else if !caps.Has(policy.View) {
+				err = items.ErrNotFound
+			}
+		}
+	}
+	if err != nil {
 		writeItemError(w, items.ErrNotFound)
 		return
 	}

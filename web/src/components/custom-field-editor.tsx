@@ -4,7 +4,7 @@ import { FormError } from "@/components/auth/form-error";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { customFieldMarker, formatCustomNumber, parseCustomNumber, validCustomNumber, type CustomField, type CustomFieldValue } from "@/lib/custom-fields";
+import { customFieldMarker, formatCustomNumber, parseCustomNumber, validCustomNumber, webLink, type CustomField, type CustomFieldValue } from "@/lib/custom-fields";
 import type { CurrentUser } from "@/lib/api";
 import { formatDate } from "@/lib/profile";
 
@@ -13,8 +13,10 @@ function ColorDot({ color, label }: { color: string; label?: string }) {
     role={label ? "img" : undefined} title={label} aria-label={label} aria-hidden={label ? undefined : true} />;
 }
 
-export function CustomFieldDisplay({ field, value, people, profile }: {
-  field: CustomField; value?: CustomFieldValue; people: PersonOption[]; profile: CurrentUser;
+// links renders a text value that is one http(s) address as a link that opens in a new tab. Only where the display is
+// not inside a button (the item panel), since a link inside the table's edit button is invalid HTML.
+export function CustomFieldDisplay({ field, value, people, profile, links }: {
+  field: CustomField; value?: CustomFieldValue; people: PersonOption[]; profile: CurrentUser; links?: boolean;
 }) {
   const { t } = useTranslation();
   if (field.type === "formula" && value == null) {
@@ -45,7 +47,12 @@ export function CustomFieldDisplay({ field, value, people, profile }: {
       </span>)}
     </span>;
   }
-  if (typeof value === "string") return field.type === "date" ? formatDate(value, profile) : <span className="whitespace-pre-wrap">{value}</span>;
+  if (typeof value === "string") {
+    if (field.type === "date") return formatDate(value, profile);
+    const url = links && field.type === "text" ? webLink(value) : undefined;
+    return url ? <a href={url} target="_blank" rel="noopener noreferrer" className="break-all text-primary underline-offset-2 hover:underline">{url}</a>
+      : <span className="whitespace-pre-wrap">{value}</span>;
+  }
 }
 
 export function CustomFieldEditor({ field, value, people, locale, disabled, onCancel, onSave }: {

@@ -21,7 +21,7 @@ func TestSearchPrefixAndScopesRespectVisibility(t *testing.T) {
 
 	item := func(kind, title, space string, parent *string) string {
 		t.Helper()
-		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1,$2,$3) RETURNING id::text", kind, title, owner.id)
+		id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ($1,$2,$3,'internal') RETURNING id::text", kind, title, owner.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", id, space, parent)
 		return id
 	}

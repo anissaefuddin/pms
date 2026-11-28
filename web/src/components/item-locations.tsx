@@ -34,7 +34,8 @@ export function ItemLocations({ item, editable, disabled }: { item: Item; editab
     setBusy(true);
     setError("");
     try {
-      await api(`/api/v1/items/${item.id}/locations`, { method: "PUT", body: JSON.stringify({ locations }) });
+      // LOCK-01: send the version this view was built from, so a stale list is refused (409) instead of overwriting a newer change.
+      await api(`/api/v1/items/${item.id}/locations`, { method: "PUT", headers: { "If-Match": `"${item.version}"` }, body: JSON.stringify({ locations }) });
       await qc.invalidateQueries({ queryKey: itemKeys.all });
       setAdding(false);
       setSpace("");

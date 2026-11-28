@@ -91,7 +91,7 @@ func (s *Server) listItems(w http.ResponseWriter, r *http.Request, container str
 	}
 	page, err := items.List(r.Context(), s.pool, actorOf(r), container, children, items.ListFilter{
 		Limit: limit, Types: split("type"), StatusGroups: split("status_group"),
-		Assignee: query.Get("assignee"), Sort: query.Get("sort"), Cursor: query.Get("cursor"),
+		Assignee: query.Get("assignee"), Owner: query.Get("owner"), Sort: query.Get("sort"), Cursor: query.Get("cursor"),
 		Fields: query["field"],
 	})
 	if err != nil {
@@ -148,6 +148,10 @@ func (s *Server) reorderItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) replaceItemLocations(w http.ResponseWriter, r *http.Request) {
+	version, ok := ifMatchVersion(w, r) // LOCK-01: same If-Match contract as PATCH /items/{id}
+	if !ok {
+		return
+	}
 	var input struct {
 		Locations []items.Location `json:"locations"`
 	}
@@ -155,7 +159,7 @@ func (s *Server) replaceItemLocations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("itemId")
-	item, err := items.ReplaceLocations(r.Context(), s.pool, actorOf(r), id, input.Locations)
+	item, err := items.ReplaceLocations(r.Context(), s.pool, actorOf(r), id, version, input.Locations)
 	if err == nil {
 		s.publishItem(r, "item.updated", id, id, item.Version)
 	}
@@ -207,6 +211,14 @@ func writeItemError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrConflict):
 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
+	case errors.Is(err, items.ErrCustomerArchived):
+		writeProblem(w, http.StatusConflict, "customer_archived", "the customer is archived and receives no new work")
+	case errors.Is(err, items.ErrAssigneeIneligible):
+		writeProblem(w, http.StatusUnprocessableEntity, "assignee_ineligible", "an assignee must be an active member of this item's customer")
+	case errors.Is(err, items.ErrOwnershipUnresolved):
+		writeProblem(w, http.StatusUnprocessableEntity, "ownership_unresolved", "the destination has no verified ownership yet")
+	case errors.Is(err, items.ErrOwnershipMismatch):
+		writeProblem(w, http.StatusUnprocessableEntity, "ownership_mismatch", "destination and parent ownership are incompatible")
 	case errors.Is(err, errApprovalFinal):
 		writeProblem(w, http.StatusConflict, "approval_final", "this approval is already decided and cannot be changed")
 	case errors.As(err, &guard):

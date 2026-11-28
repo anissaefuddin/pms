@@ -106,7 +106,7 @@ func TestAuditTrailRecordsSecurityChangesForAdminsOnly(t *testing.T) {
 	if d := lastAudit(t, f, admin, "share.space_changed")["details"].(map[string]any); len(d["removed"].([]any)) != 1 {
 		t.Fatalf("removal details = %v", d)
 	}
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Shared task',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Shared task',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	cur := f.call(admin, "GET", "/items/"+item+"/shares", nil)
 	f.want(f.call(admin, "PUT", "/items/"+item+"/shares", map[string]any{"shares": []map[string]any{{"principal_type": "user", "principal_id": bob.id, "role": "read"}}}, "If-Match", cur.header.Get("ETag")), 200, "item share")

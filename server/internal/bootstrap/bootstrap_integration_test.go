@@ -36,6 +36,7 @@ func TestBootstrapCreatesFoundationOnce(t *testing.T) {
 	for query, want := range map[string]int{
 		"SELECT count(*) FROM account": 1,
 		"SELECT count(*) FROM users WHERE user_type='admin' AND status='invited' AND password_hash IS NULL AND email='admin@example.com'":                                                   1,
+		"SELECT count(*) FROM spaces WHERE name='General' AND kind='shared' AND scope_state='internal' AND client_id IS NULL":                                                               1, // B3-SC: explicit internal, never a guess
 		"SELECT count(*) FROM spaces WHERE name='General' AND kind='shared' AND owner_id IS NULL":                                                                                           1,
 		"SELECT count(*) FROM space_admins sa JOIN spaces s ON s.id=sa.space_id AND s.name='General' JOIN shares sh ON sh.target_id=s.id AND sh.principal_id=sa.user_id AND sh.role='full'": 1, // DEF-001: never orphaned
 		"SELECT count(*) FROM spaces WHERE kind='personal'":                                                                                                                                 0, // created when the invitation is accepted

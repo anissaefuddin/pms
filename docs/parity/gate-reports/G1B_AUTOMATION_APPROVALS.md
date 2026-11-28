@@ -30,7 +30,7 @@ Gunakan instance pilot dengan migrasi sampai 00057. Catat versi, tanggal, peran,
 | APR-02 | Ganti reviewer dengan ETag terakhir. Periksa riwayat, lalu biarkan approval pending melewati tenggat UTC. Cocokkan satu reminder dan satu eskalasi di Inbox serta SMTP pilot. | NOT RUN |
 | APR-03 | Buat keputusan, ubah item, dan buka riwayat. Keputusan terdahulu tetap menunjuk versi item saat keputusan diambil dan tidak bisa diedit dari riwayat. | NOT RUN |
 
-Retest 14 Nov 2026 pada Go/PostgreSQL dan Chrome kembali lulus untuk PAR-04/06, metrik otomasi, outbox, dry-run, izin, kuota, histori, reassign dan deadline. [Bukti retest](../../TESTING.md#retest-teknis-gate-m8m10-14-november-2026).
+Retest 14 Nov 2026 pada Go/PostgreSQL dan Chrome kembali lulus untuk PAR-04/06, metrik otomasi, outbox, dry-run, izin, kuota, histori, reassign dan deadline. [Bukti retest](../../quality/TESTING.md#retest-teknis-gate-m8m10-14-november-2026).
 
 ## Status pemeriksaan eksternal
 

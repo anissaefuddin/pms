@@ -9,7 +9,7 @@ import (
 func TestCreateTaskStatusFollowsWorkflowRules(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Board")
+	space := f.internalSpace("Board")
 	f.share(space, "user", admin.id, "full")
 
 	workflows := f.call(admin, http.MethodGet, "/workflows", nil)
@@ -61,7 +61,7 @@ func TestCreateTaskStatusFollowsWorkflowRules(t *testing.T) {
 func TestCreateChildTaskRespectsParentWorkflow(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Children")
+	space := f.internalSpace("Children")
 	f.share(space, "user", admin.id, "full")
 
 	parent := f.call(admin, http.MethodPost, "/items", map[string]any{
@@ -111,7 +111,7 @@ func TestCreateTaskPermissionByLocation(t *testing.T) {
 func TestCreateTaskWithoutIdempotencyKeyCreatesEachRequest(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Twice")
+	space := f.internalSpace("Twice")
 	f.share(space, "user", admin.id, "full")
 	body := map[string]any{"type": "task", "title": "Same request", "locations": []map[string]any{{"space_id": space}}}
 	first := f.call(admin, http.MethodPost, "/items", body)
@@ -129,7 +129,7 @@ func TestCreateTaskWithoutIdempotencyKeyCreatesEachRequest(t *testing.T) {
 func TestCreateTaskIntoGuardedStatusRequiresItsFields(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Guarded")
+	space := f.internalSpace("Guarded")
 	f.share(space, "user", admin.id, "full")
 
 	workflows := f.call(admin, http.MethodGet, "/workflows", nil)
@@ -161,7 +161,7 @@ func TestNestedTaskRules(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	regular := f.person("regular")
-	space := f.space("Nested")
+	space := f.internalSpace("Nested")
 	f.share(space, "user", admin.id, "full")
 	f.share(space, "user", regular.id, "read")
 

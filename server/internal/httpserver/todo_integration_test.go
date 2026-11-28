@@ -15,8 +15,8 @@ func TestMyTodoOnlyReturnsVisibleAssignedTasks(t *testing.T) {
 	deferred := f.queryID("SELECT id::text FROM statuses WHERE name='On Hold'")
 	completed := f.queryID("SELECT id::text FROM statuses WHERE name='Completed'")
 	add := func(space, title, kind string, status, due any, assigned bool) string {
-		id := f.queryID(`INSERT INTO items(type,title,status_id,due_date,created_by)
-VALUES ($1::item_type,$2,$3::uuid,current_date + $4::int,$5) RETURNING id::text`, kind, title, status, due, admin.id)
+		id := f.queryID(`INSERT INTO items(type,title,status_id,due_date,created_by,scope_state)
+VALUES ($1::item_type,$2,$3::uuid,current_date + $4::int,$5,'internal') RETURNING id::text`, kind, title, status, due, admin.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", id, space)
 		if assigned {
 			f.exec("INSERT INTO item_assignees(item_id,user_id) VALUES ($1,$2)", id, member.id)

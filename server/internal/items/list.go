@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -16,8 +17,10 @@ import (
 type ListFilter struct {
 	Types, StatusGroups    []string
 	Assignee, Sort, Cursor string
-	Fields                 []string // "<custom field id>:<value>", ANDed
-	Limit                  int
+	// Owner filters projects by their Project Manager: "none" for projects without one, or a user id. Only projects match (B5-03).
+	Owner  string
+	Fields []string // "<custom field id>:<value>", ANDed
+	Limit  int
 }
 
 type Page struct {
@@ -75,6 +78,7 @@ func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, container
 	if fieldKey != "" {
 		key = fieldKey
 	}
+	ownerTerm := fmt.Sprintf(" AND (%[1]s::text='' OR (i.type='project' AND CASE WHEN %[1]s::text='none' THEN i.owner_id IS NULL ELSE i.owner_id::text=%[1]s::text END))", fmt.Sprintf("$%d", 9+len(fieldArgs)))
 	rows, err := tx.Query(ctx, `
 WITH candidates AS (
  SELECT i.id, `+key+` AS key
@@ -89,7 +93,7 @@ WITH candidates AS (
      SELECT 1 FROM item_assignees a WHERE a.item_id=i.id
    ) ELSE EXISTS (
      SELECT 1 FROM item_assignees a WHERE a.item_id=i.id AND a.user_id::text=$5
-   ) END)`+fieldTerms+`
+   ) END)`+fieldTerms+ownerTerm+`
  GROUP BY i.id,st.id
 )
 SELECT id::text,key FROM candidates
@@ -97,7 +101,7 @@ WHERE $6::uuid IS NULL OR
   (key IS NULL,COALESCE(key,'') COLLATE "C",id) >
   ($7::text IS NULL,COALESCE($7,'') COLLATE "C",$6::uuid)
 ORDER BY key COLLATE "C" NULLS LAST,id LIMIT $8`,
-		append([]any{spaceIDs, parentID, filter.Types, filter.StatusGroups, filter.Assignee, cursorID(cursor), cursorKey(cursor), filter.Limit + 1}, fieldArgs...)...)
+		append(append([]any{spaceIDs, parentID, filter.Types, filter.StatusGroups, filter.Assignee, cursorID(cursor), cursorKey(cursor), filter.Limit + 1}, fieldArgs...), filter.Owner)...)
 	if err != nil {
 		return Page{}, err
 	}
@@ -220,6 +224,15 @@ func validateFilter(actor policy.Actor, id string, children bool, filter *ListFi
 			return "", nil, scope, Invalid("assignee must be a UUID, me or none")
 		}
 		filter.Assignee = user.String()
+	}
+	switch filter.Owner {
+	case "none", "":
+	default:
+		owner, err := uuid.Parse(filter.Owner)
+		if err != nil {
+			return "", nil, scope, Invalid("owner must be a UUID or none")
+		}
+		filter.Owner = owner.String()
 	}
 	raw := filter.Cursor
 	filter.Cursor = ""

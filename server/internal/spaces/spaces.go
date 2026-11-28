@@ -11,6 +11,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,6 +55,16 @@ type Space struct {
 	// HasActiveAdmin is set when one shared Space is read: false means nobody can archive it or name an admin for now.
 	HasActiveAdmin *bool               `json:"has_active_admin,omitempty"`
 	MyCapabilities []policy.Capability `json:"my_capabilities"`
+	// Customer is set on a Customer Space. It is derived from the Space's stable ownership, never edited separately (B5-01).
+	Customer *CustomerRef `json:"customer,omitempty"`
+}
+
+// CustomerRef identifies the Customer that owns a Customer Space.
+type CustomerRef struct {
+	ID       string `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	Archived bool   `json:"archived"`
 }
 
 func toSpace(a policy.SpaceAccess) Space {
@@ -94,7 +105,43 @@ func (s *Service) List(ctx context.Context, actor policy.Actor) ([]Space, error)
 			out = append(out, toSpace(a))
 		}
 	}
+	ids := make([]string, 0, len(out))
+	for _, sp := range out {
+		ids = append(ids, sp.ID)
+	}
+	customers, err := s.customerRefs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range out {
+		if c, ok := customers[out[i].ID]; ok {
+			out[i].Customer = &c
+		}
+	}
 	return out, nil
+}
+
+// customerRefs returns the Customer of each Space in ids that has one. One query covers the whole list.
+func (s *Service) customerRefs(ctx context.Context, ids []string) (map[string]CustomerRef, error) {
+	out := map[string]CustomerRef{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := s.pool.Query(ctx, `SELECT sp.id::text, c.id::text, c.code, c.name, c.archived_at IS NOT NULL
+FROM spaces sp JOIN clients c ON c.id = sp.client_id WHERE sp.id = ANY($1::uuid[])`, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var spaceID string
+		var c CustomerRef
+		if err := rows.Scan(&spaceID, &c.ID, &c.Code, &c.Name, &c.Archived); err != nil {
+			return nil, err
+		}
+		out[spaceID] = c
+	}
+	return out, rows.Err()
 }
 
 func sortByName(list []policy.SpaceAccess) {
@@ -125,6 +172,13 @@ WHERE a.space_id=$1 AND u.status='active' AND u.user_type IN ('admin','regular')
 		}
 		space.HasActiveAdmin = &active
 	}
+	customers, err := s.customerRefs(ctx, []string{id})
+	if err != nil {
+		return Space{}, err
+	}
+	if c, ok := customers[id]; ok {
+		space.Customer = &c
+	}
 	return space, nil
 }
 
@@ -138,6 +192,10 @@ type CreateInput struct {
 	Name        string
 	Description string
 	Shares      []ShareInput
+	// ScopeState is the explicit ownership choice every ordinary shared Space needs (B3-SC): "internal" or "client".
+	// There is no default. ClientID is set only for "client" and must name an active Customer the creator belongs to.
+	ScopeState string
+	ClientID   string
 }
 
 func validateText(name, description string) error {
@@ -165,6 +223,49 @@ func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput
 	return space, tx.Commit(ctx)
 }
 
+// ownershipForNewSpace validates the explicit ownership of a new shared Space and returns the client to store (nil for internal).
+// It runs in the creating transaction. The Customer row is read FOR SHARE, so an archive waits for this create or has already
+// committed; the membership row is read FOR SHARE, so a revoke (FOR UPDATE on that row) waits too. The lock order is the Customer,
+// then the membership, the same order Customer membership revoke uses. Nothing is written before this check passes.
+func ownershipForNewSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, scope, clientID string) (*string, error) {
+	switch scope {
+	case "internal":
+		if clientID != "" {
+			return nil, ValidationError{"an internal Space has no Customer; leave client_id out"}
+		}
+		return nil, nil
+	case "client":
+		id, err := uuid.Parse(clientID)
+		if err != nil {
+			return nil, ValidationError{"a client Space needs a valid client_id"}
+		}
+		var status string
+		err = tx.QueryRow(ctx, "SELECT status FROM clients WHERE id=$1 FOR SHARE", id).Scan(&status)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ValidationError{"the Customer does not exist"}
+		}
+		if err != nil {
+			return nil, err
+		}
+		if status != "active" {
+			return nil, ValidationError{"the Customer is archived and receives no new Spaces"}
+		}
+		var one int
+		err = tx.QueryRow(ctx, `SELECT 1 FROM client_memberships m JOIN users u ON u.id = m.user_id
+WHERE m.client_id=$1 AND m.user_id=$2 AND m.status='active' AND u.status='active' AND u.user_type IN ('admin','regular') FOR SHARE`,
+			id, actor.ID).Scan(&one)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, forbidden("you must be an active member of this Customer to create its Space")
+		}
+		if err != nil {
+			return nil, err
+		}
+		client := id.String()
+		return &client, nil
+	}
+	return nil, ValidationError{"scope_state is required: internal or client"}
+}
+
 // CreateTx is Create inside the caller's transaction, for flows that fill the new Space before committing.
 func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput, batch *notifications.Batch) (Space, error) {
 	if actor.Type != policy.Admin && actor.Type != policy.Regular {
@@ -184,8 +285,13 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 	if !hasCreator {
 		shares = append(shares, ShareInput{PrincipalType: "user", PrincipalID: actor.ID, Role: string(policy.Full)})
 	}
+	clientID, err := ownershipForNewSpace(ctx, tx, actor, in.ScopeState, in.ClientID)
+	if err != nil {
+		return Space{}, err
+	}
 	var id string
-	if err := tx.QueryRow(ctx, "INSERT INTO spaces(name,description,kind) VALUES ($1,$2,'shared') RETURNING id::text", strings.TrimSpace(in.Name), in.Description).Scan(&id); err != nil {
+	if err := tx.QueryRow(ctx, "INSERT INTO spaces(name,description,kind,scope_state,client_id) VALUES ($1,$2,'shared',$3,$4::uuid) RETURNING id::text",
+		strings.TrimSpace(in.Name), in.Description, in.ScopeState, clientID).Scan(&id); err != nil {
 		return Space{}, err
 	}
 	// The creator is the owner of the new Space, so granting any role is within their power.
@@ -464,6 +570,40 @@ func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id stri
 
 type shareKey struct{ principalType, principalID string }
 
+// checkRecipients refuses a new or changed direct user share on a client-owned resource unless the user is an active member of
+// that Customer (B3-11). Membership is eligibility, never a grant. A group is not checked here: the access gate already limits a
+// client resource to members. An unresolved resource takes no new share. Removals are never refused.
+func checkRecipients(ctx context.Context, tx pgx.Tx, target, id string, existing, desired map[shareKey]policy.Role) error {
+	table := "spaces"
+	if target == "item" {
+		table = "items"
+	}
+	var scope string
+	var client *string
+	if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM "+table+" WHERE id=$1::uuid", id).Scan(&scope, &client); err != nil {
+		return err
+	}
+	for key, role := range desired {
+		if existing[key] == role || key.principalType != "user" || scope == "internal" {
+			continue
+		}
+		if scope != "client" || client == nil {
+			return ValidationError{"this resource has no verified owner yet, so it cannot be shared"}
+		}
+		var one int
+		err := tx.QueryRow(ctx, `SELECT 1 FROM client_memberships m JOIN users u ON u.id=m.user_id
+WHERE m.client_id=$1::uuid AND m.user_id=$2::uuid AND m.status='active' AND u.status='active' AND u.user_type IN ('admin','regular')
+FOR SHARE OF m`, *client, key.principalID).Scan(&one)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ValidationError{"a recipient must be an active member of this resource's customer"}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // writeShares replaces the Space's share list with want inside tx. grantable is what the caller may hand out: a role is
 // refused when it holds a capability outside it, unless the role is already unchanged on the Space.
 func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Actor, want []ShareInput, grantable policy.Caps, batch *notifications.Batch) error {
@@ -532,6 +672,9 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if !grantable.Contains(caps) {
 			return forbidden("you cannot grant a role above your own capabilities")
 		}
+	}
+	if err := checkRecipients(ctx, tx, target, spaceID, existing, desired); err != nil {
+		return err
 	}
 	if target == "space" {
 		if err := guardSpaceShareChange(ctx, tx, existing, desired, grantable); err != nil {

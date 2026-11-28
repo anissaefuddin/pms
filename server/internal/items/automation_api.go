@@ -23,7 +23,7 @@ func ReplaceLocationsTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, item
 	if err != nil {
 		return Detail{}, ErrNotFound
 	}
-	return replaceLocations(ctx, tx, actor, itemID, id, want)
+	return replaceLocations(ctx, tx, actor, itemID, id, 0, want) // automation has no client version to check (LOCK-01)
 }
 
 // WorkspaceZone is the workspace's time zone for evaluating deadlines. An unknown or missing name falls back to UTC, so a bad setting

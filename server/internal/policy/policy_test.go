@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// expectedRoleCaps and expectedCeilings are typed in by hand from the tables in docs/ARCHITECTURE.md §6.1, on purpose
+// expectedRoleCaps and expectedCeilings are typed in by hand from the tables in docs/architecture/ARCHITECTURE.md §6.1, on purpose
 // not built from the code under test: if either side drifts from the document, this test fails.
 var expectedRoleCaps = map[Role][]Capability{
 	Read:    {View},

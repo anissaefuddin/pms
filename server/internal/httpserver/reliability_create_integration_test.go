@@ -32,7 +32,7 @@ func postItem(t *testing.T, base string, p *person, body map[string]any) (int, s
 func TestCreateDuplicatesWithoutIdempotencyKey(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Reliability")
+	space := f.internalSpace("Reliability")
 	f.share(space, "user", admin.id, "full")
 	body := map[string]any{"type": "task", "title": "Concurrent twice", "locations": []map[string]any{{"space_id": space}}}
 
@@ -66,7 +66,7 @@ func TestCreateDuplicatesWithoutIdempotencyKey(t *testing.T) {
 func TestCreateInSeveralCustomLocations(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	first, second := f.space("Custom A"), f.space("Custom B")
+	first, second := f.internalSpace("Custom A"), f.internalSpace("Custom B")
 	f.share(first, "user", admin.id, "full")
 	f.share(second, "user", admin.id, "full")
 	parent := f.call(admin, http.MethodPost, "/items", map[string]any{
@@ -123,7 +123,7 @@ func TestCreateWithClientIDIsIdempotent(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	other := f.person("regular")
-	space := f.space("Client id")
+	space := f.internalSpace("Client id")
 	f.share(space, "user", admin.id, "full")
 	f.share(space, "user", other.id, "full")
 	const v7 = "018f4d3c-9a6b-7c10-8000-00000000abcd"
@@ -165,7 +165,7 @@ func TestCreateWithClientIDIsIdempotent(t *testing.T) {
 func TestGanttCreatedTaskIsPlacedAfterItsSibling(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Gantt order")
+	space := f.internalSpace("Gantt order")
 	f.share(space, "user", admin.id, "full")
 	project := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "P", "locations": []map[string]any{{"space_id": space}}})
 	pid := project.body["id"].(string)

@@ -21,6 +21,7 @@ tags:
   - { name: auth, description: "Login, session, password, undangan" }
   - { name: users, description: "Profil, user, grup, seat" }
   - { name: spaces, description: "Space dan sharing" }
+  - { name: clients, description: "Customer Master dan membership klien (B2; hanya Workspace Admin)" }
   - { name: settings, description: "Pengaturan workspace" }
   - { name: items, description: "Project, folder, task" }
   - { name: views, description: "Definisi view Table dan Board" }
@@ -571,6 +572,47 @@ paths:
         '204': { description: Diselesaikan }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/pydio-files:
+    get:
+      tags: [items]
+      operationId: listPydioFiles
+      summary: Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+      description: Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Hanya field ber-config pydio_folder yang didaftar (lainnya 404). Tautan harus berada di host PMS_PYDIO_LINK_URL, di dalam PMS_PYDIO_LINK_ROOTS, dan di dalam root Customer item di PMS_PYDIO_CUSTOMER_ROOTS (selain itu 422). Isi file tidak diproksikan; setiap entri membawa alamat Cells.
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: field, in: query, required: true, description: Field text yang berisi tautan folder, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioListing' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/pydio-reference:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [items]
+      operationId: getPydioReference
+      summary: Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+      description: Status diputuskan server. Folder tidak pernah dikembalikan pada status lain. Item tanpa akses mendapat 404.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [state]
+                properties:
+                  state: { type: string, enum: [linked, not_configured, roots_unavailable, invalid] }
+                  open_url: { type: string, description: Hanya pada status linked }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /items/{projectId}/gantt-snapshots:
     parameters:
       - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -723,6 +765,27 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PublicGanttSnapshot' }
         '404': { $ref: '#/components/responses/Problem' }
+  /portfolio/projects:
+    get:
+      tags: [portfolio]
+      operationId: listPortfolioProjects
+      summary: Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan
+      parameters:
+        - { name: customer, in: query, required: false, schema: { type: string }, description: 'id Customer, atau internal untuk proyek tanpa Customer' }
+        - { name: owner, in: query, required: false, schema: { type: string }, description: 'id user Project Manager, atau none' }
+        - { name: health, in: query, required: false, schema: { type: string, enum: [green, yellow, red, none] } }
+        - { name: status, in: query, required: false, schema: { type: string, enum: [active, completed, deferred, cancelled] } }
+        - { name: q, in: query, required: false, schema: { type: string, maxLength: 200 } }
+        - { name: sort, in: query, required: false, schema: { type: string, enum: [title, finish, progress, health, overdue, updated, customer, owner] } }
+        - { name: order, in: query, required: false, schema: { type: string, enum: [asc, desc] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /portfolio/timeline:
     post:
       operationId: getPortfolioTimeline
@@ -1618,6 +1681,44 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /pydio/settings:
+    get:
+      operationId: getPydioSettings
+      summary: Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+      responses:
+        '200':
+          description: Pengaturan yang berlaku
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioSettings' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putPydioSettings
+      summary: Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PydioSettingsInput' }
+      responses:
+        '200':
+          description: Pengaturan tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioSettings' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deletePydioSettings
+      summary: Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+      responses:
+        '204': { description: Dihapus }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /custom-roles:
     get:
       operationId: listCustomRoles
@@ -1919,6 +2020,8 @@ paths:
                         health: { type: string, enum: [empty, attention, on_track] }
                         last_activity: { type: string, format: date-time, nullable: true }
                         effective_access: { type: string, enum: [space_admin, full, editor, limited, read] }
+                        customer:
+                          $ref: '#/components/schemas/CustomerRef'
                   next_cursor: { type: string, nullable: true }
                   total: { type: integer }
         '404': { $ref: '#/components/responses/Problem' }
@@ -2854,6 +2957,188 @@ paths:
                       type: array
                       items: { $ref: '#/components/schemas/Capability' }
         '403': { $ref: '#/components/responses/Problem' }
+  /clients:
+    get:
+      tags: [clients]
+      operationId: listClients
+      summary: Daftar klien (Customer Master). Hanya Workspace Admin
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [all, active, archived], default: all } }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Client' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [clients]
+      operationId: createClient
+      summary: Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/eligible:
+    get:
+      tags: [clients]
+      operationId: listEligibleClients
+      summary: Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+      parameters:
+        - { name: scope, in: query, required: false, schema: { type: string, enum: [membership, administrative], default: membership } }
+        - { name: q, in: query, required: false, schema: { type: string, maxLength: 100 }, description: "Cari nama, kode, atau nama pendek" }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ClientOption' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [clients]
+      operationId: getClient
+      summary: Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [clients]
+      operationId: updateClient
+      summary: Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/archive:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [clients]
+      operationId: archiveClient
+      summary: Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/members:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [clients]
+      operationId: listClientMembers
+      summary: Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+      parameters:
+        - { name: include_revoked, in: query, required: false, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ClientMembership' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [clients]
+      operationId: grantClientMember
+      summary: Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientMembershipGrant' }
+      responses:
+        '200':
+          description: Membership aktif (baru atau sudah ada)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientMembership' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/members/{userId}:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [clients]
+      operationId: revokeClientMember
+      summary: Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+      responses:
+        '200':
+          description: Membership yang dicabut
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientMembership' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /users/invitations:
     post:
       tags: [users]
@@ -4091,10 +4376,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [request_id]
+              required: [request_id, scope_state]
               properties:
                 request_id: { type: string, format: uuid, description: Kunci idempotensi dari klien }
                 name: { type: string, minLength: 1, maxLength: 120, description: Default nama template }
+                scope_state: { $ref: '#/components/schemas/SpaceScopeState' }
+                client_id: { type: string, format: uuid, nullable: true, description: Wajib untuk scope_state client; kosong untuk internal }
       responses:
         '200':
           description: Diulang dengan request_id yang sama; Space yang sudah ada
@@ -7693,6 +7980,32 @@ components:
             version: { type: integer }
             your_ip: { type: string, description: Alamat yang dilihat server untuk permintaan ini }
             override_active: { type: boolean, description: PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan }
+    PydioSettingsInput:
+      type: object
+      additionalProperties: false
+      required: [version, enabled, base_url, roots, customer_roots]
+      properties:
+        version: { type: integer, minimum: 0 }
+        enabled: { type: boolean }
+        base_url: { type: string, maxLength: 500, description: Alamat https Cells tanpa kredensial dan path }
+        roots: { type: array, minItems: 1, maxItems: 50, items: { type: string, maxLength: 500 }, description: Path workspace yang boleh ditautkan }
+        customer_roots:
+          type: object
+          maxProperties: 500
+          description: Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
+          additionalProperties: { type: array, minItems: 1, maxItems: 50, items: { type: string, maxLength: 500 } }
+    PydioSettings:
+      type: object
+      required: [source, version, enabled, base_url, roots, customer_roots, listing_enabled, listing_token_available]
+      properties:
+        source: { type: string, enum: [database, environment, none] }
+        version: { type: integer, description: 0 bila belum ada pengaturan tersimpan }
+        enabled: { type: boolean }
+        base_url: { type: string }
+        roots: { type: array, items: { type: string } }
+        customer_roots: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        listing_enabled: { type: boolean, description: PMS_PYDIO_LISTING; hanya diatur operator }
+        listing_token_available: { type: boolean, description: Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL }
     SsoConfigInput:
       type: object
       additionalProperties: false
@@ -8217,6 +8530,17 @@ components:
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
+        customer:
+          $ref: '#/components/schemas/CustomerRef'
+    CustomerRef:
+      type: object
+      description: 'Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah'
+      required: [id, code, name, archived]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        archived: { type: boolean }
     SpaceMember:
       type: object
       required: [user_id, name, role, capped_by_user_type, sources]
@@ -8246,14 +8570,21 @@ components:
         project: { type: string, format: uuid, nullable: true, description: 'Workflow untuk root Project yang tidak menyebut workflow lain (B)' }
     SpaceCreate:
       type: object
-      required: [name]
+      description: Pemilihan kepemilikan wajib (B3-SC). Tidak ada default; tanpa scope_state permintaan ditolak
+      required: [name, scope_state]
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
         description: { type: string, maxLength: 1000 }
+        scope_state: { $ref: '#/components/schemas/SpaceScopeState' }
+        client_id: { type: string, format: uuid, nullable: true, description: Wajib untuk client; harus Customer aktif tempat pembuat menjadi anggota aktif }
         shares:
           type: array
           maxItems: 500
           items: { $ref: '#/components/schemas/ShareInput' }
+    SpaceScopeState:
+      type: string
+      description: internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+      enum: [internal, client]
     SpaceUpdate:
       type: object
       properties:
@@ -8960,6 +9291,81 @@ components:
         name: { type: string }
         rate_minor: { type: integer, format: int64 }
         effective_from: { type: string, format: date }
+    PydioListing:
+      type: object
+      required: [folder_url, items, truncated]
+      properties:
+        folder_url: { type: string, description: Alamat folder di Cells }
+        truncated: { type: boolean, description: Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PydioEntry' }
+    PydioEntry:
+      type: object
+      required: [name, folder, url]
+      properties:
+        name: { type: string }
+        folder: { type: boolean }
+        size: { type: integer, format: int64, description: Byte; tidak ada untuk folder }
+        modified_at: { type: string, format: date-time }
+        url: { type: string, description: Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna }
+    Client:
+      type: object
+      required: [id, code, name, status, created_at, created_by, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string, description: "Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah" }
+        name: { type: string }
+        short_name: { type: string, nullable: true }
+        status: { type: string, enum: [active, archived] }
+        created_at: { type: string, format: date-time }
+        created_by: { type: string, format: uuid }
+        updated_at: { type: string, format: date-time }
+        archived_at: { type: string, format: date-time, nullable: true }
+        archived_by: { type: string, format: uuid, nullable: true }
+    ClientCreate:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        short_name: { type: string, nullable: true }
+    ClientUpdate:
+      type: object
+      additionalProperties: false
+      description: Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak
+      properties:
+        name: { type: string, minLength: 1 }
+        short_name: { type: string, nullable: true }
+    ClientOption:
+      type: object
+      description: Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource
+      required: [id, code, name]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        short_name: { type: string, description: Hanya bila ada }
+    ClientMembership:
+      type: object
+      required: [id, client_id, user_id, status, granted_at, granted_by]
+      properties:
+        id: { type: string, format: uuid }
+        client_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        user_name: { type: string, description: Hanya pada daftar }
+        status: { type: string, enum: [active, revoked] }
+        granted_at: { type: string, format: date-time }
+        granted_by: { type: string, format: uuid }
+        revoked_at: { type: string, format: date-time, nullable: true }
+        revoked_by: { type: string, format: uuid, nullable: true }
+    ClientMembershipGrant:
+      type: object
+      required: [user_id]
+      additionalProperties: false
+      properties:
+        user_id: { type: string, format: uuid }
     GanttSnapshot:
       type: object
       required: [id, project_id, name, show_assignees, expires_at, created_at]
@@ -9083,6 +9489,7 @@ components:
         currency: { type: string, pattern: '^[A-Z]{3}$', description: Kode ISO 4217 untuk Currency }
         decimals: { type: integer, minimum: 0, maximum: 6, description: Jumlah desimal untuk Currency dengan default 2 }
         allow_over_100: { type: boolean, description: Izinkan nilai Percent melebihi 100 }
+        pydio_folder: { type: boolean, description: 'Khusus Text: referensi folder Pydio, divalidasi saat ditulis. Dihilangkan pada update berarti tidak berubah' }
         expression: { type: string, maxLength: 500, description: 'Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if' }
         target_type_key: { type: string, description: Khusus Relation; batasi target ke satu tipe item (kosong = semua) }
         aggregation: { type: string, enum: [sum, average, min, max, count], description: Default untuk field numerik }

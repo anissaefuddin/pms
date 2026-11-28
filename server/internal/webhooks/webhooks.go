@@ -403,8 +403,8 @@ func Sign(secret string, ts int64, body []byte) string {
 // Send attempts every due delivery once (called from the outbox dispatch tick). A delivery that fails is retried with Backoff up to
 // MaxAttempts; DisableAfter failed attempts in a row switch the subscription off.
 func (s *Service) Send(ctx context.Context) (int, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT d.id, d.subscription_id, d.event_id, d.event_type, d.payload, d.attempts, w.url, w.secret
-FROM webhook_deliveries d JOIN webhook_subscriptions w ON w.id=d.subscription_id
+	rows, err := s.Pool.Query(ctx, `SELECT d.id, d.subscription_id, d.event_id, d.event_type, d.payload, d.attempts, w.url, w.secret, w.owner_id::text, u.user_type::text, u.status='active'
+FROM webhook_deliveries d JOIN webhook_subscriptions w ON w.id=d.subscription_id JOIN users u ON u.id=w.owner_id
 WHERE d.status='pending' AND d.next_attempt_at<=$1 AND w.enabled AND w.deleted_at IS NULL ORDER BY d.next_attempt_at LIMIT 50`, s.Now())
 	if err != nil {
 		return 0, err
@@ -414,11 +414,13 @@ WHERE d.status='pending' AND d.next_attempt_at<=$1 AND w.enabled AND w.deleted_a
 		typ, url, secret string
 		payload          []byte
 		attempts         int
+		owner, kind      string
+		active           bool
 	}
 	var jobs []job
 	for rows.Next() {
 		var j job
-		if err := rows.Scan(&j.id, &j.sub, &j.event, &j.typ, &j.payload, &j.attempts, &j.url, &j.secret); err != nil {
+		if err := rows.Scan(&j.id, &j.sub, &j.event, &j.typ, &j.payload, &j.attempts, &j.url, &j.secret, &j.owner, &j.kind, &j.active); err != nil {
 			rows.Close()
 			return 0, err
 		}
@@ -429,6 +431,16 @@ WHERE d.status='pending' AND d.next_attempt_at<=$1 AND w.enabled AND w.deleted_a
 		return 0, err
 	}
 	for _, j := range jobs {
+		// Access is checked again when the job runs, not only when the event was queued (B3-13). A blocked payload is never sent.
+		if blocked, err := s.blocked(ctx, j.owner, j.kind, j.active, j.payload); err != nil {
+			return 0, err
+		} else if blocked {
+			if _, err := s.Pool.Exec(ctx, "UPDATE webhook_deliveries SET status='failed', attempts=attempts+1, last_error=$2 WHERE id=$1",
+				j.id, "the subscription owner may no longer see this item; nothing was sent"); err != nil {
+				return 0, err
+			}
+			continue
+		}
 		var status int
 		var derr error
 		secret, oerr := s.open(j.sub, j.secret)
@@ -497,4 +509,26 @@ func (s *Service) post(ctx context.Context, rawURL, secret, delivery, event, typ
 		return resp.StatusCode, fmt.Errorf("receiver answered %d", resp.StatusCode)
 	}
 	return resp.StatusCode, nil
+}
+
+// blocked reports whether a queued payload may no longer leave: its owner is inactive, or the item it names is no longer visible to
+// the owner. An event without an item carries no item data, so it is not blocked here.
+func (s *Service) blocked(ctx context.Context, owner, kind string, active bool, payload []byte) (bool, error) {
+	if !active {
+		return true, nil
+	}
+	var body struct {
+		ItemID string `json:"item_id"`
+	}
+	if err := json.Unmarshal(payload, &body); err != nil {
+		return false, err
+	}
+	if body.ItemID == "" {
+		return false, nil
+	}
+	caps, err := policy.ItemCaps(ctx, s.Pool, policy.Actor{ID: owner, Type: policy.UserType(kind)}, body.ItemID)
+	if err != nil {
+		return false, err
+	}
+	return !caps.Has(policy.View), nil
 }

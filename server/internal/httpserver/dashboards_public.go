@@ -17,6 +17,9 @@ import (
 )
 
 func (s *Server) publicDashboardRoutes(mux *http.ServeMux) {
+	if !s.cfg.PublicLinks { // B3-17: public access is off by default; with it off no public-link route exists, so no old token works
+		return
+	}
 	mux.HandleFunc("GET /api/v1/dashboards/{dashboardId}/public-link", s.requireUser(s.getDashboardLink))
 	mux.HandleFunc("PUT /api/v1/dashboards/{dashboardId}/public-link", s.requireUser(s.putDashboardLink))
 	mux.HandleFunc("DELETE /api/v1/dashboards/{dashboardId}/public-link", s.requireUser(s.deleteDashboardLink))

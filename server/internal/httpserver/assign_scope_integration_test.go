@@ -66,8 +66,16 @@ func (c scopeCast) state(items ...string) string {
 	return strings.Join(out, ";")
 }
 
+// newInternalScopeCast is newScopeCast on a matrix whose Space is explicitly internal (B3-03 fixture). The folders and shares are the same.
+func newInternalScopeCast(t *testing.T) scopeCast {
+	c := scopeCast{assignCast: newInternalAssignCast(t)}
+	c.g, c.plain1, c.plain2 = c.folder("G", ""), c.folder("Plain 1", ""), c.folder("Plain 2", "")
+	c.f.share2(c.g, c.editor.id, "full")
+	return c
+}
+
 func TestAFolderGivesNoAssignmentSayOutsideItself(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 
 	// Into the folder, assign there, and back.
 	task := c.make("task", "A", "")
@@ -97,7 +105,7 @@ func TestAFolderGivesNoAssignmentSayOutsideItself(t *testing.T) {
 }
 
 func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 
 	c.move(c.editor, c.make("task", "unassigned", ""), 200, "no assignee", c.plain1)
@@ -113,7 +121,7 @@ func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
 
 	parent := c.make("task", "parent", "")
 	sub := c.make("task", "sub", parent, c.teammate.id)
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Elsewhere"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Elsewhere"})
 	f.want(own, 201, "own space")
 	elsewhere := map[string]any{"locations": []map[string]any{{"space_id": own.body["id"]}}}
 	before := c.state(parent, sub)
@@ -137,7 +145,7 @@ func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
 
 // Restoring a task whose folder is gone puts it at the Space root: the same boundary applies.
 func TestRestoreDoesNotCarryAssignmentOutOfAFolder(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	box := c.folder("Box", c.g)
 	task := c.make("task", "in box", box, c.teammate.id)
@@ -152,7 +160,7 @@ func TestRestoreDoesNotCarryAssignmentOutOfAFolder(t *testing.T) {
 }
 
 func TestMoveAndAssignAtTheSameTime(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	for i := range 10 {
 		task := c.make("task", fmt.Sprintf("race %d", i), "")
 		c.move(c.editor, task, 200, "into G", c.g)
@@ -183,7 +191,7 @@ func (f *fixture) share2(itemID, userID, role string) {
 
 // DEF-041: a folder cannot be turned into a lasting right on the task by sharing it while it is there.
 func TestAFolderCannotBeTurnedIntoADirectShare(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	grant := func(item string) reply {
 		got := f.call(c.editor, "GET", "/items/"+item+"/shares", nil)
@@ -209,7 +217,7 @@ func TestAFolderCannotBeTurnedIntoADirectShare(t *testing.T) {
 
 // DEF-044 (final review B1): creating something with initial shares hands out rights too.
 func TestCreateWithSharesCannotDelegateFromAFolder(t *testing.T) {
-	c := newScopeCast(t)
+	c := newInternalScopeCast(t)
 	f := c.f
 	holder := c.folder("Holder", "")
 	c.move(c.editor, holder, 200, "folder also under G", "", c.g)

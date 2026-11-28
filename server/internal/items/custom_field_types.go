@@ -28,6 +28,9 @@ type CustomFieldConfig struct {
 	TargetTypeKey string `json:"target_type_key,omitempty"`
 	// Expression is the formula of a Formula field (see formula.go).
 	Expression string `json:"expression,omitempty"`
+	// PydioFolder marks a Text field as the canonical Pydio folder reference of a project (B4-01). Its values are checked by
+	// PydioFolderCheck on every write. The field's stable UUID is the identity; no name matching is used.
+	PydioFolder *bool `json:"pydio_folder,omitempty"` // nil in an update = keep the current setting
 }
 
 type CustomFieldMarker struct {
@@ -47,11 +50,18 @@ func (config CustomFieldConfig) allowsOver100() bool {
 	return config.AllowOver100 != nil && *config.AllowOver100
 }
 
+func (config CustomFieldConfig) isPydioFolder() bool {
+	return config.PydioFolder != nil && *config.PydioFolder
+}
+
 func numericCustomField(kind string) bool {
 	return kind == "number" || kind == "currency" || kind == "percent" || kind == "duration"
 }
 
 func validateCustomFieldConfig(kind string, config CustomFieldConfig) error {
+	if config.isPydioFolder() && kind != "text" {
+		return Invalid("pydio_folder applies only to Text fields")
+	}
 	if config.ProjectBudget != nil && kind != "currency" {
 		return Invalid("project_budget only applies to Currency fields")
 	}
@@ -164,6 +174,12 @@ func normalizeCustomFieldValue(field CustomField, raw json.RawMessage) (json.Raw
 		var value *string
 		if json.Unmarshal(raw, &value) != nil || value == nil || utf8.RuneCountInString(*value) > 5000 || strings.ContainsRune(*value, 0) {
 			return invalid("enter text up to 5000 characters without null bytes")
+		}
+		if field.Config.isPydioFolder() && *value != "" {
+			// The message never repeats the value: a folder path may be confidential (B4-02).
+			if err := PydioFolderCheck(*value); err != nil {
+				return invalid("enter a folder reference inside the configured Pydio workspace, without credentials")
+			}
 		}
 		return json.Marshal(*value)
 	case "date":
@@ -313,8 +329,10 @@ func validateNewRelationTargets(ctx context.Context, tx pgx.Tx, actor policy.Act
 	if slices.Contains(added, itemID) {
 		return InvalidField{"fields." + field.ID, field.Name + ": an item cannot relate to itself"}
 	}
-	rows, err := tx.Query(ctx, `SELECT i.id::text FROM items i JOIN item_type_defs t ON t.id=i.type_id
-WHERE i.id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND i.deleted_at IS NULL AND ($2='' OR t.key=$2) ORDER BY i.id FOR SHARE OF i`, added, field.Config.TargetTypeKey)
+	// A target must share the source's stable owner (B3-10); a mismatch reads as unavailable, like a hidden item.
+	rows, err := tx.Query(ctx, `SELECT i.id::text FROM items i JOIN item_type_defs t ON t.id=i.type_id JOIN items src ON src.id=$3::uuid
+WHERE i.id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND i.deleted_at IS NULL AND ($2='' OR t.key=$2) AND `+sameOwnerSQL("i", "src")+`
+ORDER BY i.id FOR SHARE OF i`, added, field.Config.TargetTypeKey, itemID)
 	if err != nil {
 		return err
 	}

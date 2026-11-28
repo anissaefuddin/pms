@@ -149,9 +149,9 @@ func TestRatesSnapshotKeepHistoryAndCostIsAdminOnly(t *testing.T) {
 	space := f.space("Cost")
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", member.id, "editor")
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','P',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", project, space)
-	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text", admin.id)
+	task := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','T',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'A')", task, space, project)
 	role := f.queryID("INSERT INTO resource_roles(name) VALUES ('Dev') RETURNING id::text")
 	f.exec("INSERT INTO resource_user_roles(user_id,role_id) VALUES ($1,$2)", member.id, role)

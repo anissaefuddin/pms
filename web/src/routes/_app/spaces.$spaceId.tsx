@@ -88,7 +88,9 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
   const createMenu = useCreateMenu(space.id, canCreate).data;
-  const newKinds = (["project", "folder", "task"] as const).filter((kind) => menuAllows(createMenu, kind));
+  // No Create capability means no New item action at all. Without this guard an unloaded menu would offer every kind (the
+  // server still refuses the write; this only keeps the control off the screen).
+  const newKinds = canCreate ? (["project", "folder", "task"] as const).filter((kind) => menuAllows(createMenu, kind)) : [];
   const canLock = shared && me?.user_type === "admin" && can(space, "share");
   const canEditForms = can(space, "edit"); // also gates the Forms link
   const canManageFields = can(space, "share") && can(space, "delete");

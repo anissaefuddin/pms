@@ -10,7 +10,7 @@ func TestReportActualCostIsAdminOnly(t *testing.T) {
 	space := f.space("Cost report")
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
-	task := f.queryID(`INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text`, admin.id)
+	task := f.queryID(`INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','T',$1,'internal') RETURNING id::text`, admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", task, space)
 	f.exec(`INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,rate_snapshot,status) VALUES ($1,$2,'2026-11-02',90,'billable',4000,'approved'),($1,$2,'2026-11-03',60,'non_billable',4000,'approved'),($1,$2,'2026-11-04',60,'billable',4000,'submitted')`, task, admin.id)
 	q := map[string]any{"reporting_on": "time_entries", "metric": "actual_cost_minor", "group_by": "user"}

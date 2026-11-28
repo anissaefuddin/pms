@@ -1,6 +1,6 @@
 # PMS Administrator Guide
 
-Guides for people who run a PMS instance and administer its account. Everything here is derived from the server code (`server/internal/config`), `api/openapi.yaml`, [DECISIONS.md](../../DECISIONS.md) D-90..D-101, [ARCHITECTURE.md](../../ARCHITECTURE.md), `deploy/` and the admin screens under Settings. Where a statement could not be checked against code or docs it is marked **Unverified**.
+Guides for people who run a PMS instance and administer its account. Everything here is derived from the server code (`server/internal/config`), `api/openapi.yaml`, [DECISIONS.md](../../architecture/DECISIONS.md) D-90..D-101, [ARCHITECTURE.md](../../architecture/ARCHITECTURE.md), `deploy/` and the admin screens under Settings. Where a statement could not be checked against code or docs it is marked **Unverified**.
 
 Two roles appear throughout: the **operator** (has shell access to the server and `deploy/.env`) and the **administrator** (a PMS user of type admin who works in Settings). Items marked "operator" cannot be done from the UI.
 
@@ -27,4 +27,4 @@ The Settings sidebar (`web/src/routes/_app/settings.tsx`) shows these admin page
 
 ## Operator basics
 
-Configuration is environment variables read by `config.Load()`; in a standard install they live in `deploy/.env` and are passed through `deploy/docker-compose.yml`. After changing one, run `docker compose up -d app` from `deploy/`. Never commit `deploy/.env`. See also [PILOT_RUNBOOK.md](../../PILOT_RUNBOOK.md) (Indonesian) for the install and pilot procedure.
+Configuration is environment variables read by `config.Load()`; in a standard install they live in `deploy/.env` and are passed through `deploy/docker-compose.yml`. After changing one, run `docker compose up -d app` from `deploy/`. Never commit `deploy/.env`. See also [PILOT_RUNBOOK.md](../../operations/PILOT_RUNBOOK.md) (Indonesian) for the install and pilot procedure.

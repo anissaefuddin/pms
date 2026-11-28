@@ -117,7 +117,7 @@ func TestItemTypeDefaultsApplyToSpaceTemplates(t *testing.T) {
 	admin, regular := f.person("admin"), f.person("regular")
 	task := f.queryID("SELECT id::text FROM item_type_defs WHERE is_builtin AND key='task'")
 	f.want(f.call(admin, "PATCH", "/item-types/"+task, map[string]any{"defaults": map[string]any{"importance": "high"}}, "If-Match", `"1"`), 200, "task defaults")
-	made := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": uuid.NewString(), "name": "Templated"})
+	made := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString(), "name": "Templated"})
 	f.want(made, 201, "template space")
 	if f.queryID(`SELECT count(*)::text FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1 AND i.type='task' AND i.importance='high'`, made.body["id"]) == "0" {
 		t.Fatal("template tasks without an explicit importance must take the type default")
@@ -171,7 +171,7 @@ func TestItemTypeInExportSearchAndReports(t *testing.T) {
 	d := newTypeDefaultsEnv(t)
 	e, f := d.e, d.e.f
 	startExcelWorker(t, f)
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Root',$1) RETURNING id::text", e.admin.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','Root',$1,'internal') RETURNING id::text", e.admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, e.space)
 	mk := func(key, title string) string {
 		got := f.call(e.editor, "POST", "/items", map[string]any{"type_key": key, "title": title, "locations": []map[string]any{{"space_id": e.space, "parent_item_id": project}}})

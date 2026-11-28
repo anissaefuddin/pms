@@ -11,6 +11,7 @@ import { getItem, itemKeys, listItems, type Item } from "@/lib/items";
 import type { Share } from "@/lib/spaces";
 import { ViewWorkspace } from "@/components/view-workspace";
 import { ProjectHeader } from "@/components/project-header";
+import { ProjectDocuments } from "@/components/project-documents";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { WorkspaceLayout } from "@/components/workspace-layout";
@@ -58,9 +59,9 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
   if (!me) return null;
   if (detail.isError) return <WorkspaceLayout><ErrorState message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void detail.refetch()} /></WorkspaceLayout>;
   return <WorkspaceLayout className="space-y-6">
-    {isProject && item ? <ProjectHeader item={item} children={children.data ?? []} canCreate={canCreate} infoOpen={infoOpen}
+    {isProject && item ? <><ProjectHeader item={item} children={children.data ?? []} canCreate={canCreate} infoOpen={infoOpen}
       onToggleInfo={toggleInfo} onAddTask={() => setAddingTask(true)}
-      onShare={canShare ? () => setSharing(true) : undefined} />
+      onShare={canShare ? () => setSharing(true) : undefined} /><ProjectDocuments item={item} onConfigure={toggleInfo} /></>
     : item && container ? <WorkspaceHeader icon={<TypeIcon name="folder" />} title={item.title} starItemId={item.id}
       breadcrumb={<ItemPathBreadcrumb item={item} ancestors={folderAncestors.data ?? []} />}
       actions={<>

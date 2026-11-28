@@ -118,6 +118,9 @@ func CreateDependency(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	if err := authorizeDependency(ctx, tx, actor, predecessor.String(), successor.String()); err != nil {
 		return DependencyMutation{}, writeError(err)
 	}
+	if err := requireSameOwner(ctx, tx, predecessor.String(), successor.String()); err != nil {
+		return DependencyMutation{}, writeError(err)
+	}
 	if !validDependencyType(input.Type) {
 		return DependencyMutation{}, Invalid("dependency type must be FS, SS, FF or SF")
 	}
@@ -175,6 +178,9 @@ func UpdateDependency(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 		return DependencyMutation{}, writeError(err)
 	}
 	if err := authorizeDependency(ctx, tx, actor, out.PredecessorID, out.SuccessorID); err != nil {
+		return DependencyMutation{}, writeError(err)
+	}
+	if err := requireSameOwner(ctx, tx, out.PredecessorID, out.SuccessorID); err != nil {
 		return DependencyMutation{}, writeError(err)
 	}
 	if input.Type == nil && input.Lag == nil {

@@ -10,7 +10,7 @@ func TestRecycleRestoresCascadeAndMissingParent(t *testing.T) {
 	f.share(a, "user", admin.id, "full") // A1.2: the admin deletes and restores items in both Spaces as their explicit manager
 	f.share(b, "user", admin.id, "full")
 	makeItem := func(kind, title string) string {
-		return f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1,$2,$3) RETURNING id::text", kind, title, admin.id)
+		return f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ($1,$2,$3,'internal') RETURNING id::text", kind, title, admin.id)
 	}
 	place := func(item, space string, parent *string, rank string) {
 		f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,$4)", item, space, parent, rank)

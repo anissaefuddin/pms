@@ -19,11 +19,11 @@ Workspace Admin tidak otomatis mendapat `full` atau akses ke konten Shared Space
 
 | Dokumen | Perubahan |
 |---|---|
-| `docs/DECISIONS.md` | D-17 ditandai SUPERSEDED untuk bagian admin otomatis `full`. Baris baru D-17.1 (APPROVED). D-SA1 tetap. D-05 tetap berarti stack dan progres unggah. |
-| `docs/ARCHITECTURE.md` §6.2 poin 5 | Aturan admin workspace disesuaikan dengan D-17.1. |
-| `docs/ARCHITECTURE.md` §14 poin 1 | Ditandai superseded oleh D-17.1. |
-| `docs/SPACE_MANAGEMENT_ANALISA.md` §12.1 | Ditambahkan catatan keputusan 20 Nov. Isi historis tidak diubah. |
-| `docs/BACKLOG.md` (catatan 12 Nov) | Ditandai superseded oleh D-17.1. |
+| `docs/architecture/DECISIONS.md` | D-17 ditandai SUPERSEDED untuk bagian admin otomatis `full`. Baris baru D-17.1 (APPROVED). D-SA1 tetap. D-05 tetap berarti stack dan progres unggah. |
+| `docs/architecture/ARCHITECTURE.md` §6.2 poin 5 | Aturan admin workspace disesuaikan dengan D-17.1. |
+| `docs/architecture/ARCHITECTURE.md` §14 poin 1 | Ditandai superseded oleh D-17.1. |
+| `docs/features/space-management/SPACE_MANAGEMENT_ANALISA.md` §12.1 | Ditambahkan catatan keputusan 20 Nov. Isi historis tidak diubah. |
+| `docs/roadmap/history/BACKLOG.md` (catatan 12 Nov) | Ditandai superseded oleh D-17.1. |
 
 **Pemisahan D-05 dan D-SA1:** selesai di commit `fbb0952`. Referensi Space Admin di kode, OpenAPI, dan UI memakai D-SA1. D-05 untuk stack (`DECISIONS.md`) dan D-05 untuk progres unggah (`web/src/lib/upload.ts`) tidak berubah.
 
@@ -96,7 +96,7 @@ Kode produksi tidak diubah di sesi ini. Perubahan sudah di-commit di batch S-1, 
 - `docs/security/LENS_EFFECTIVE_PERMISSION_INSPECTOR_SPEC.md` (baru)
 - `docs/security/LENS_RBAC_ENHANCEMENT_ROADMAP.md` (diperbarui)
 - `docs/security/LENS_RBAC_FINDINGS_CLOSURE.md` (diperbarui)
-- `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/SPACE_MANAGEMENT_ANALISA.md`, `docs/BACKLOG.md` (koreksi, D-17.1)
+- `docs/architecture/DECISIONS.md`, `docs/architecture/ARCHITECTURE.md`, `docs/features/space-management/SPACE_MANAGEMENT_ANALISA.md`, `docs/roadmap/history/BACKLOG.md` (koreksi, D-17.1)
 
 ## 6. Regression risks
 

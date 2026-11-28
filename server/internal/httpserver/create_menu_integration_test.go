@@ -7,7 +7,7 @@ import "testing"
 func TestSpaceCreateMenu(t *testing.T) {
 	f := newFixture(t)
 	editor, viewer, outsider := f.person("regular"), f.person("regular"), f.person("regular")
-	space := f.space("Menu")
+	space := f.internalSpace("Menu")
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", viewer.id, "read")
 	url := "/spaces/" + space + "/create-menu"

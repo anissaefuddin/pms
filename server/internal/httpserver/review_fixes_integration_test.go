@@ -8,9 +8,9 @@ import (
 
 // DEF-032 (review H1): assignment rights cannot be carried from one Space into another by moving the work.
 func TestMovingWorkDoesNotCarryAssignmentRights(t *testing.T) {
-	c := newAssignCast(t)
+	c := newInternalAssignCast(t)
 	f := c.f
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine"})
 	f.want(own, 201, "own space")
 	mine := own.body["id"].(string)
 	f.share(mine, "user", c.teammate.id, "editor")
@@ -42,7 +42,7 @@ func TestMovingWorkDoesNotCarryAssignmentRights(t *testing.T) {
 func TestStatusChangesDoNotQueueOnTheWorkflow(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.spaceWithoutAdmins("Revisions")
+	space := f.scopedSpace("Revisions", "internal", "")
 	f.share(space, "user", admin.id, "full")
 	task := func(title string) string {
 		made := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": title, "locations": []map[string]string{{"space_id": space}}})
@@ -82,7 +82,7 @@ func TestProjectCostAcrossSpaces(t *testing.T) {
 	seen, hidden := f.spaceWithoutAdmins("Seen"), f.spaceWithoutAdmins("Hidden")
 	f.share(seen, "user", finance.id, "full")
 	f.share(hidden, "user", manager.id, "full")
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", finance.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','P',$1,'internal') RETURNING id::text", finance.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A'),($1,$3,'B')", project, seen, hidden)
 	budget := f.call(manager, "POST", "/spaces/"+hidden+"/custom-fields", map[string]any{"name": "Hidden budget", "type": "currency", "config": map[string]any{"currency": "IDR", "project_budget": true}})
 	f.want(budget, 201, "budget in the hidden Space")
@@ -118,7 +118,7 @@ IF nextval('link_fault') = 1 THEN RAISE serialization_failure; END IF; RETURN NE
 func TestNewCommentRetriesASerializationConflict(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.spaceWithoutAdmins("Comments")
+	space := f.scopedSpace("Comments", "internal", "")
 	f.share(space, "user", admin.id, "full")
 	made := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]string{{"space_id": space}}})
 	f.want(made, 201, "task")

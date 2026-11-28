@@ -63,7 +63,7 @@ func TestPackageDependencies(t *testing.T) {
 
 func isPlatform(pkg string) bool {
 	switch pkg {
-	case "platform", "config", "database", "security", "gen", "apigen", "dbgen":
+	case "platform", "config", "database", "security", "gen", "apigen", "dbgen", "solutions":
 		return true
 	default:
 		return false

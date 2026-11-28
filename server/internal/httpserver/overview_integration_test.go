@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// Workspace Overview (see docs/reviews/LENS_WORKSPACE_OVERVIEW_IMPLEMENTATION.md). Name prefix TestWorkspaceOverview.
+// Workspace Overview (see docs/features/workspace-overview/LENS_WORKSPACE_OVERVIEW_IMPLEMENTATION.md). Name prefix TestWorkspaceOverview.
 
 // ovStatus returns the first status of a group in the default workflow.
 func ovStatus(f *fixture, grp string) string {

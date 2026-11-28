@@ -11,7 +11,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/overview"
 )
 
-// getOverview serves the Workspace Overview (see docs/reviews/LENS_WORKSPACE_OVERVIEW_IMPLEMENTATION.md). Access is decided
+// getOverview serves the Workspace Overview (see docs/features/workspace-overview/LENS_WORKSPACE_OVERVIEW_IMPLEMENTATION.md). Access is decided
 // inside the overview package from the actor's effective permissions; this handler only parses parameters.
 func (s *Server) getOverview(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()

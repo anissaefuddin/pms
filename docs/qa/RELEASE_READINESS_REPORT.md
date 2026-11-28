@@ -19,7 +19,7 @@ Dasar: bukti aktual, bukan status DONE. Ini rekomendasi QA; sign-off produk dan 
 PASS 63, PARTIAL 102, FAIL 6, NOT_IMPLEMENTED 11, BLOCKED 25, NOT RUN 1 dari 208. Cakupan penerimaan 30.3%. P0: lihat `TEST_EXECUTION_REPORT.md` (15 BLOCKED, 2 FAIL).
 
 ## Syarat menuju GO
-Perbaiki defect High dan CI merah; sediakan instance QA terisolasi, mail sink, IdP sandbox dan kredensial provider uji; jalankan ulang baris BLOCKED/PARTIAL; jalankan UAT manusia ([UAT.md](../UAT.md)); sign-off produk dan keamanan.
+Perbaiki defect High dan CI merah; sediakan instance QA terisolasi, mail sink, IdP sandbox dan kredensial provider uji; jalankan ulang baris BLOCKED/PARTIAL; jalankan UAT manusia ([UAT.md](../quality/UAT.md)); sign-off produk dan keamanan.
 
 ## Catatan lingkungan
 Pengujian dilakukan langsung di DB dev-lens atas pilihan pengguna (bukan instance terpisah). Data QA terbatas ke Space `QA |` dan user `@pms-ita.test`; backup `20261114T234003Z`. Data uji tetap ada di dev-lens sampai Anda minta dibersihkan.

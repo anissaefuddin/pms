@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -43,6 +44,27 @@ WHERE sa.space_id=$3::uuid AND sa.user_id=$1::uuid AND u.user_type IN ('admin','
 	if err != nil {
 		return nil, err
 	}
+	// B3-05 before any path counts: every item on a path (the Items and their ancestors) must pass the eligibility gate in this Space.
+	ids := []string{}
+	seen := map[string]bool{}
+	for _, r := range found {
+		for _, id := range []string{r.ID, r.Value} {
+			if r.Kind == "edge" && id != "" && !seen[id] {
+				seen[id] = true
+				ids = append(ids, id)
+			}
+		}
+	}
+	for _, id := range itemIDs {
+		if !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
+		}
+	}
+	gate, err := eligibleItems(ctx, db, actor, spaceID, ids)
+	if err != nil {
+		return nil, err
+	}
 	parents, granted, space := map[string][]string{}, map[string]bool{}, false
 	for _, r := range found {
 		switch {
@@ -58,6 +80,9 @@ WHERE sa.space_id=$3::uuid AND sa.user_id=$1::uuid AND u.user_type IN ('admin','
 	memo := map[string]bool{}
 	var every func(string) bool
 	every = func(id string) bool {
+		if !gate[id] { // an ineligible or incompatible item cannot be on a path that hands work on (B3-05, fail closed)
+			return false
+		}
 		if space || granted[id] {
 			return true
 		}
@@ -76,4 +101,27 @@ WHERE sa.space_id=$3::uuid AND sa.user_id=$1::uuid AND u.user_type IN ('admin','
 		out[id] = every(id)
 	}
 	return out, nil
+}
+
+// eligibleItems reports which of the items pass the B3-05 gate for this actor in this Space: stable ownership matches the
+// Space, and a client item needs the actor's active membership of its Customer.
+func eligibleItems(ctx context.Context, db DB, actor Actor, spaceID string, itemIDs []string) (map[string]bool, error) {
+	out := map[string]bool{}
+	if len(itemIDs) == 0 {
+		return out, nil
+	}
+	rows, err := db.Query(ctx, strings.Replace(`SELECT i.id::text FROM items i JOIN spaces s ON s.id=$2::uuid
+WHERE i.id=ANY($3::uuid[]) AND i.deleted_at IS NULL AND /*ITEM_GATE*/`, "/*ITEM_GATE*/", itemGate, 1), actor.ID, spaceID, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
 }

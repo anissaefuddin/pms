@@ -55,6 +55,39 @@ type SpaceRow struct {
 	Health       string     `json:"health"` // empty | attention | on_track
 	LastActivity *time.Time `json:"last_activity"`
 	Access       string     `json:"effective_access"` // space_admin | full | editor | limited | read
+	// Customer is set for a Customer Space (B5-01); a Space without one is Internal.
+	Customer *CustomerRef `json:"customer,omitempty"`
+}
+
+// CustomerRef is the Customer that owns a Customer Space.
+type CustomerRef struct {
+	ID       string `json:"id"`
+	Code     string `json:"code"`
+	Name     string `json:"name"`
+	Archived bool   `json:"archived"`
+}
+
+// customersOf returns the Customer of each Space in ids that has one, in one query.
+func customersOf(ctx context.Context, pool *pgxpool.Pool, ids []string) (map[string]CustomerRef, error) {
+	out := map[string]CustomerRef{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := pool.Query(ctx, `SELECT sp.id::text, c.id::text, c.code, c.name, c.archived_at IS NOT NULL
+FROM spaces sp JOIN clients c ON c.id = sp.client_id WHERE sp.id = ANY($1::uuid[])`, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var spaceID string
+		var c CustomerRef
+		if err := rows.Scan(&spaceID, &c.ID, &c.Code, &c.Name, &c.Archived); err != nil {
+			return nil, err
+		}
+		out[spaceID] = c
+	}
+	return out, rows.Err()
 }
 
 // Result is the response body.
@@ -187,11 +220,18 @@ GROUP BY l.space_id`, ids, tz)
 	if err != nil {
 		return nil, err
 	}
+	customers, err := customersOf(ctx, pool, ids)
+	if err != nil {
+		return nil, err
+	}
 	out := make([]SpaceRow, 0, len(ids))
 	for _, id := range ids {
 		a, c := byID[id], stats[id]
 		row := SpaceRow{ID: id, Name: a.Name, Icon: a.IconKey, Archived: a.Archived, Projects: c.projects, Tasks: c.tasks,
 			Done: c.done, Overdue: c.overdue, LastActivity: last[id], Access: accessLabel(a)}
+		if cust, ok := customers[id]; ok {
+			row.Customer = &cust
+		}
 		if c.tasks > 0 {
 			p := c.done * 100 / c.tasks
 			row.Progress = &p

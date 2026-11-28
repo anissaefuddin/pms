@@ -4,12 +4,13 @@ import { useTranslation } from "react-i18next";
 import { useProfile } from "@/lib/profile";
 import { ConnectorsTab } from "@/components/ConnectorsTab";
 import { OAuthClients } from "@/components/OAuthClients";
+import { PydioSettingsTab } from "@/components/PydioSettingsTab";
 import { IntegrationGallery } from "@/components/integration-gallery";
 
 export const Route = createFileRoute("/_app/settings/apps")({ component: Apps });
 
 // Integration Center: each section reuses an existing tab component. Gallery is a read-only index of the sections.
-// Admin-only sections (Connectors, OAuth apps) are hidden for everyone else; their APIs enforce the same rule.
+// Admin-only sections (Connectors, OAuth apps, Pydio) are hidden for everyone else; their APIs enforce the same rule.
 function Apps() {
   const { t } = useTranslation();
   const me = useProfile();
@@ -18,6 +19,7 @@ function Apps() {
   const sections = [
     { id: "connectors", label: t("settings.apps.connectors.title"), body: <ConnectorsTab /> },
     { id: "clients", label: t("oauth.apps.clients"), body: <OAuthClients /> },
+    { id: "pydio", label: t("apps.tab.pydio"), body: <PydioSettingsTab /> },
   ];
   const tabs = [
     { id: "gallery", label: t("apps.tab.gallery"), body: <IntegrationGallery admin={admin} onOpen={setActive} /> },

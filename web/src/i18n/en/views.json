@@ -273,33 +273,33 @@
     "help": "Calendar help",
     "moreOn": "More items on {{date}}",
     "closeMore": "Close more items",
-    "navigate": "Calendar navigation"
-    ,"choosePeriod": "Choose calendar period"
-    ,"yearInput": "Year"
-    ,"go": "Go"
-    ,"chooseDate": "Choose date"
-    ,"density": "Density"
-    ,"comfortable": "Comfortable"
-    ,"compact": "Compact"
-    ,"dayDetails": "Day details"
-    ,"scheduledCount_one": "{{count}} scheduled item"
-    ,"scheduledCount_other": "{{count}} scheduled items"
-    ,"newItem": "New item"
-    ,"openWeek": "Open week"
-    ,"itemsOnDate": "Items on this date"
-    ,"noItemsDate": "No scheduled items in this period."
-    ,"weekAgenda": "This week's agenda"
-    ,"monthSummary": "{{deadlines}} due · {{milestones}} milestones · {{overdue}} overdue"
-    ,"activity": "{{active}} active · {{boundaries}} starts or deadlines"
-    ,"options": "Customize calendar"
-    ,"showWeekends": "Show weekends"
-    ,"showWeekNumbers": "Show week numbers"
-    ,"showSubitems": "Show subitems"
-    ,"colorBy": "Color by"
-    ,"colorStatus": "Status"
-    ,"colorType": "Item type"
-    ,"maxItems": "Maximum visible items"
-    ,"weekShort": "Wk"
+    "navigate": "Calendar navigation",
+    "choosePeriod": "Choose calendar period",
+    "yearInput": "Year",
+    "go": "Go",
+    "chooseDate": "Choose date",
+    "density": "Density",
+    "comfortable": "Comfortable",
+    "compact": "Compact",
+    "dayDetails": "Day details",
+    "scheduledCount_one": "{{count}} scheduled item",
+    "scheduledCount_other": "{{count}} scheduled items",
+    "newItem": "New item",
+    "openWeek": "Open week",
+    "itemsOnDate": "Items on this date",
+    "noItemsDate": "No scheduled items in this period.",
+    "weekAgenda": "This week's agenda",
+    "monthSummary": "{{deadlines}} due · {{milestones}} milestones · {{overdue}} overdue",
+    "activity": "{{active}} active · {{boundaries}} starts or deadlines",
+    "options": "Customize calendar",
+    "showWeekends": "Show weekends",
+    "showWeekNumbers": "Show week numbers",
+    "showSubitems": "Show subitems",
+    "colorBy": "Color by",
+    "colorStatus": "Status",
+    "colorType": "Item type",
+    "maxItems": "Maximum visible items",
+    "weekShort": "Wk"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",
@@ -348,7 +348,15 @@
     "percent": "{{value}}%",
     "summary": "Summary",
     "directScope": "Direct children of this project only",
-    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded"
+    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded",
+    "customer": "Customer",
+    "internal": "Internal",
+    "archivedCustomer": "archived",
+    "projectManager": "Project Manager",
+    "unassigned": "Unassigned",
+    "health": "Health",
+    "noHealth": "Not set",
+    "lastUpdate": "Last update"
   },
   "searchPlaceholder": "Search",
   "chip": {
@@ -394,5 +402,82 @@
   "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded.",
   "card.overdue": "Overdue",
   "addToGroup": "Add item to {{name}}",
-  "columnResize": "Resize column {{name}}"
+  "columnResize": "Resize column {{name}}",
+  "ownerFilter": {
+    "label": "Project Manager",
+    "any": "Any",
+    "none": "Unassigned",
+    "mine": "Mine"
+  },
+  "documents": {
+    "title": "Documents",
+    "loading": "Checking the document reference…",
+    "loadError": "The document reference could not be loaded.",
+    "linked": "Folder linked to this project.",
+    "open": "Open in Pydio",
+    "notConfigured": "No document folder is set for this project.",
+    "rootsUnavailable": "Document links are not available for this Customer yet: no approved folder mapping is configured.",
+    "invalid": "The stored folder reference is not valid. An administrator needs to correct it.",
+    "configure": "Configure"
+  },
+  "monitor": {
+    "title": "Project monitor",
+    "loading": "Loading projects…",
+    "loadError": "The project monitor could not be loaded.",
+    "total": "Projects",
+    "health": "Health",
+    "healthCounts": "Green {{green}} · Yellow {{yellow}} · Red {{red}} · Not set {{none}}",
+    "overdueTasks": "Overdue tasks",
+    "lateProjects": "Projects with overdue tasks",
+    "unassignedCount": "Unassigned",
+    "search": "Search",
+    "searchPlaceholder": "Project name or code",
+    "customer": "Customer",
+    "owner": "Project Manager",
+    "healthFilter": "Health",
+    "statusFilter": "Status",
+    "sort": "Sort by",
+    "descending": "Descending",
+    "any": "All",
+    "unassigned": "Unassigned",
+    "unavailable": "Not available",
+    "empty": "No projects match these filters.",
+    "internal": "Internal",
+    "archived": "archived",
+    "healthOption": {
+      "green": "Green",
+      "yellow": "Yellow",
+      "red": "Red",
+      "none": "Not set"
+    },
+    "statusOption": {
+      "active": "Active",
+      "completed": "Completed",
+      "deferred": "Deferred",
+      "cancelled": "Cancelled"
+    },
+    "sortOption": {
+      "title": "Name",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "finish": "Finish date",
+      "progress": "Progress",
+      "health": "Health",
+      "overdue": "Overdue tasks",
+      "updated": "Last update"
+    },
+    "col": {
+      "code": "Code",
+      "project": "Project",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "status": "Status",
+      "progress": "Progress",
+      "health": "Health",
+      "start": "Start",
+      "finish": "Finish",
+      "overdue": "Overdue",
+      "updated": "Last update"
+    }
+  }
 }

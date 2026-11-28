@@ -14,7 +14,7 @@ func TestBrowserCreateNested(t *testing.T) {
 	}
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.space("Nested browser")
+	space := f.internalSpace("Nested browser")
 	f.share(space, "user", admin.id, "full")
 	project := f.call(admin, http.MethodPost, "/items", map[string]any{
 		"type": "project", "title": "Nested project", "locations": []map[string]any{{"space_id": space}},

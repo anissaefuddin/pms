@@ -151,7 +151,8 @@ func build(ctx context.Context, tx pgx.Tx, pool *pgxpool.Pool, publicURL string,
 	data.Kind = "report_digest"
 	data.Item = d.name
 	data.Period = time.Now().Format("2 Jan 2006")
-	return mail.Args{To: d.email, Template: "report_digest", Locale: d.locale, URL: link, Data: data}, true, nil
+	// The mail worker repeats the read check at send time, so a digest queued before access ended is not sent (PROMPT #026).
+	return mail.Args{To: d.email, Template: "report_digest", Locale: d.locale, URL: link, Data: data, ReportID: d.reportID, RecipientID: d.userID}, true, nil
 }
 
 // render limits email to a compact summary; full data remains in the application. The largest rows are kept, and the email says how

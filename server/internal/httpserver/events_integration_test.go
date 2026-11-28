@@ -17,7 +17,7 @@ func TestEventReplayRespectsCurrentAccess(t *testing.T) {
 	f.share(privateSpace, "user", member.id, "read")
 	f.share(publicSpace, "user", member.id, "read")
 	makeItem := func(space string) string {
-		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Original',$1) RETURNING id::text", admin.id)
+		id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Original',$1,'internal') RETURNING id::text", admin.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
 		return id
 	}

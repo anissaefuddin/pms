@@ -15,6 +15,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/automation"
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
 	"github.com/anissaefuddin/pms/server/internal/buildinfo"
+	"github.com/anissaefuddin/pms/server/internal/clientscope"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/connectors"
 	"github.com/anissaefuddin/pms/server/internal/connectors/gcal"
@@ -25,6 +26,8 @@ import (
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
+	"github.com/anissaefuddin/pms/server/internal/seed"
+	"github.com/anissaefuddin/pms/server/internal/solutions"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
@@ -54,6 +57,12 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	// Before database.Open: opening the pool applies pending migrations, so an invalid registry must stop the start first.
+	if command == "serve" {
+		if err := checkSolutions(solutions.Builtin); err != nil {
+			return err
+		}
+	}
 	pool, err := database.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err
@@ -66,6 +75,9 @@ func run() error {
 		// database.Open above already applied pending migrations; running it again is a no-op.
 		slog.Info("migrations are up to date")
 		return nil
+	case "client-scope":
+		// B3-18 dry-run and B3-19 apply of the ownership migration. The mapping is operator-approved; this command never guesses one.
+		return clientscope.Run(ctx, pool, os.Args[2:], os.Stdout)
 	case "bootstrap":
 		flags := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
 		account := flags.String("account", "", "account name")
@@ -92,12 +104,21 @@ func run() error {
 		}
 		slog.Info("instance bootstrapped", "admin_id", result.AdminID, "admin_email", *email)
 		if cfg.SMTPHost == "" {
-			slog.Warn("SMTP is not configured: give the administrator this link to activate the account (valid 7 days)", "url", fmt.Sprintf("%s/invitations/%s", cfg.PublicURL, result.InviteToken))
+			// Command output for the operator, not the application log: the one-time link must not reach container logs (LOG-01).
+			fmt.Fprintf(os.Stdout, "SMTP is not configured. Give the administrator this one-time link to activate the account (valid 7 days):\n%s/invitations/%s\n", cfg.PublicURL, result.InviteToken)
 		}
 		return nil
 	default:
 		return fmt.Errorf("unknown command %q (use serve, migrate, bootstrap, or version)", command)
 	}
+}
+
+// checkSolutions validates the static solution registry the server would run with (ARCH-05).
+func checkSolutions(defs func() []solutions.Definition) error {
+	if err := solutions.Validate(defs()); err != nil {
+		return fmt.Errorf("invalid solution registry, refusing to start: %w", err)
+	}
+	return nil
 }
 
 func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
@@ -109,6 +130,13 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	}
 	if cfg.ConnectorKey == nil {
 		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed, and webhook signing secrets are stored unencrypted")
+	}
+	seeds, err := seed.Parse(cfg.Seeds)
+	if err != nil {
+		return err
+	}
+	if err := seed.Apply(ctx, pool, seeds); err != nil {
+		return err
 	}
 	engine := automation.New(pool)
 	hooks := webhooks.New(pool).WithKeys(twofactor.Keys{Current: cfg.ConnectorKey, Previous: cfg.ConnectorKeyPrevious})

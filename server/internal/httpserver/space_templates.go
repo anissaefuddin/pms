@@ -58,8 +58,10 @@ func (s *Server) createSpaceFromTemplate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var input struct {
-		Name      string `json:"name"`
-		RequestID string `json:"request_id"`
+		Name       string  `json:"name"`
+		RequestID  string  `json:"request_id"`
+		ScopeState string  `json:"scope_state"`
+		ClientID   *string `json:"client_id"`
 	}
 	if !decode(w, r, &input) {
 		return
@@ -78,7 +80,7 @@ func (s *Server) createSpaceFromTemplate(w http.ResponseWriter, r *http.Request)
 	}
 	actor := actorOf(r)
 	batch := s.notificationBatch()
-	space, replay, err := s.instantiateTemplate(r.Context(), actor, template, input.Name, requestID, batch)
+	space, replay, err := s.instantiateTemplate(r.Context(), actor, template, input.Name, spaces.CreateInput{ScopeState: input.ScopeState, ClientID: clientIDOf(input.ClientID)}, requestID, batch)
 	if replay {
 		space, err = s.spaces.Get(r.Context(), actor, space.ID)
 	}
@@ -95,7 +97,7 @@ func (s *Server) createSpaceFromTemplate(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, status, space)
 }
 
-func (s *Server) instantiateTemplate(ctx context.Context, actor policy.Actor, t spacetemplates.Template, name string, requestID uuid.UUID, batch *notifications.Batch) (spaces.Space, bool, error) {
+func (s *Server) instantiateTemplate(ctx context.Context, actor policy.Actor, t spacetemplates.Template, name string, ownership spaces.CreateInput, requestID uuid.UUID, batch *notifications.Batch) (spaces.Space, bool, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return spaces.Space{}, false, err
@@ -114,7 +116,8 @@ func (s *Server) instantiateTemplate(ctx context.Context, actor policy.Actor, t 
 		}
 		return spaces.Space{ID: existing}, err == nil, err
 	}
-	space, err := spaces.CreateTx(ctx, tx, actor, spaces.CreateInput{Name: name}, batch)
+	ownership.Name = name
+	space, err := spaces.CreateTx(ctx, tx, actor, ownership, batch)
 	if err != nil {
 		return spaces.Space{}, false, err
 	}

@@ -170,9 +170,10 @@ WITH RECURSIVE reachable(id) AS (
         SELECT d.successor_id FROM item_dependencies d
         WHERE d.predecessor_id=r.id AND EXISTS (
             SELECT 1 FROM items s
+            JOIN items pr ON pr.id=d.predecessor_id
             JOIN item_locations l ON l.item_id=s.id AND l.deleted_root_id IS NULL
             JOIN spaces sp ON sp.id=l.space_id AND sp.deleted_at IS NULL
-            WHERE s.id=d.successor_id AND s.deleted_at IS NULL
+            WHERE s.id=d.successor_id AND s.deleted_at IS NULL AND `+sameOwnerSQL("pr", "s")+`
         )
         OFFSET 0 -- Keep the indexed successor lookup tied to the current item.
     ) next
@@ -185,7 +186,7 @@ JOIN items p ON p.id=d.predecessor_id AND p.deleted_at IS NULL
 WHERE EXISTS (
     SELECT 1 FROM item_locations l JOIN spaces sp ON sp.id=l.space_id AND sp.deleted_at IS NULL
     WHERE l.item_id=p.id AND l.deleted_root_id IS NULL
-)
+) AND `+sameOwnerSQL("p", "s")+`
 ORDER BY p.id,s.id`, root)
 	if err != nil {
 		return nil, err

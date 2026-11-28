@@ -15,7 +15,7 @@ func dependencyInput(id, kind string) map[string]any {
 
 func dependencyItem(f *fixture, actor *person, space, title string) string {
 	f.t.Helper()
-	id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task',$1,$2) RETURNING id::text", title, actor.id)
+	id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task',$1,$2,'internal') RETURNING id::text", title, actor.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
 	return id
 }

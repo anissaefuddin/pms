@@ -97,7 +97,7 @@ func TestTimesheetStepsNotifyTheRightPeople(t *testing.T) {
 func TestSpaceSaysWhenNoAdminIsActive(t *testing.T) {
 	f := newFixture(t)
 	admin, creator, member := f.person("admin"), f.person("regular"), f.person("regular")
-	made := f.call(creator, "POST", "/spaces", map[string]any{"name": "Gov"})
+	made := f.call(creator, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Gov"})
 	space := made.body["id"].(string)
 	f.share(space, "user", member.id, "editor")
 	active := func() any { return f.call(member, "GET", "/spaces/"+space, nil).body["has_active_admin"] }

@@ -30,10 +30,10 @@ func TestNotificationWorkerHonoursEmailPreferences(t *testing.T) {
 		t.Fatal(err)
 	}
 	var space, item string
-	if err := pool.QueryRow(ctx, "INSERT INTO spaces(name,kind) VALUES ('Shared','shared') RETURNING id::text").Scan(&space); err != nil {
+	if err := pool.QueryRow(ctx, "INSERT INTO spaces(name,kind,scope_state) VALUES ('Shared','shared','internal') RETURNING id::text").Scan(&space); err != nil {
 		t.Fatal(err)
 	}
-	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
+	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','T',$1,'internal') RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, "INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space); err != nil {
@@ -118,10 +118,10 @@ func TestNotificationNeverLeaksAnItemTheRecipientCannotView(t *testing.T) {
 		t.Fatal(err)
 	}
 	var space, item string
-	if err := pool.QueryRow(ctx, "INSERT INTO spaces(name,kind) VALUES ('Private','shared') RETURNING id::text").Scan(&space); err != nil {
+	if err := pool.QueryRow(ctx, "INSERT INTO spaces(name,kind,scope_state) VALUES ('Private','shared','internal') RETURNING id::text").Scan(&space); err != nil {
 		t.Fatal(err)
 	}
-	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by) VALUES ('task','Secret',$1) RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
+	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Secret',$1,'internal') RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, "INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space); err != nil {
@@ -161,9 +161,9 @@ func TestNotificationNamesOnlyASpaceTheRecipientCanSee(t *testing.T) {
 	}
 	var id string
 	if err := pool.QueryRow(ctx, `WITH u AS (UPDATE users SET status='active',first_name='A',last_name='B',password_hash='x' WHERE id=$1 RETURNING id),
-hidden AS (INSERT INTO spaces(name,kind) VALUES ('SecretClient','shared') RETURNING id),
-open AS (INSERT INTO spaces(name,kind) VALUES ('OpenSpace','shared') RETURNING id),
-i AS (INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id),
+hidden AS (INSERT INTO spaces(name,kind,scope_state) VALUES ('SecretClient','shared','internal') RETURNING id),
+open AS (INSERT INTO spaces(name,kind,scope_state) VALUES ('OpenSpace','shared','internal') RETURNING id),
+i AS (INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','T',$1,'internal') RETURNING id),
 l AS (INSERT INTO item_locations(item_id,space_id,rank) SELECT i.id,hidden.id,'A' FROM i,hidden UNION ALL SELECT i.id,open.id,'B' FROM i,open),
 s AS (INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) SELECT 'space',id,'user',$1,'read' FROM open)
 INSERT INTO notifications(id,recipient_id,kind,item_id) SELECT gen_random_uuid(),$1,'assigned',id FROM i RETURNING id::text`, boot.AdminID).Scan(&id); err != nil {

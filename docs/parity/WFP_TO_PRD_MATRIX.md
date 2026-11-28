@@ -1,9 +1,9 @@
 # Matriks WFP → ID PRD (S7.2.2)
 
-**Tanggal:** 13 Nov 2026. **Status:** DRAFT-SIAP-REVIEW. Sumber: register [baseline §4](../PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md), hasil [katalog sumber](WRIKE_SOURCE_CATALOG_2026-11-13.md) dan [PRD §5](../PRD.md) (ID v0.3 di §5.1–5.14, ID parity baru di §5.15).
+**Tanggal:** 13 Nov 2026. **Status:** DRAFT-SIAP-REVIEW. Sumber: register [baseline §4](PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md), hasil [katalog sumber](WRIKE_SOURCE_CATALOG_2026-11-13.md) dan [PRD §5](../product/PRD.md) (ID v0.3 di §5.1–5.14, ID parity baru di §5.15).
 
 - **ID PRD:** diambil dari kolom "PMS baseline" register bila ada; untuk baris tanpa ID, dipetakan manual ke ID yang sudah ada atau ke ID baru §5.15. `N/A_APPROVED (…)` = di luar rilis 1.0 menurut PRD v0.4 (M13) dan masih menunggu persetujuan pemilik produk (DEC-PAR-01/05/06).
-- **Cakupan 1.0:** `Ada` bila ID PRD sudah DONE di M0–M6, `M8..M12` bila ID baru §5.15 menjadi story di milestone itu (lihat [TRACEABILITY](../TRACEABILITY_M7_M12.md)), `M13` bila di luar 1.0.
+- **Cakupan 1.0:** `Ada` bila ID PRD sudah DONE di M0–M6, `M8..M12` bila ID baru §5.15 menjadi story di milestone itu (lihat [TRACEABILITY](../roadmap/history/TRACEABILITY_M7_M12.md)), `M13` bila di luar 1.0.
 - [Rekonsiliasi alur layar](WFP_SCREEN_FLOW_RECONCILIATION.md) mencatat bukti per WFP. Retest 14 Nov 2026 mencocokkan 106 ID unik (WFP-001–106) di register, katalog, dan matriks. WFP-102 mengacu pada PRD §6 NFR Aksesibilitas dan gate STAB-07 di TRACEABILITY. Entri M13 mengacu pada keputusan scope. Label Ada (M0–M6) menunjukkan pemetaan milestone dan perlu diverifikasi terhadap bukti masing-masing requirement.
 
 | WFP | Capability | ID PRD | Cakupan | Status katalog |

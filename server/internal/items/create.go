@@ -351,6 +351,15 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 	if err != nil {
 		return Detail{}, err
 	}
+	// B3-03: ownership is derived here, from the destination Space and parent, and checked before anything is written.
+	own, err := creationOwnership(ctx, tx, locations)
+	if err != nil {
+		return Detail{}, err
+	}
+	var ownClient *string
+	if own.client != "" {
+		ownClient = &own.client
+	}
 	id := clientID
 	if id == uuid.Nil {
 		if id, err = uuid.NewV7(); err != nil {
@@ -358,9 +367,9 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 		}
 	}
 	if _, err := tx.Exec(ctx, `
-INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at)
-VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END)`,
-		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID); err != nil {
+INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at,scope_state,client_id)
+VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END,$9,$10::uuid)`,
+		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID, own.scope, ownClient); err != nil {
 		// A retry of the same client id (lost response) hits the primary key: the caller already has this item.
 		if pgCode(err) == "23505" {
 			return Detail{}, ErrConflict
@@ -452,6 +461,22 @@ func addInitialShares(ctx context.Context, tx pgx.Tx, id uuid.UUID, actor policy
 			return Invalid("duplicate share principal")
 		}
 		seen[key] = true
+		if sh.PrincipalType == "user" { // a direct share on a client item needs an active member of its Customer (B3-11)
+			var scope string
+			var client *string
+			if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM items WHERE id=$1", id).Scan(&scope, &client); err != nil {
+				return err
+			}
+			own, err := storedOwnership(scope, client)
+			if err != nil {
+				return err
+			}
+			if err := checkNewAssignees(ctx, tx, "", own, []uuid.UUID{sh.PrincipalID}); errors.Is(err, ErrAssigneeIneligible) {
+				return Invalid("a share recipient must be an active member of this item's customer")
+			} else if err != nil {
+				return err
+			}
+		}
 		if ok, err := policy.LockedAllows(ctx, tx, id.String(), sh.PrincipalType, sh.PrincipalID.String()); err != nil {
 			return err
 		} else if !ok {
@@ -594,6 +619,25 @@ WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_i
 		return nil, err
 	}
 	refused := map[string]bool{}
+	// B3-06 fail closed: an item with a live location its own ownership does not match cannot be reliably assigned on, whatever the
+	// actor's grants say. Ordinary permission on the item is not affected; only handing it to someone else is refused.
+	mismatch, err := db.Query(ctx, `SELECT DISTINCT l.item_id::text FROM item_locations l JOIN items i ON i.id=l.item_id JOIN spaces s ON s.id=l.space_id
+WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL AND `+policy.PlacementMismatchSQL, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	for mismatch.Next() {
+		var id string
+		if err := mismatch.Scan(&id); err != nil {
+			mismatch.Close()
+			return nil, err
+		}
+		refused[id] = true
+	}
+	mismatch.Close()
+	if err := mismatch.Err(); err != nil {
+		return nil, err
+	}
 	for _, p := range places {
 		caps, err := policy.ItemsCaps(ctx, db, actor, p.Items, &p.Space)
 		if err != nil {

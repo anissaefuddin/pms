@@ -11,6 +11,8 @@ import { FormError } from "@/components/auth/form-error";
 import { TextField } from "@/components/auth/text-field";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { CustomerPicker } from "@/components/customer-picker";
+import type { CustomerOption } from "@/lib/customers";
 
 type SpaceTemplate = components["schemas"]["SpaceTemplate"];
 
@@ -40,6 +42,9 @@ function SpaceForm({ space, onDone }: { space?: Space; onDone: () => void }) {
   const [shares, setShares] = useState<Share[]>([]);
   const me = queryClient.getQueryData<CurrentUser>(["me"]);
   const [templateId, setTemplateId] = useState("");
+  // B3-SC: every new Space states its ownership explicitly. There is no default, and no implicit internal fallback.
+  const [ownership, setOwnership] = useState<"internal" | "client" | null>(null);
+  const [customer, setCustomer] = useState<CustomerOption | null>(null);
   const requestId = useRef(crypto.randomUUID()); // a retry of the same dialog never builds a second Space
   const templates = useQuery({ queryKey: ["space-templates"], queryFn: async () => (await api<{ items: SpaceTemplate[] }>("/api/v1/space-templates")).items, enabled: !space });
   const template = templates.data?.find((entry) => entry.id === templateId);
@@ -51,6 +56,9 @@ function SpaceForm({ space, onDone }: { space?: Space; onDone: () => void }) {
     const name = String(data.get("name") ?? "").trim();
     const description = String(data.get("description") ?? "").trim();
     if (!name) return setError(t("spaces.form.nameRequired"));
+    if (!space && !ownership) return setError(t("spaces.form.ownership.required"));
+    if (!space && ownership === "client" && !customer) return setError(t("spaces.form.ownership.customerRequired"));
+    const scope = { scope_state: ownership ?? undefined, client_id: ownership === "client" ? customer?.id : undefined };
     setError(""); setStale(null); setPending(true);
     try {
       if (space) {
@@ -63,14 +71,14 @@ function SpaceForm({ space, onDone }: { space?: Space; onDone: () => void }) {
         onDone();
       } else {
         if (template) {
-          const created = await api<Space>(`/api/v1/space-templates/${template.id}/spaces`, { method: "POST", body: JSON.stringify({ name, request_id: requestId.current }) });
+          const created = await api<Space>(`/api/v1/space-templates/${template.id}/spaces`, { method: "POST", body: JSON.stringify({ name, request_id: requestId.current, ...scope }) });
           await queryClient.invalidateQueries({ queryKey: spaceKeys.all });
           toast.success(t("spaces.form.created"));
           onDone();
           return await navigate({ to: "/spaces/$spaceId", params: { spaceId: created.id } });
         }
         const access = shares.map(({ principal_type, principal_id, role }) => ({ principal_type, principal_id, role }));
-        const created = await api<Space>("/api/v1/spaces", { method: "POST", body: JSON.stringify({ name, description: description || undefined, shares: access.length ? access : undefined }) });
+        const created = await api<Space>("/api/v1/spaces", { method: "POST", body: JSON.stringify({ name, description: description || undefined, ...scope, shares: access.length ? access : undefined }) });
         await queryClient.invalidateQueries({ queryKey: spaceKeys.all });
         toast.success(t("spaces.form.created"));
         onDone();
@@ -115,6 +123,24 @@ function SpaceForm({ space, onDone }: { space?: Space; onDone: () => void }) {
         }}>{t("spaces.template.delete")}</Button>}
       </div>}
       <TextField label={t("spaces.form.name")} name="name" defaultValue={space?.name ?? ""} maxLength={120} required autoComplete="off" />
+      {!space && <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{t("spaces.form.ownership.label")}</legend>
+        <div role="radiogroup" aria-label={t("spaces.form.ownership.label")} className="flex flex-col gap-2">
+          <label className="flex items-start gap-2 text-sm">
+            <input type="radio" name="ownership" value="internal" className="mt-1" checked={ownership === "internal"}
+              onChange={() => { setOwnership("internal"); setCustomer(null); }} />
+            <span><span className="block font-medium">{t("spaces.form.ownership.internal")}</span>
+              <span className="block text-xs text-muted-foreground">{t("spaces.form.ownership.internalHint")}</span></span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="radio" name="ownership" value="client" className="mt-1" checked={ownership === "client"}
+              onChange={() => setOwnership("client")} />
+            <span><span className="block font-medium">{t("spaces.form.ownership.customer")}</span>
+              <span className="block text-xs text-muted-foreground">{t("spaces.form.ownership.customerHint")}</span></span>
+          </label>
+        </div>
+        {ownership === "client" && <CustomerPicker label={t("spaces.form.ownership.customerPick")} value={customer?.id ?? null} selected={customer} onChange={setCustomer} clearable />}
+      </fieldset>}
       {!template && <div className="space-y-1.5">
         <label htmlFor="space-description" className="block text-sm font-medium">{t("spaces.form.description")}</label>
         <textarea id="space-description" name="description" defaultValue={space?.description ?? ""} maxLength={1000} rows={3}

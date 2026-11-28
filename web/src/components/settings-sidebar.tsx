@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Search, BadgeDollarSign, Blocks, Boxes, CalendarClock, ClipboardList, Code2, Crown, History, IdCard, KeyRound, Languages, Layers, LayoutTemplate, ListChecks, Mail, Palette, ScrollText, Shapes, ShieldCheck, SlidersHorizontal, UserCog, UserPlus, UserRound, Users, Workflow, Zap } from "lucide-react";
+import { ArrowLeft, Search, BadgeDollarSign, Blocks, Boxes, Building2, CalendarClock, ClipboardList, Code2, Crown, History, IdCard, KeyRound, Languages, Layers, LayoutTemplate, ListChecks, Mail, Palette, ScrollText, Shapes, ShieldCheck, SlidersHorizontal, UserCog, UserPlus, UserRound, Users, Workflow, Zap } from "lucide-react";
 
 // One icon per Settings page, so each item reads at a glance.
 const SETTINGS_ICON: Record<string, LucideIcon> = {
@@ -18,6 +18,7 @@ const SETTINGS_ICON: Record<string, LucideIcon> = {
   "/settings/resources": Boxes,
   "/settings/apps": Blocks,
   "/settings/rates": BadgeDollarSign,
+  "/settings/customers": Building2,
   "/settings/spaces": Layers,
   "/settings/item-types": Shapes,
   "/settings/workflows": Workflow,
@@ -69,6 +70,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
         { to: "/settings/resources", label: t("settings.resources") },
         { to: "/settings/apps", label: t("apps.title") },
         { to: "/settings/rates", label: t("settings.rates") },
+        { to: "/settings/customers", label: t("settings.customers.title") },
       ] : []),
       { to: "/settings/spaces", label: t("settings.spacesManagement") },
     ] },

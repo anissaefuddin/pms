@@ -2,7 +2,7 @@
 
 - Baseline: branch `feat/m12c-ui-clean`, commit `f429094` (remote sudah sinkron).
 - Working tree saat audit: 62 entri perubahan belum di-commit dari sesi lain. Tidak ada yang diubah oleh audit ini kecuali satu file tes baru (lihat `LENS_RBAC_REMEDIATION_PLAN.md`).
-- Metode: pembacaan kode (`server/internal/policy`, `spaces`, `items`, `httpserver`), dokumen `docs/ARCHITECTURE.md` §6, dan tiga tes: unit `policy` (lulus), integrasi `TestReplaceItemLocations` (lulus), probe `TestMoveTaskUnderOwnDescendantIsRefused` (lulus) terhadap PostgreSQL 16.15 terisolasi di container lokal.
+- Metode: pembacaan kode (`server/internal/policy`, `spaces`, `items`, `httpserver`), dokumen `docs/architecture/ARCHITECTURE.md` §6, dan tiga tes: unit `policy` (lulus), integrasi `TestReplaceItemLocations` (lulus), probe `TestMoveTaskUnderOwnDescendantIsRefused` (lulus) terhadap PostgreSQL 16.15 terisolasi di container lokal.
 - Tidak dijalankan: matriks otorisasi penuh (CI job `authorization-matrix`), E2E, dan skenario uji di dev-lens.
 
 ## 1. Model yang diimplementasikan (terverifikasi di kode)

@@ -157,7 +157,11 @@ func TestPublicDashboardLinkExpiryPasswordAndFinancialMasking(t *testing.T) {
 	}
 	f.want(view(token, ""), 401, "password required")
 	f.want(view(token, "wrong password here"), 401, "wrong password")
-	f.want(view("x"+token[1:], "correct horse battery"), 404, "unknown token")
+	bogus := "y" + token[1:]
+	if token[0] == 'y' {
+		bogus = "z" + token[1:]
+	}
+	f.want(view(bogus, "correct horse battery"), 404, "unknown token")
 	got := view(token, "correct horse battery")
 	f.want(got, 200, "public view")
 	widgets := got.body["widgets"].([]any)

@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -48,11 +49,18 @@ func RecycleItemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string,
 	return itemsCaps(ctx, db, actor, itemIDs, nil, true, includeDeletedSpaces)
 }
 
-func itemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, spaceID *string, deleted, includeDeletedSpaces bool) (map[string]Caps, error) {
-	if actor.Form != nil {
-		return formItemsCaps(ctx, db, actor, itemIDs, spaceID, deleted)
-	}
-	rows, err := db.Query(ctx, `
+// itemGate is the B3-05 eligibility predicate on one location, evaluated before any permission is unioned. It expects the
+// item as i, its Space as s, and the actor as $1. A client item needs an active membership of its own Customer, and then
+// only locations in Spaces of that same Customer contribute. An internal item only contributes through internal Spaces.
+// Unresolved or inconsistent ownership matches neither branch, so it contributes nothing (fail closed).
+const itemGate = `((i.scope_state = 'internal' AND i.client_id IS NULL AND s.scope_state = 'internal' AND s.client_id IS NULL)
+    OR (i.scope_state = 'client' AND i.client_id IS NOT NULL AND s.scope_state = 'client' AND s.client_id = i.client_id AND EXISTS (
+          SELECT 1 FROM client_memberships m JOIN users u ON u.id = m.user_id
+          WHERE m.client_id = i.client_id AND m.user_id = $1::uuid AND m.status = 'active'
+            AND u.status = 'active' AND u.user_type IN ('admin', 'regular'))))`
+
+// itemsCapsSQL is the one statement that unions every permission source on live locations. /*ITEM_GATE*/ is replaced by itemGate.
+const itemsCapsSQL = `
 WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
   SELECT l.item_id, l.space_id, l.item_id, l.parent_item_id
   FROM item_locations l
@@ -60,14 +68,17 @@ WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
   JOIN spaces s ON s.id = l.space_id AND (s.deleted_at IS NULL OR $5::boolean)
   WHERE i.id = ANY(ARRAY(SELECT unnest($2::text[])::uuid))
     AND (s.kind = 'shared' OR s.owner_id = $1::uuid)
+    AND /*ITEM_GATE*/
     AND (CASE WHEN $4::boolean THEN l.deleted_root_id=i.id AND i.deleted_at IS NOT NULL
          ELSE l.deleted_root_id IS NULL AND i.deleted_at IS NULL END)
     AND ($3::uuid IS NULL OR l.space_id = $3::uuid)
   UNION
   SELECT a.root_id, l.space_id, l.item_id, l.parent_item_id
   FROM ancestry a
+  JOIN items ri ON ri.id = a.root_id
   JOIN item_locations l ON l.item_id = a.parent_id AND l.space_id = a.space_id
   JOIN items i ON i.id = l.item_id AND i.deleted_at IS NULL
+    AND i.scope_state = ri.scope_state AND i.client_id IS NOT DISTINCT FROM ri.client_id
   WHERE l.deleted_root_id IS NULL
 ), targets(root_id, target_type, target_id) AS (
   SELECT root_id, 'space'::share_target, space_id FROM ancestry
@@ -83,7 +94,19 @@ LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
    OR (sh.principal_type = 'group' AND sh.principal_id IN
        (SELECT group_id FROM group_members WHERE user_id = $1::uuid))
-`, actor.ID, itemIDs, spaceID, deleted, includeDeletedSpaces)
+`
+
+// PlacementMismatchSQL is true for a live placement whose Space does not carry the item's stable ownership (B3-08). Items with
+// unresolved or inconsistent ownership never match, so they are reported too. Expects the item as i, its Space as s, and its
+// placement as l. It is the negation of the compatibility rule that itemGate applies to the Space.
+const PlacementMismatchSQL = `NOT ((i.scope_state = 'internal' AND i.client_id IS NULL AND s.scope_state = 'internal' AND s.client_id IS NULL)
+  OR (i.scope_state = 'client' AND i.client_id IS NOT NULL AND s.scope_state = 'client' AND s.client_id = i.client_id))`
+
+func itemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, spaceID *string, deleted, includeDeletedSpaces bool) (map[string]Caps, error) {
+	if actor.Form != nil {
+		return formItemsCaps(ctx, db, actor, itemIDs, spaceID, deleted)
+	}
+	rows, err := db.Query(ctx, strings.Replace(itemsCapsSQL, "/*ITEM_GATE*/", itemGate, 1), actor.ID, itemIDs, spaceID, deleted, includeDeletedSpaces)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +128,11 @@ func formItemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, sp
 	if deleted || (spaceID != nil && *spaceID != actor.Form.SpaceID) {
 		return out, nil
 	}
-	rows, err := db.Query(ctx, `SELECT DISTINCT l.item_id::text FROM item_locations l JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL
-WHERE l.space_id=$1::uuid AND l.deleted_root_id IS NULL AND l.item_id=ANY($2::uuid[])`, actor.Form.SpaceID, itemIDs)
+	// B3-05 applies to the requester: a form submission reaches only what the requester could reach in that Space.
+	rows, err := db.Query(ctx, strings.Replace(`SELECT DISTINCT l.item_id::text FROM item_locations l JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL
+JOIN spaces s ON s.id=l.space_id
+WHERE l.space_id=$2::uuid AND l.deleted_root_id IS NULL AND l.item_id=ANY($3::uuid[]) AND /*ITEM_GATE*/`, "/*ITEM_GATE*/", itemGate, 1),
+		actor.ID, actor.Form.SpaceID, itemIDs)
 	if err != nil {
 		return nil, err
 	}

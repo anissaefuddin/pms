@@ -12,7 +12,7 @@ func TestDirectCreateAssignmentRulesAndAllocations(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	member, other, planner, manager := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
-	space := f.space("Lane")
+	space := f.internalSpace("Lane")
 	f.share(space, "user", member.id, "editor")
 	f.share(space, "user", planner.id, "editor")
 	f.share(space, "user", other.id, "read")
@@ -63,7 +63,7 @@ func TestDirectCreateAssignmentRulesAndAllocations(t *testing.T) {
 func TestEditorCannotAssignOthersOnEdit(t *testing.T) {
 	f := newFixture(t)
 	manager, editor, other := f.person("regular"), f.person("regular"), f.person("regular")
-	space := f.space("Reassign")
+	space := f.internalSpace("Reassign")
 	f.share(space, "user", manager.id, "full")
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", other.id, "editor")
@@ -120,7 +120,7 @@ func TestFullSpaceAccessIsNotWorkspaceConfiguration(t *testing.T) {
 func TestEditorCannotAssignThroughBlueprintOrForm(t *testing.T) {
 	f := newFixture(t)
 	manager, editor, teammate, requester := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
-	space := f.space("Intake team")
+	space := f.internalSpace("Intake team")
 	f.share(space, "user", manager.id, "full")
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", teammate.id, "editor")

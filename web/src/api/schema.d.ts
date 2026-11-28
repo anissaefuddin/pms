@@ -399,6 +399,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{itemId}/pydio-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+         * @description Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Hanya field ber-config pydio_folder yang didaftar (lainnya 404). Tautan harus berada di host PMS_PYDIO_LINK_URL, di dalam PMS_PYDIO_LINK_ROOTS, dan di dalam root Customer item di PMS_PYDIO_CUSTOMER_ROOTS (selain itu 422). Isi file tidak diproksikan; setiap entri membawa alamat Cells.
+         */
+        get: operations["listPydioFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/pydio-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+         * @description Status diputuskan server. Folder tidak pernah dikembalikan pada status lain. Item tanpa akses mendapat 404.
+         */
+        get: operations["getPydioReference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{projectId}/gantt-snapshots": {
         parameters: {
             query?: never;
@@ -557,6 +599,23 @@ export interface paths {
         };
         /** Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut */
         get: operations["getPublicGanttSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portfolio/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan */
+        get: operations["listPortfolioProjects"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1102,6 +1161,25 @@ export interface paths {
         put: operations["putAccessPolicy"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pydio/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan */
+        get: operations["getPydioSettings"];
+        /** Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit */
+        put: operations["putPydioSettings"];
+        post?: never;
+        /** Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi */
+        delete: operations["deletePydioSettings"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1982,6 +2060,120 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar klien (Customer Master). Hanya Workspace Admin */
+        get: operations["listClients"];
+        put?: never;
+        /** Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin */
+        post: operations["createClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/eligible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource */
+        get: operations["listEligibleClients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        /** Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin */
+        get: operations["getClient"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin */
+        patch: operations["updateClient"];
+        trace?: never;
+    };
+    "/clients/{clientId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin */
+        post: operations["archiveClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        /** Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin */
+        get: operations["listClientMembers"];
+        put?: never;
+        /** Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin */
+        post: operations["grantClientMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin */
+        delete: operations["revokeClientMember"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5448,6 +5640,34 @@ export interface components {
             /** @description PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan */
             override_active: boolean;
         };
+        PydioSettingsInput: {
+            version: number;
+            enabled: boolean;
+            /** @description Alamat https Cells tanpa kredensial dan path */
+            base_url: string;
+            /** @description Path workspace yang boleh ditautkan */
+            roots: string[];
+            /** @description Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots */
+            customer_roots: {
+                [key: string]: string[];
+            };
+        };
+        PydioSettings: {
+            /** @enum {string} */
+            source: "database" | "environment" | "none";
+            /** @description 0 bila belum ada pengaturan tersimpan */
+            version: number;
+            enabled: boolean;
+            base_url: string;
+            roots: string[];
+            customer_roots: {
+                [key: string]: string[];
+            };
+            /** @description PMS_PYDIO_LISTING; hanya diatur operator */
+            listing_enabled: boolean;
+            /** @description Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL */
+            listing_token_available: boolean;
+        };
         SsoConfigInput: {
             name: string;
             enabled?: boolean;
@@ -5968,6 +6188,15 @@ export interface components {
             /** @description Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan */
             has_active_admin?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
+            customer?: components["schemas"]["CustomerRef"];
+        };
+        /** @description Customer pemilik Customer Space. Diturunkan dari kepemilikan Space (B5-01); tidak diedit terpisah */
+        CustomerRef: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: string;
+            archived: boolean;
         };
         SpaceMember: {
             /** Format: uuid */
@@ -6002,11 +6231,23 @@ export interface components {
              */
             project?: string | null;
         };
+        /** @description Pemilihan kepemilikan wajib (B3-SC). Tidak ada default; tanpa scope_state permintaan ditolak */
         SpaceCreate: {
             name: string;
             description?: string;
+            scope_state: components["schemas"]["SpaceScopeState"];
+            /**
+             * Format: uuid
+             * @description Wajib untuk client; harus Customer aktif tempat pembuat menjadi anggota aktif
+             */
+            client_id?: string | null;
             shares?: components["schemas"]["ShareInput"][];
         };
+        /**
+         * @description internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+         * @enum {string}
+         */
+        SpaceScopeState: "internal" | "client";
         SpaceUpdate: {
             name?: string;
             description?: string | null;
@@ -6754,6 +6995,89 @@ export interface components {
             /** Format: date */
             effective_from: string;
         };
+        PydioListing: {
+            /** @description Alamat folder di Cells */
+            folder_url: string;
+            /** @description Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio */
+            truncated: boolean;
+            items: components["schemas"]["PydioEntry"][];
+        };
+        PydioEntry: {
+            name: string;
+            folder: boolean;
+            /**
+             * Format: int64
+             * @description Byte; tidak ada untuk folder
+             */
+            size?: number;
+            /** Format: date-time */
+            modified_at?: string;
+            /** @description Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna */
+            url: string;
+        };
+        Client: {
+            /** Format: uuid */
+            id: string;
+            /** @description Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah */
+            code: string;
+            name: string;
+            short_name?: string | null;
+            /** @enum {string} */
+            status: "active" | "archived";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            created_by: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            archived_at?: string | null;
+            /** Format: uuid */
+            archived_by?: string | null;
+        };
+        ClientCreate: {
+            code: string;
+            name: string;
+            short_name?: string | null;
+        };
+        /** @description Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak */
+        ClientUpdate: {
+            name?: string;
+            short_name?: string | null;
+        };
+        /** @description Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource */
+        ClientOption: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: string;
+            /** @description Hanya bila ada */
+            short_name?: string;
+        };
+        ClientMembership: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            client_id: string;
+            /** Format: uuid */
+            user_id: string;
+            /** @description Hanya pada daftar */
+            user_name?: string;
+            /** @enum {string} */
+            status: "active" | "revoked";
+            /** Format: date-time */
+            granted_at: string;
+            /** Format: uuid */
+            granted_by: string;
+            /** Format: date-time */
+            revoked_at?: string | null;
+            /** Format: uuid */
+            revoked_by?: string | null;
+        };
+        ClientMembershipGrant: {
+            /** Format: uuid */
+            user_id: string;
+        };
         GanttSnapshot: {
             /** Format: uuid */
             id: string;
@@ -6873,6 +7197,8 @@ export interface components {
             decimals?: number;
             /** @description Izinkan nilai Percent melebihi 100 */
             allow_over_100?: boolean;
+            /** @description Khusus Text: referensi folder Pydio, divalidasi saat ditulis. Dihilangkan pada update berarti tidak berubah */
+            pydio_folder?: boolean;
             /** @description Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if */
             expression?: string;
             /** @description Khusus Relation; batasi target ke satu tipe item (kosong = semua) */
@@ -8338,6 +8664,65 @@ export interface operations {
             409: components["responses"]["Problem"];
         };
     };
+    listPydioFiles: {
+        parameters: {
+            query: {
+                /** @description Field text yang berisi tautan folder */
+                field: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioListing"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getPydioReference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        state: "linked" | "not_configured" | "roots_unavailable" | "invalid";
+                        /** @description Hanya pada status linked */
+                        open_url?: string;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     listGanttSnapshots: {
         parameters: {
             query?: never;
@@ -8634,6 +9019,38 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    listPortfolioProjects: {
+        parameters: {
+            query?: {
+                /** @description id Customer, atau internal untuk proyek tanpa Customer */
+                customer?: string;
+                /** @description id user Project Manager, atau none */
+                owner?: string;
+                health?: "green" | "yellow" | "red" | "none";
+                status?: "active" | "completed" | "deferred" | "cancelled";
+                q?: string;
+                sort?: "title" | "finish" | "progress" | "health" | "overdue" | "updated" | "customer" | "owner";
+                order?: "asc" | "desc";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getPortfolioTimeline: {
@@ -10031,6 +10448,77 @@ export interface operations {
             428: components["responses"]["Problem"];
         };
     };
+    getPydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pengaturan yang berlaku */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioSettings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    putPydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PydioSettingsInput"];
+            };
+        };
+        responses: {
+            /** @description Pengaturan tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioSettings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deletePydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     listCustomRoles: {
         parameters: {
             query?: never;
@@ -10508,6 +10996,7 @@ export interface operations {
                             last_activity: string | null;
                             /** @enum {string} */
                             effective_access: "space_admin" | "full" | "editor" | "limited" | "read";
+                            customer?: components["schemas"]["CustomerRef"];
                         }[];
                         next_cursor?: string | null;
                         total: number;
@@ -11877,6 +12366,268 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+        };
+    };
+    listClients: {
+        parameters: {
+            query?: {
+                status?: "all" | "active" | "archived";
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Client"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientCreate"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listEligibleClients: {
+        parameters: {
+            query?: {
+                scope?: "membership" | "administrative";
+                /** @description Cari nama, kode, atau nama pendek */
+                q?: string;
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ClientOption"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    archiveClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listClientMembers: {
+        parameters: {
+            query?: {
+                include_revoked?: boolean;
+            };
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ClientMembership"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    grantClientMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientMembershipGrant"];
+            };
+        };
+        responses: {
+            /** @description Membership aktif (baru atau sudah ada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMembership"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    revokeClientMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Membership yang dicabut */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMembership"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     inviteUser: {
@@ -13659,6 +14410,12 @@ export interface operations {
                     request_id: string;
                     /** @description Default nama template */
                     name?: string;
+                    scope_state: components["schemas"]["SpaceScopeState"];
+                    /**
+                     * Format: uuid
+                     * @description Wajib untuk scope_state client; kosong untuk internal
+                     */
+                    client_id?: string | null;
                 };
             };
         };
