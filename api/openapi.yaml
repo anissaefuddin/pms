@@ -1719,6 +1719,87 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /pydio/storage:
+    get:
+      operationId: getPydioStorage
+      summary: Pengaturan penyimpanan file Pydio (admin); token tidak pernah dikembalikan
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioStorage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putPydioStorage
+      summary: Simpan pengaturan (admin). Saat enabled, PMS lebih dulu menulis, membaca, dan menghapus file uji di tiap folder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PydioStorageInput' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioStorage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /pydio/storage/test:
+    post:
+      operationId: testPydioStorage
+      summary: Ulangi uji tulis, baca, dan hapus dengan pengaturan tersimpan (admin)
+      responses:
+        '204': { description: Berhasil }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/pydio-folder:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getPydioFolder
+      summary: Folder penyimpanan yang berlaku untuk item dan sumbernya (admin)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioFolder' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putPydioFolder
+      summary: Tetapkan folder sendiri untuk sebuah project (admin); hanya berlaku untuk file baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PydioFolderInput' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioFolder' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deletePydioFolder
+      summary: Kembali ke folder otomatis (admin)
+      responses:
+        '204': { description: Berhasil }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /custom-roles:
     get:
       operationId: listCustomRoles
@@ -7980,6 +8061,44 @@ components:
             version: { type: integer }
             your_ip: { type: string, description: Alamat yang dilihat server untuk permintaan ini }
             override_active: { type: boolean, description: PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan }
+    PydioStorageInput:
+      type: object
+      additionalProperties: false
+      required: [version, enabled, base_url, root, customer_roots]
+      properties:
+        version: { type: integer, minimum: 0 }
+        enabled: { type: boolean }
+        base_url: { type: string, maxLength: 500 }
+        root: { type: string, maxLength: 400, description: 'Folder utama, misalnya pms-files' }
+        customer_roots: { type: object, additionalProperties: { type: string, maxLength: 400 }, description: Kode Customer ke folder penyimpanannya }
+        code_field_id: { type: string, format: uuid, nullable: true, description: Field Text yang memuat kode project }
+        token: { type: string, maxLength: 4000, writeOnly: true, description: 'Wajib saat pertama kali dan saat alamat berubah; kosong mempertahankan' }
+    PydioStorage:
+      type: object
+      required: [version, enabled, base_url, root, customer_roots, token_set, key_configured]
+      properties:
+        version: { type: integer }
+        enabled: { type: boolean }
+        base_url: { type: string }
+        root: { type: string }
+        customer_roots: { type: object, additionalProperties: { type: string } }
+        code_field_id: { type: string, format: uuid, nullable: true }
+        token_set: { type: boolean }
+        key_configured: { type: boolean, description: PMS_CONNECTOR_KEY tersedia }
+    PydioFolderInput:
+      type: object
+      additionalProperties: false
+      required: [folder]
+      properties:
+        folder: { type: string, maxLength: 400 }
+    PydioFolder:
+      type: object
+      required: [folder, source, enabled]
+      properties:
+        project_id: { type: string, format: uuid }
+        folder: { type: string }
+        source: { type: string, enum: [project, customer, default] }
+        enabled: { type: boolean }
     PydioSettingsInput:
       type: object
       additionalProperties: false

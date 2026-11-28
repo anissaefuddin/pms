@@ -321,7 +321,7 @@ func (s *Server) readSubmission(w http.ResponseWriter, r *http.Request, def form
 				cleanup()
 				return nil, nil, items.InvalidField{Field: "answers." + key, Message: "this question does not accept that many files"}
 			}
-			file, err := s.stageAttachment(part, max)
+			file, err := s.stageAttachment(part, s.localTarget(max))
 			if err != nil {
 				cleanup()
 				return nil, nil, err

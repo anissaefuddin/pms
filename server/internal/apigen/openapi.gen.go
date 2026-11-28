@@ -2226,6 +2226,27 @@ func (e PublicDashboardLayout) Valid() bool {
 	}
 }
 
+// Defines values for PydioFolderSource.
+const (
+	PydioFolderSourceCustomer PydioFolderSource = "customer"
+	PydioFolderSourceDefault  PydioFolderSource = "default"
+	PydioFolderSourceProject  PydioFolderSource = "project"
+)
+
+// Valid indicates whether the value is a known member of the PydioFolderSource enum.
+func (e PydioFolderSource) Valid() bool {
+	switch e {
+	case PydioFolderSourceCustomer:
+		return true
+	case PydioFolderSourceDefault:
+		return true
+	case PydioFolderSourceProject:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PydioSettingsSource.
 const (
 	PydioSettingsSourceDatabase    PydioSettingsSource = "database"
@@ -6432,6 +6453,22 @@ type PydioEntry struct {
 	Url string `json:"url"`
 }
 
+// PydioFolder defines model for PydioFolder.
+type PydioFolder struct {
+	Enabled   bool                `json:"enabled"`
+	Folder    string              `json:"folder"`
+	ProjectId *openapi_types.UUID `json:"project_id,omitempty"`
+	Source    PydioFolderSource   `json:"source"`
+}
+
+// PydioFolderSource defines model for PydioFolder.Source.
+type PydioFolderSource string
+
+// PydioFolderInput defines model for PydioFolderInput.
+type PydioFolderInput struct {
+	Folder string `json:"folder"`
+}
+
 // PydioListing defines model for PydioListing.
 type PydioListing struct {
 	// FolderUrl Alamat folder di Cells
@@ -6486,6 +6523,39 @@ type PydioSettingsInput struct {
 	// Roots Path workspace yang boleh ditautkan
 	Roots   []string `json:"roots"`
 	Version int      `json:"version"`
+}
+
+// PydioStorage defines model for PydioStorage.
+type PydioStorage struct {
+	BaseUrl       string              `json:"base_url"`
+	CodeFieldId   *openapi_types.UUID `json:"code_field_id,omitempty"`
+	CustomerRoots map[string]string   `json:"customer_roots"`
+	Enabled       bool                `json:"enabled"`
+
+	// KeyConfigured PMS_CONNECTOR_KEY tersedia
+	KeyConfigured bool   `json:"key_configured"`
+	Root          string `json:"root"`
+	TokenSet      bool   `json:"token_set"`
+	Version       int    `json:"version"`
+}
+
+// PydioStorageInput defines model for PydioStorageInput.
+type PydioStorageInput struct {
+	BaseUrl string `json:"base_url"`
+
+	// CodeFieldId Field Text yang memuat kode project
+	CodeFieldId *openapi_types.UUID `json:"code_field_id,omitempty"`
+
+	// CustomerRoots Kode Customer ke folder penyimpanannya
+	CustomerRoots map[string]string `json:"customer_roots"`
+	Enabled       bool              `json:"enabled"`
+
+	// Root Folder utama, misalnya pms-files
+	Root string `json:"root"`
+
+	// Token Wajib saat pertama kali dan saat alamat berubah; kosong mempertahankan
+	Token   *string `json:"token,omitempty"`
+	Version int     `json:"version"`
 }
 
 // RealtimeEvent defines model for RealtimeEvent.
@@ -9032,6 +9102,9 @@ type ReplaceItemFollowersJSONRequestBody ReplaceItemFollowersJSONBody
 // ReplaceItemLocationsJSONRequestBody defines body for ReplaceItemLocations for application/json ContentType.
 type ReplaceItemLocationsJSONRequestBody ReplaceItemLocationsJSONBody
 
+// PutPydioFolderJSONRequestBody defines body for PutPydioFolder for application/json ContentType.
+type PutPydioFolderJSONRequestBody = PydioFolderInput
+
 // ReorderItemJSONRequestBody defines body for ReorderItem for application/json ContentType.
 type ReorderItemJSONRequestBody ReorderItemJSONBody
 
@@ -9088,6 +9161,9 @@ type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
 
 // PutPydioSettingsJSONRequestBody defines body for PutPydioSettings for application/json ContentType.
 type PutPydioSettingsJSONRequestBody = PydioSettingsInput
+
+// PutPydioStorageJSONRequestBody defines body for PutPydioStorage for application/json ContentType.
+type PutPydioStorageJSONRequestBody = PydioStorageInput
 
 // CreateRateJSONRequestBody defines body for CreateRate for application/json ContentType.
 type CreateRateJSONRequestBody CreateRateJSONBody
@@ -10045,6 +10121,15 @@ type ServerInterface interface {
 	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
 	// (GET /items/{itemId}/pydio-files)
 	ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams)
+	// DeletePydioFolder Kembali ke folder otomatis (admin)
+	// (DELETE /items/{itemId}/pydio-folder)
+	DeletePydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// GetPydioFolder Folder penyimpanan yang berlaku untuk item dan sumbernya (admin)
+	// (GET /items/{itemId}/pydio-folder)
+	GetPydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// PutPydioFolder Tetapkan folder sendiri untuk sebuah project (admin); hanya berlaku untuk file baru
+	// (PUT /items/{itemId}/pydio-folder)
+	PutPydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
 	// (GET /items/{itemId}/pydio-reference)
 	GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
@@ -10225,6 +10310,15 @@ type ServerInterface interface {
 	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
 	// (PUT /pydio/settings)
 	PutPydioSettings(w http.ResponseWriter, r *http.Request)
+	// GetPydioStorage Pengaturan penyimpanan file Pydio (admin); token tidak pernah dikembalikan
+	// (GET /pydio/storage)
+	GetPydioStorage(w http.ResponseWriter, r *http.Request)
+	// PutPydioStorage Simpan pengaturan (admin). Saat enabled, PMS lebih dulu menulis, membaca, dan menghapus file uji di tiap folder
+	// (PUT /pydio/storage)
+	PutPydioStorage(w http.ResponseWriter, r *http.Request)
+	// TestPydioStorage Ulangi uji tulis, baca, dan hapus dengan pengaturan tersimpan (admin)
+	// (POST /pydio/storage/test)
+	TestPydioStorage(w http.ResponseWriter, r *http.Request)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(w http.ResponseWriter, r *http.Request)
@@ -15762,6 +15856,84 @@ func (siw *ServerInterfaceWrapper) ListPydioFiles(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// DeletePydioFolder operation middleware
+func (siw *ServerInterfaceWrapper) DeletePydioFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePydioFolder(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioFolder operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioFolder(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutPydioFolder operation middleware
+func (siw *ServerInterfaceWrapper) PutPydioFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutPydioFolder(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPydioReference operation middleware
 func (siw *ServerInterfaceWrapper) GetPydioReference(w http.ResponseWriter, r *http.Request) {
 
@@ -17685,6 +17857,48 @@ func (siw *ServerInterfaceWrapper) PutPydioSettings(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutPydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioStorage operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioStorage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutPydioStorage operation middleware
+func (siw *ServerInterfaceWrapper) PutPydioStorage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutPydioStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestPydioStorage operation middleware
+func (siw *ServerInterfaceWrapper) TestPydioStorage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestPydioStorage(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -22492,6 +22706,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/pydio/settings", wrapper.DeletePydioSettings)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pydio/settings", wrapper.GetPydioSettings)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/pydio/settings", wrapper.PutPydioSettings)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pydio/storage", wrapper.GetPydioStorage)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/pydio/storage", wrapper.PutPydioStorage)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/pydio/storage/test", wrapper.TestPydioStorage)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/items/{itemId}/pydio-folder", wrapper.DeletePydioFolder)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-folder", wrapper.GetPydioFolder)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/items/{itemId}/pydio-folder", wrapper.PutPydioFolder)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
@@ -33314,6 +33534,213 @@ func (response ListPydioFiles503ApplicationProblemPlusJSONResponse) VisitListPyd
 	return err
 }
 
+type DeletePydioFolderRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type DeletePydioFolderResponseObject interface {
+	VisitDeletePydioFolderResponse(w http.ResponseWriter) error
+}
+
+type DeletePydioFolder204Response struct {
+}
+
+func (response DeletePydioFolder204Response) VisitDeletePydioFolderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePydioFolder401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePydioFolder401ApplicationProblemPlusJSONResponse) VisitDeletePydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioFolder403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioFolder403ApplicationProblemPlusJSONResponse) VisitDeletePydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioFolder404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioFolder404ApplicationProblemPlusJSONResponse) VisitDeletePydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioFolderRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type GetPydioFolderResponseObject interface {
+	VisitGetPydioFolderResponse(w http.ResponseWriter) error
+}
+
+type GetPydioFolder200JSONResponse PydioFolder
+
+func (response GetPydioFolder200JSONResponse) VisitGetPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioFolder401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioFolder401ApplicationProblemPlusJSONResponse) VisitGetPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioFolder403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioFolder403ApplicationProblemPlusJSONResponse) VisitGetPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioFolder404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioFolder404ApplicationProblemPlusJSONResponse) VisitGetPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioFolderRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+	Body   *PutPydioFolderJSONRequestBody
+}
+
+type PutPydioFolderResponseObject interface {
+	VisitPutPydioFolderResponse(w http.ResponseWriter) error
+}
+
+type PutPydioFolder200JSONResponse PydioFolder
+
+func (response PutPydioFolder200JSONResponse) VisitPutPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioFolder401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutPydioFolder401ApplicationProblemPlusJSONResponse) VisitPutPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioFolder403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioFolder403ApplicationProblemPlusJSONResponse) VisitPutPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioFolder404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioFolder404ApplicationProblemPlusJSONResponse) VisitPutPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioFolder422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioFolder422ApplicationProblemPlusJSONResponse) VisitPutPydioFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetPydioReferenceRequestObject struct {
 	ItemId openapi_types.UUID `json:"itemId"`
 }
@@ -36183,6 +36610,210 @@ func (response PutPydioSettings409ApplicationProblemPlusJSONResponse) VisitPutPy
 type PutPydioSettings422ApplicationProblemPlusJSONResponse Problem
 
 func (response PutPydioSettings422ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioStorageRequestObject struct {
+}
+
+type GetPydioStorageResponseObject interface {
+	VisitGetPydioStorageResponse(w http.ResponseWriter) error
+}
+
+type GetPydioStorage200JSONResponse PydioStorage
+
+func (response GetPydioStorage200JSONResponse) VisitGetPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioStorage401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioStorage401ApplicationProblemPlusJSONResponse) VisitGetPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioStorage403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioStorage403ApplicationProblemPlusJSONResponse) VisitGetPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioStorageRequestObject struct {
+	Body *PutPydioStorageJSONRequestBody
+}
+
+type PutPydioStorageResponseObject interface {
+	VisitPutPydioStorageResponse(w http.ResponseWriter) error
+}
+
+type PutPydioStorage200JSONResponse PydioStorage
+
+func (response PutPydioStorage200JSONResponse) VisitPutPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioStorage401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutPydioStorage401ApplicationProblemPlusJSONResponse) VisitPutPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioStorage403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioStorage403ApplicationProblemPlusJSONResponse) VisitPutPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioStorage409ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioStorage409ApplicationProblemPlusJSONResponse) VisitPutPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioStorage422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioStorage422ApplicationProblemPlusJSONResponse) VisitPutPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestPydioStorageRequestObject struct {
+}
+
+type TestPydioStorageResponseObject interface {
+	VisitTestPydioStorageResponse(w http.ResponseWriter) error
+}
+
+type TestPydioStorage204Response struct {
+}
+
+func (response TestPydioStorage204Response) VisitTestPydioStorageResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type TestPydioStorage401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TestPydioStorage401ApplicationProblemPlusJSONResponse) VisitTestPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestPydioStorage403ApplicationProblemPlusJSONResponse Problem
+
+func (response TestPydioStorage403ApplicationProblemPlusJSONResponse) VisitTestPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestPydioStorage404ApplicationProblemPlusJSONResponse Problem
+
+func (response TestPydioStorage404ApplicationProblemPlusJSONResponse) VisitTestPydioStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestPydioStorage422ApplicationProblemPlusJSONResponse Problem
+
+func (response TestPydioStorage422ApplicationProblemPlusJSONResponse) VisitTestPydioStorageResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -46361,6 +46992,15 @@ type StrictServerInterface interface {
 	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
 	// (GET /items/{itemId}/pydio-files)
 	ListPydioFiles(ctx context.Context, request ListPydioFilesRequestObject) (ListPydioFilesResponseObject, error)
+	// DeletePydioFolder Kembali ke folder otomatis (admin)
+	// (DELETE /items/{itemId}/pydio-folder)
+	DeletePydioFolder(ctx context.Context, request DeletePydioFolderRequestObject) (DeletePydioFolderResponseObject, error)
+	// GetPydioFolder Folder penyimpanan yang berlaku untuk item dan sumbernya (admin)
+	// (GET /items/{itemId}/pydio-folder)
+	GetPydioFolder(ctx context.Context, request GetPydioFolderRequestObject) (GetPydioFolderResponseObject, error)
+	// PutPydioFolder Tetapkan folder sendiri untuk sebuah project (admin); hanya berlaku untuk file baru
+	// (PUT /items/{itemId}/pydio-folder)
+	PutPydioFolder(ctx context.Context, request PutPydioFolderRequestObject) (PutPydioFolderResponseObject, error)
 	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
 	// (GET /items/{itemId}/pydio-reference)
 	GetPydioReference(ctx context.Context, request GetPydioReferenceRequestObject) (GetPydioReferenceResponseObject, error)
@@ -46541,6 +47181,15 @@ type StrictServerInterface interface {
 	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
 	// (PUT /pydio/settings)
 	PutPydioSettings(ctx context.Context, request PutPydioSettingsRequestObject) (PutPydioSettingsResponseObject, error)
+	// GetPydioStorage Pengaturan penyimpanan file Pydio (admin); token tidak pernah dikembalikan
+	// (GET /pydio/storage)
+	GetPydioStorage(ctx context.Context, request GetPydioStorageRequestObject) (GetPydioStorageResponseObject, error)
+	// PutPydioStorage Simpan pengaturan (admin). Saat enabled, PMS lebih dulu menulis, membaca, dan menghapus file uji di tiap folder
+	// (PUT /pydio/storage)
+	PutPydioStorage(ctx context.Context, request PutPydioStorageRequestObject) (PutPydioStorageResponseObject, error)
+	// TestPydioStorage Ulangi uji tulis, baca, dan hapus dengan pengaturan tersimpan (admin)
+	// (POST /pydio/storage/test)
+	TestPydioStorage(ctx context.Context, request TestPydioStorageRequestObject) (TestPydioStorageResponseObject, error)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(ctx context.Context, request ListRatesRequestObject) (ListRatesResponseObject, error)
@@ -52058,6 +52707,91 @@ func (sh *strictHandler) ListPydioFiles(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// DeletePydioFolder operation middleware
+func (sh *strictHandler) DeletePydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request DeletePydioFolderRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePydioFolder(ctx, request.(DeletePydioFolderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePydioFolder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePydioFolderResponseObject); ok {
+		if err := validResponse.VisitDeletePydioFolderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioFolder operation middleware
+func (sh *strictHandler) GetPydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request GetPydioFolderRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioFolder(ctx, request.(GetPydioFolderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioFolder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioFolderResponseObject); ok {
+		if err := validResponse.VisitGetPydioFolderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutPydioFolder operation middleware
+func (sh *strictHandler) PutPydioFolder(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request PutPydioFolderRequestObject
+
+	request.ItemId = itemId
+
+	var body PutPydioFolderJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPydioFolder(ctx, request.(PutPydioFolderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPydioFolder")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutPydioFolderResponseObject); ok {
+		if err := validResponse.VisitPutPydioFolderResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetPydioReference operation middleware
 func (sh *strictHandler) GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
 	var request GetPydioReferenceRequestObject
@@ -53707,6 +54441,85 @@ func (sh *strictHandler) PutPydioSettings(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PutPydioSettingsResponseObject); ok {
 		if err := validResponse.VisitPutPydioSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioStorage operation middleware
+func (sh *strictHandler) GetPydioStorage(w http.ResponseWriter, r *http.Request) {
+	var request GetPydioStorageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioStorage(ctx, request.(GetPydioStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioStorageResponseObject); ok {
+		if err := validResponse.VisitGetPydioStorageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutPydioStorage operation middleware
+func (sh *strictHandler) PutPydioStorage(w http.ResponseWriter, r *http.Request) {
+	var request PutPydioStorageRequestObject
+
+	var body PutPydioStorageJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPydioStorage(ctx, request.(PutPydioStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPydioStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutPydioStorageResponseObject); ok {
+		if err := validResponse.VisitPutPydioStorageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestPydioStorage operation middleware
+func (sh *strictHandler) TestPydioStorage(w http.ResponseWriter, r *http.Request) {
+	var request TestPydioStorageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestPydioStorage(ctx, request.(TestPydioStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestPydioStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestPydioStorageResponseObject); ok {
+		if err := validResponse.VisitTestPydioStorageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

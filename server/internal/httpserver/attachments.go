@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/pydiostore"
 	"github.com/anissaefuddin/pms/server/internal/storage"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -96,7 +98,12 @@ func (s *Server) listAttachments(w http.ResponseWriter, r *http.Request) {
 	if out == nil {
 		out = []json.RawMessage{}
 	}
-	writeJSON(w, 200, map[string]any{"items": out, "max_upload_bytes": s.attachmentLimit()})
+	max, err := s.uploadMax(ctx)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, 200, map[string]any{"items": out, "max_upload_bytes": max})
 }
 
 func (s *Server) attachmentLimit() int64 {
@@ -139,7 +146,16 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	max := s.attachmentLimit()
+	attachmentID := uuid.Nil
+	if existing != nil {
+		attachmentID = *existing
+	}
+	target, err := s.uploadTarget(r.Context(), id, attachmentID)
+	if err != nil {
+		writeAttachmentUploadError(w, err)
+		return
+	}
+	max := target.max
 	controller := http.NewResponseController(w)
 	now := time.Now()
 	_ = controller.SetReadDeadline(now.Add(5 * time.Minute))
@@ -159,16 +175,17 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, items.Invalid("valid attachment filename is required"))
 		return
 	}
-	staged, err := s.stageAttachment(part, max)
+	staged, err := s.stageAttachment(part, target)
 	if err != nil {
 		writeAttachmentUploadError(w, err)
 		return
 	}
-	store := s.attachmentStore()
 	stored := false
 	defer func() {
 		if !stored {
-			_ = store.Remove(staged.File.Key)
+			if err := target.store.Remove(staged.File.Key); err != nil {
+				slog.ErrorContext(r.Context(), "unused upload not removed", "backend", staged.Backend, "error", err)
+			}
 		}
 	}()
 	if _, err = reader.NextPart(); !errors.Is(err, io.EOF) {
@@ -295,12 +312,13 @@ func (b blockedFile) Error() string { return b.message }
 type stagedFile struct {
 	Filename, Media string
 	File            storage.File
-	Backend         string // where File was written; empty for a link, which has no bytes
+	Backend         string    // where File was written; empty for a link, which has no bytes
+	ID              uuid.UUID // the new attachment's id when its path already carries it
 }
 
 // stageAttachment applies the attachment rules (name, executable and type checks, size limit, ZIP inspection)
-// to one multipart file and stores it. Normal uploads and form submissions both use it.
-func (s *Server) stageAttachment(part *multipart.Part, max int64) (stagedFile, error) {
+// to one multipart file and stores it in the target. Normal uploads and form submissions both use it.
+func (s *Server) stageAttachment(part *multipart.Part, target uploadTarget) (stagedFile, error) {
 	filename := strings.TrimSpace(path.Base(strings.ReplaceAll(part.FileName(), "\\", "/")))
 	if filename == "" || filename == "." || len(filename) > 255 || strings.ContainsFunc(filename, unicode.IsControl) {
 		return stagedFile{}, items.Invalid("valid attachment filename is required")
@@ -317,32 +335,39 @@ func (s *Server) stageAttachment(part *multipart.Part, max int64) (stagedFile, e
 	if executableAttachment(filename, header) {
 		return stagedFile{}, blockedFile{"executable attachments are not allowed"}
 	}
-	switch media {
-	case "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "application/zip", "text/plain; charset=utf-8":
-	default:
-		return stagedFile{}, blockedFile{"supported files are PDF, PNG, JPEG, GIF, WebP, plain text, and ZIP"}
+	if target.limits != nil { // Pydio: the administrator's extension list decides the types
+		if err := target.limits.Check(filename, 0); err != nil {
+			return stagedFile{}, blockedFile{err.Error()}
+		}
+	} else {
+		switch media {
+		case "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "application/zip", "text/plain; charset=utf-8":
+		default:
+			return stagedFile{}, blockedFile{"supported files are PDF, PNG, JPEG, GIF, WebP, plain text, and ZIP"}
+		}
 	}
-	store := s.attachmentStore()
-	file, err := store.Put(source, max)
+	file, err := target.put(filename, source)
 	if err != nil {
 		return stagedFile{}, err
 	}
 	if media == "application/zip" {
-		if err := validateAttachmentZIP(store, file); err != nil {
-			_ = store.Remove(file.Key)
+		if err := validateAttachmentZIP(target.store, file); err != nil {
+			_ = target.store.Remove(file.Key)
 			if errors.Is(err, errBlockedArchive) {
 				return stagedFile{}, blockedFile{err.Error()}
 			}
 			return stagedFile{}, err
 		}
 	}
-	return stagedFile{Filename: filename, Media: media, File: file, Backend: storage.Name(s.cfg)}, nil
+	return stagedFile{Filename: filename, Media: media, File: file, Backend: target.backend, ID: target.attachment}, nil
 }
 
 func insertAttachment(ctx context.Context, tx pgx.Tx, itemID uuid.UUID, uploader string, f stagedFile) (uuid.UUID, error) {
-	id, err := uuid.NewV7()
-	if err != nil {
-		return id, err
+	id, err := f.ID, error(nil)
+	if id == uuid.Nil {
+		if id, err = uuid.NewV7(); err != nil {
+			return id, err
+		}
 	}
 	_, err = tx.Exec(ctx, `WITH a AS (INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,storage_backend)
 VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'),NULLIF($9,'')))
@@ -459,6 +484,8 @@ func writeAttachmentUploadError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.As(err, &blocked):
 		writeProblem(w, 422, "file_type_blocked", blocked.message)
+	case errors.Is(err, storage.ErrUnavailable):
+		writeStorageUnavailable(w, err)
 	case errors.Is(err, storage.ErrTooLarge), errors.As(err, &max):
 		writeProblem(w, 413, "file_too_large", "attachment exceeds upload limit")
 	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):
@@ -534,12 +561,16 @@ WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id,
 		writeItemError(w, items.Invalid("a link attachment has no file to download; open "+*link))
 		return
 	}
-	store, err := storage.For(s.cfg, backend)
+	store, err := pydiostore.Open(ctx, s.pool, s.cfg, backend)
 	if err != nil {
 		writeItemError(w, err)
 		return
 	}
 	file, err := store.Open(key)
+	if errors.Is(err, storage.ErrUnavailable) {
+		writeStorageUnavailable(w, err)
+		return
+	}
 	if err != nil {
 		writeItemError(w, err)
 		return

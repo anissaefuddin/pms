@@ -1185,6 +1185,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pydio/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pengaturan penyimpanan file Pydio (admin); token tidak pernah dikembalikan */
+        get: operations["getPydioStorage"];
+        /** Simpan pengaturan (admin). Saat enabled, PMS lebih dulu menulis, membaca, dan menghapus file uji di tiap folder */
+        put: operations["putPydioStorage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pydio/storage/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ulangi uji tulis, baca, dan hapus dengan pengaturan tersimpan (admin) */
+        post: operations["testPydioStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/pydio-folder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        /** Folder penyimpanan yang berlaku untuk item dan sumbernya (admin) */
+        get: operations["getPydioFolder"];
+        /** Tetapkan folder sendiri untuk sebuah project (admin); hanya berlaku untuk file baru */
+        put: operations["putPydioFolder"];
+        post?: never;
+        /** Kembali ke folder otomatis (admin) */
+        delete: operations["deletePydioFolder"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/custom-roles": {
         parameters: {
             query?: never;
@@ -5639,6 +5695,49 @@ export interface components {
             your_ip: string;
             /** @description PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan */
             override_active: boolean;
+        };
+        PydioStorageInput: {
+            version: number;
+            enabled: boolean;
+            base_url: string;
+            /** @description Folder utama, misalnya pms-files */
+            root: string;
+            /** @description Kode Customer ke folder penyimpanannya */
+            customer_roots: {
+                [key: string]: string;
+            };
+            /**
+             * Format: uuid
+             * @description Field Text yang memuat kode project
+             */
+            code_field_id?: string | null;
+            /** @description Wajib saat pertama kali dan saat alamat berubah; kosong mempertahankan */
+            token?: string;
+        };
+        PydioStorage: {
+            version: number;
+            enabled: boolean;
+            base_url: string;
+            root: string;
+            customer_roots: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            code_field_id?: string | null;
+            token_set: boolean;
+            /** @description PMS_CONNECTOR_KEY tersedia */
+            key_configured: boolean;
+        };
+        PydioFolderInput: {
+            folder: string;
+        };
+        PydioFolder: {
+            /** Format: uuid */
+            project_id?: string;
+            folder: string;
+            /** @enum {string} */
+            source: "project" | "customer" | "default";
+            enabled: boolean;
         };
         PydioSettingsInput: {
             version: number;
@@ -10516,6 +10615,156 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPydioStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioStorage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    putPydioStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PydioStorageInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioStorage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    testPydioStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Berhasil */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getPydioFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioFolder"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    putPydioFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PydioFolderInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioFolder"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deletePydioFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Berhasil */
             204: {
                 headers: {
                     [name: string]: unknown;

@@ -58,7 +58,7 @@ API yang dipakai: `GET`, `PUT`, `DELETE /api/v1/pydio/settings` (khusus admin, t
 
 ### Batas upload ke Pydio
 
-Upload file ke Pydio **belum tersedia**. Pengaturan ini baru disimpan dan ditampilkan; adapter upload nanti memeriksanya lewat `pydio.UploadLimits.Check`. Lampiran lokal tetap memakai `PMS_MAX_UPLOAD_MB`.
+Berlaku saat [penyimpanan Pydio](#penyimpanan-file-di-pydio) aktif. Lampiran lokal tetap memakai `PMS_MAX_UPLOAD_MB`.
 
 | Field API | Default | Aturan |
 |---|---|---|
@@ -68,7 +68,26 @@ Upload file ke Pydio **belum tersedia**. Pengaturan ini baru disimpan dan ditamp
 - Tidak ada variabel environment: tanpa pengaturan tersimpan, default berlaku. Menghapus pengaturan mengembalikan default.
 - `PUT` yang tidak mengirim field ini (atau mengirim `null`) mempertahankan nilai tersimpan; `[]` berarti semua tipe.
 - Yang diperiksa hanya nama file, bukan isinya.
-- Uji ke Cells staging: upload tunggal lewat alamat publik gagal di atas 100 MB (HTTP 413 dari proxy), multipart berhasil sampai 500 MB. Batas di atas 100 MB memerlukan multipart di adapter.
+- Uji ke Cells staging: upload tunggal lewat alamat publik gagal di atas 100 MB (HTTP 413 dari proxy), multipart berhasil sampai 500 MB. Adapter mengirim file di atas 50 MB sebagai multipart.
+
+## Penyimpanan file di Pydio
+
+Terpisah dari tautan folder. API khusus admin (belum ada di UI): `GET/PUT /api/v1/pydio/storage`, `POST /api/v1/pydio/storage/test`, `GET/PUT/DELETE /api/v1/items/{itemId}/pydio-folder`.
+
+| Hal | Aturan |
+|---|---|
+| Aktif atau tidak | Aktif: lampiran baru ke Pydio. Mati: lampiran baru ke `PMS_STORAGE`. File lama selalu dibaca dari tempat ia ditulis |
+| Token | Wajib `PMS_CONNECTOR_KEY`; disimpan terenkripsi, tidak pernah dikembalikan. Alamat baru wajib token baru |
+| Menyalakan | PMS menulis, membaca, dan menghapus file uji di folder utama dan tiap folder Customer; gagal berarti tidak disimpan |
+| Folder | 1. folder project yang ditetapkan admin; 2. `<folder Customer>/<KODE>_<nomor>`; 3. `<folder utama>/<CUSTOMER atau _internal>/<KODE>_<nomor>`. Tanpa kode: `P<nomor>` |
+| Subproject | Punya folder sendiri. Task mengikuti project terdekat di atasnya. Item di luar project: `_items/<nomor>` |
+| Path file | `<folder>/<id lampiran>/<id unggahan>/<nama file aman>`. Tidak dipindah saat kode atau lokasi berubah |
+| Gangguan Pydio | Upload dan download dijawab 502 `storage_unavailable`; tidak ada pindah diam-diam ke lokal |
+| Tipe dan ukuran | Mengikuti batas upload Pydio (default 100 MB, semua tipe). File yang dapat dieksekusi tetap ditolak |
+
+Batas saat ini: lampiran dari form publik dan gambar preview tetap di `PMS_STORAGE`; `backup.sh` tidak mencakup file di Pydio (backup Pydio terpisah); mengganti alamat membuat file lama dicari di alamat baru; file yang tidak terpakai di Pydio tidak disapu otomatis.
+
+Akun Cells: satu akun layanan dengan hak baca dan tulis **hanya** pada folder penyimpanan, tanpa dibagikan ke pengguna biasa.
 
 ## Langkah
 

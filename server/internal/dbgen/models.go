@@ -1150,6 +1150,13 @@ type ProjectExcelImport struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
+type PydioProjectFolder struct {
+	ItemID    pgtype.UUID        `json:"item_id"`
+	Folder    string             `json:"folder"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy pgtype.UUID        `json:"updated_by"`
+}
+
 type PydioSetting struct {
 	ID                int16              `json:"id"`
 	Enabled           bool               `json:"enabled"`
@@ -1161,6 +1168,19 @@ type PydioSetting struct {
 	UpdatedBy         pgtype.UUID        `json:"updated_by"`
 	MaxUploadMb       int32              `json:"max_upload_mb"`
 	AllowedExtensions []string           `json:"allowed_extensions"`
+}
+
+type PydioStorage struct {
+	ID            int16              `json:"id"`
+	Enabled       bool               `json:"enabled"`
+	BaseUrl       string             `json:"base_url"`
+	Root          string             `json:"root"`
+	TokenEnc      string             `json:"token_enc"`
+	CustomerRoots []byte             `json:"customer_roots"`
+	CodeFieldID   pgtype.UUID        `json:"code_field_id"`
+	Version       int32              `json:"version"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy     pgtype.UUID        `json:"updated_by"`
 }
 
 type Report struct {

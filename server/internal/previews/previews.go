@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/config"
+	"github.com/anissaefuddin/pms/server/internal/pydiostore"
 	"github.com/anissaefuddin/pms/server/internal/storage"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -58,7 +59,7 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
 
 // Generate reads the source from the backend it was recorded in and stores the pages in the configured one.
 func (w *Worker) Generate(ctx context.Context, id uuid.UUID, version int) error {
-	source := func(backend string) (storage.Storage, error) { return storage.For(w.Config, backend) }
+	source := func(backend string) (storage.Storage, error) { return pydiostore.Open(ctx, w.Pool, w.Config, backend) }
 	return generate(ctx, w.Pool, source, storage.FromConfig(w.Config), id, version)
 }
 

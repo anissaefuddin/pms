@@ -213,6 +213,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	}
 	s.pydioRoutes(mux)
 	s.pydioSettingsRoutes(mux)
+	s.pydioStorageRoutes(mux)
 	s.connectorRoutes(mux)
 	s.OAuthRoutes(mux)
 	s.bookmarkRoutes(mux)
