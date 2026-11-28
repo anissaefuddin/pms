@@ -5651,6 +5651,10 @@ export interface components {
             customer_roots: {
                 [key: string]: string[];
             };
+            /** @description Batas per file untuk upload ke Pydio. Dihilangkan berarti nilai tersimpan dipertahankan (100 saat membuat) */
+            max_upload_mb?: number;
+            /** @description Ekstensi yang boleh diupload ke Pydio, disimpan huruf kecil tanpa titik. Daftar kosong berarti semua tipe; dihilangkan berarti nilai tersimpan dipertahankan */
+            allowed_extensions?: string[];
         };
         PydioSettings: {
             /** @enum {string} */
@@ -5663,6 +5667,10 @@ export interface components {
             customer_roots: {
                 [key: string]: string[];
             };
+            /** @description Batas per file untuk upload ke Pydio; 100 bila belum disimpan. Belum dipakai karena upload ke Pydio belum tersedia */
+            max_upload_mb: number;
+            /** @description Kosong berarti semua tipe file */
+            allowed_extensions: string[];
             /** @description PMS_PYDIO_LISTING; hanya diatur operator */
             listing_enabled: boolean;
             /** @description Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL */

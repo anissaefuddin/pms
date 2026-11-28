@@ -7994,9 +7994,15 @@ components:
           maxProperties: 500
           description: Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
           additionalProperties: { type: array, minItems: 1, maxItems: 50, items: { type: string, maxLength: 500 } }
+        max_upload_mb: { type: integer, minimum: 1, maximum: 1024, description: Batas per file untuk upload ke Pydio. Dihilangkan berarti nilai tersimpan dipertahankan (100 saat membuat) }
+        allowed_extensions:
+          type: array
+          maxItems: 100
+          items: { type: string }
+          description: Ekstensi yang boleh diupload ke Pydio, disimpan huruf kecil tanpa titik. Daftar kosong berarti semua tipe; dihilangkan berarti nilai tersimpan dipertahankan
     PydioSettings:
       type: object
-      required: [source, version, enabled, base_url, roots, customer_roots, listing_enabled, listing_token_available]
+      required: [source, version, enabled, base_url, roots, customer_roots, max_upload_mb, allowed_extensions, listing_enabled, listing_token_available]
       properties:
         source: { type: string, enum: [database, environment, none] }
         version: { type: integer, description: 0 bila belum ada pengaturan tersimpan }
@@ -8004,6 +8010,8 @@ components:
         base_url: { type: string }
         roots: { type: array, items: { type: string } }
         customer_roots: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        max_upload_mb: { type: integer, description: Batas per file untuk upload ke Pydio; 100 bila belum disimpan. Belum dipakai karena upload ke Pydio belum tersedia }
+        allowed_extensions: { type: array, items: { type: string }, description: Kosong berarti semua tipe file }
         listing_enabled: { type: boolean, description: PMS_PYDIO_LISTING; hanya diatur operator }
         listing_token_available: { type: boolean, description: Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL }
     SsoConfigInput:

@@ -1151,14 +1151,16 @@ type ProjectExcelImport struct {
 }
 
 type PydioSetting struct {
-	ID            int16              `json:"id"`
-	Enabled       bool               `json:"enabled"`
-	BaseUrl       string             `json:"base_url"`
-	Roots         []string           `json:"roots"`
-	CustomerRoots []byte             `json:"customer_roots"`
-	Version       int32              `json:"version"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
-	UpdatedBy     pgtype.UUID        `json:"updated_by"`
+	ID                int16              `json:"id"`
+	Enabled           bool               `json:"enabled"`
+	BaseUrl           string             `json:"base_url"`
+	Roots             []string           `json:"roots"`
+	CustomerRoots     []byte             `json:"customer_roots"`
+	Version           int32              `json:"version"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy         pgtype.UUID        `json:"updated_by"`
+	MaxUploadMb       int32              `json:"max_upload_mb"`
+	AllowedExtensions []string           `json:"allowed_extensions"`
 }
 
 type Report struct {

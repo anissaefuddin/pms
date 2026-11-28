@@ -19,6 +19,7 @@ import (
 
 // Pydio folder link settings. The PMS_PYDIO_* environment applies until an administrator saves settings; the saved row then replaces
 // it as a whole, and removing the row brings the environment back. The listing switch and its token stay with the operator.
+// The upload limits have no environment variable: without a saved row the defaults apply.
 // shortcut: the settings are cached for 10 seconds per process, like the access policy (a saved change applies at once on this
 // process and within 10 s on another).
 
@@ -47,8 +48,10 @@ type pydioView struct {
 	Source  string `json:"source"` // database | environment | none
 	Version int    `json:"version"`
 	pydioSettings
-	ListingEnabled        bool `json:"listing_enabled"`
-	ListingTokenAvailable bool `json:"listing_token_available"`
+	MaxUploadMB           int      `json:"max_upload_mb"`
+	AllowedExtensions     []string `json:"allowed_extensions"`
+	ListingEnabled        bool     `json:"listing_enabled"`
+	ListingTokenAvailable bool     `json:"listing_token_available"`
 }
 
 // pydioRuntime is what the request handlers use. client is nil while Pydio links are off.
@@ -70,8 +73,8 @@ func (s *Server) pydioToken(baseURL string) string {
 func (s *Server) pydioCurrent(ctx context.Context) (pydioView, error) {
 	view := pydioView{Source: "database", ListingEnabled: s.cfg.PydioListing}
 	var customers []byte
-	err := s.pool.QueryRow(ctx, "SELECT enabled,base_url,roots,customer_roots,version FROM pydio_settings WHERE id=1").
-		Scan(&view.Enabled, &view.BaseURL, &view.Roots, &customers, &view.Version)
+	err := s.pool.QueryRow(ctx, "SELECT enabled,base_url,roots,customer_roots,version,max_upload_mb,allowed_extensions FROM pydio_settings WHERE id=1").
+		Scan(&view.Enabled, &view.BaseURL, &view.Roots, &customers, &view.Version, &view.MaxUploadMB, &view.AllowedExtensions)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		view.Source, view.Enabled = "environment", s.cfg.PydioLinkURL != ""
@@ -79,6 +82,7 @@ func (s *Server) pydioCurrent(ctx context.Context) (pydioView, error) {
 			view.Source = "none"
 		}
 		view.BaseURL, view.Roots, view.CustomerRoots = s.cfg.PydioLinkURL, s.cfg.PydioLinkRoots, s.cfg.PydioCustomerRoots
+		view.MaxUploadMB = pydio.DefaultMaxUploadMB
 	case err != nil:
 		return pydioView{}, err
 	default:
@@ -91,6 +95,9 @@ func (s *Server) pydioCurrent(ctx context.Context) (pydioView, error) {
 	}
 	if view.CustomerRoots == nil {
 		view.CustomerRoots = map[string][]string{}
+	}
+	if view.AllowedExtensions == nil {
+		view.AllowedExtensions = []string{}
 	}
 	view.ListingTokenAvailable = s.pydioToken(view.BaseURL) != ""
 	return view, nil
@@ -192,6 +199,9 @@ func (s *Server) putPydioSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Version *int `json:"version"`
 		pydioSettings
+		// Omitted (or null) keeps the saved value, so an older client cannot reset a limit; [] allows every type.
+		MaxUploadMB       *int     `json:"max_upload_mb"`
+		AllowedExtensions []string `json:"allowed_extensions"`
 	}
 	if !decode(w, r, &in) {
 		return
@@ -203,6 +213,18 @@ func (s *Server) putPydioSettings(w http.ResponseWriter, r *http.Request) {
 	if err := in.pydioSettings.normalize(); err != nil {
 		writeError(w, http.StatusUnprocessableEntity, err.Error())
 		return
+	}
+	if in.MaxUploadMB != nil && (*in.MaxUploadMB < 1 || *in.MaxUploadMB > pydio.MaxUploadMB) {
+		writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf("max_upload_mb must be 1 to %d", pydio.MaxUploadMB))
+		return
+	}
+	if in.AllowedExtensions != nil {
+		cleaned, err := pydio.CleanExtensions(in.AllowedExtensions)
+		if err != nil {
+			writeError(w, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+		in.AllowedExtensions = cleaned
 	}
 	codes := make([]string, 0, len(in.CustomerRoots))
 	for code := range in.CustomerRoots {
@@ -223,21 +245,28 @@ WHERE NOT EXISTS (SELECT 1 FROM clients WHERE code=c)`, codes).Scan(&unknown); e
 		if len(unknown) > 0 {
 			return adminError{http.StatusUnprocessableEntity, "validation_failed", "unknown Customer code: " + strings.Join(unknown, ", ")}
 		}
-		query := `INSERT INTO pydio_settings(id,enabled,base_url,roots,customer_roots,updated_by) VALUES (1,$1,$2,$3,$4,$5::uuid) ON CONFLICT (id) DO NOTHING`
-		args := []any{in.Enabled, in.BaseURL, in.Roots, customers, actorOf(r).ID}
+		query := `INSERT INTO pydio_settings(id,enabled,base_url,roots,customer_roots,updated_by,max_upload_mb,allowed_extensions)
+VALUES (1,$1,$2,$3,$4,$5::uuid,COALESCE($6::integer,$8::integer),COALESCE($7::text[],'{}')) ON CONFLICT (id) DO NOTHING`
+		args := []any{in.Enabled, in.BaseURL, in.Roots, customers, actorOf(r).ID, in.MaxUploadMB, in.AllowedExtensions}
 		if *in.Version > 0 {
-			query = `UPDATE pydio_settings SET enabled=$1,base_url=$2,roots=$3,customer_roots=$4,updated_by=$5::uuid,updated_at=now(),version=version+1 WHERE id=1 AND version=$6`
+			query = `UPDATE pydio_settings SET enabled=$1,base_url=$2,roots=$3,customer_roots=$4,updated_by=$5::uuid,
+max_upload_mb=COALESCE($6::integer,max_upload_mb),allowed_extensions=COALESCE($7::text[],allowed_extensions),updated_at=now(),version=version+1 WHERE id=1 AND version=$8`
 			args = append(args, *in.Version)
+		} else {
+			args = append(args, pydio.DefaultMaxUploadMB)
 		}
-		tag, err := tx.Exec(ctx, query, args...)
+		var maxUploadMB int
+		var extensions []string
+		err := tx.QueryRow(ctx, query+" RETURNING max_upload_mb,allowed_extensions", args...).Scan(&maxUploadMB, &extensions)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return adminError{http.StatusConflict, "version_conflict", "the settings were changed by someone else; reload and try again"}
+		}
 		if err != nil {
 			return err
 		}
-		if tag.RowsAffected() == 0 {
-			return adminError{http.StatusConflict, "version_conflict", "the settings were changed by someone else; reload and try again"}
-		}
 		return s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditPydioConfigured, TargetType: "pydio", TargetID: "settings",
-			Details: map[string]any{"enabled": in.Enabled, "base_url": in.BaseURL, "roots": in.Roots, "customer_roots": in.CustomerRoots}})
+			Details: map[string]any{"enabled": in.Enabled, "base_url": in.BaseURL, "roots": in.Roots, "customer_roots": in.CustomerRoots,
+				"max_upload_mb": maxUploadMB, "allowed_extensions": extensions}})
 	})
 	if err != nil {
 		adminWriteError(w, err)
