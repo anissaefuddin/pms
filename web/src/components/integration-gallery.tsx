@@ -1,3 +1,4 @@
+import { FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { AdminStatus } from "@/components/admin/admin-ui";
@@ -10,6 +11,7 @@ const GITHUB_MARK = <svg viewBox="0 0 16 16" fill="currentColor" className="size
 const PROVIDERS = [
   { id: "github", logo: GITHUB_MARK, tileClass: "border bg-white text-neutral-900", section: "connectors" },
   { id: "google", logo: <img src="/brand/google-calendar.svg" alt="" className="size-10" />, tileClass: "", section: "connectors" },
+  { id: "pydio", logo: <FolderOpen className="size-6" aria-hidden="true" />, tileClass: "border bg-muted", section: "pydio" },
 ] as const;
 const BUILDERS = [
   { id: "api", section: "api", adminOnly: false },
