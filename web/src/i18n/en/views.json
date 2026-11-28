@@ -73,6 +73,7 @@
     "open": "Open link",
     "versionNumber": "v{{version}}",
     "dash": "—",
+    "emptySpaceHint": "Attach a file to an item in this Space to see it here.",
     "location": "Location",
     "thisFolder": "This folder",
     "thisProject": "This project",

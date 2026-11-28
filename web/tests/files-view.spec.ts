@@ -96,6 +96,37 @@ test("a reader gets no Add file, and an empty folder says so", async ({ page }) 
   await expect(page.getByRole("link", { name: "Open folder in Pydio" })).toHaveCount(0);
 });
 
+test("a Space lists the files of its items without Add file or direct files", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET /spaces/${marketing.id}/views`]: { body: { items: [{ id: viewId, name: "Files", type: "files", is_default: true, visibility: "public", position: 0 }] } },
+    [`GET /spaces/${marketing.id}/items`]: { body: { items: [folder] } },
+    [`GET /spaces/${marketing.id}/files`]: { body: { items: [file("f2", "Charter.pdf", ["Asset Integrity", "Alpha"])], total: 1, truncated: false,
+      counts: { all: 1, direct: 0, subitems: 1, projects: 1 }, projects: [{ id: alphaId, title: "Alpha", files: 1 }] } },
+    "GET /workflows": { body: { items: [] } },
+  } });
+  await page.goto(`/spaces/${marketing.id}?view=${viewId}`);
+  const summary = page.getByRole("group", { name: "File summary" });
+  await expect(summary).toContainText("Total documents1");
+  await expect(summary).toContainText("Projects with files1");
+  await expect(summary).not.toContainText("Direct files");
+  await expect(page.getByRole("button", { name: "Asset Integrity › Alpha" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add file" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Direct/ })).toHaveCount(0);
+  expect(calls.some((c) => c.path.endsWith("/pydio-reference"))).toBe(false);
+  expect((await new AxeBuilder({ page }).include("[data-files-view]").analyze()).violations).toEqual([]);
+});
+
+test("a Space offers the Files view when adding one", async ({ page }) => {
+  await mockSpaces(page, { extra: {
+    [`GET /spaces/${marketing.id}/views`]: { body: { items: [{ id: viewId, name: "Table", type: "table", is_default: true, visibility: "public", position: 0 }] } },
+  } });
+  await page.goto(`/spaces/${marketing.id}`);
+  await page.getByRole("button", { name: "Add view" }).click();
+  const types = page.getByRole("group", { name: /view type/i });
+  await expect(types.getByRole("button", { name: /^Files/ })).toBeEnabled();
+  await expect(types.getByRole("button", { name: /^Chart/ })).toBeDisabled();
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
   test("the files view does not scroll the page sideways", async ({ page }) => {

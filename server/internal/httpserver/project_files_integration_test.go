@@ -162,3 +162,62 @@ func TestFoldersMayHaveAFilesView(t *testing.T) {
 	f.want(create(folder, "timelog"), 422, "timelog on a folder")
 	f.want(create(task, "files"), 404, "a task has no views")
 }
+
+// The Space Files view gathers every item of one Space, judged by what the viewer may do in that Space.
+func TestSpaceFiles(t *testing.T) {
+	f := newFixture(t)
+	admin, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular")
+	open, other := f.space("Open"), f.space("Other")
+	f.share(open, "user", reader.id, "read")
+	f.share(open, "user", admin.id, "full")
+	f.share(other, "user", admin.id, "full")
+	item := func(kind, title, space, parent string) string {
+		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1::item_type,$2,$3) RETURNING id::text", kind, title, admin.id)
+		var under any
+		if parent != "" {
+			under = parent
+		}
+		f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", id, space, under)
+		return id
+	}
+	folder := item("folder", "Contracts", open, "")
+	alpha := item("project", "Alpha", open, folder)
+	task := item("task", "Collect", open, alpha)
+	loose := item("task", "Loose", open, "")
+	elsewhere := item("project", "Elsewhere", other, "")
+	gone := item("task", "Gone", open, "")
+	n := 0
+	attach := func(owner, name string) {
+		n++
+		f.exec(`INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,created_at)
+VALUES (gen_random_uuid(),$1,$2,$3,'text/plain',1,$4,decode(repeat('00',32),'hex'),timestamptz '2026-11-01' + make_interval(mins => $5))`, owner, admin.id, name, fmt.Sprint("space-key", n), n)
+	}
+	attach(folder, "folder.txt")
+	attach(task, "task.txt")
+	attach(loose, "loose.txt")
+	attach(elsewhere, "elsewhere.txt")
+	attach(gone, "gone.txt")
+	f.exec("UPDATE items SET deleted_at=now() WHERE id=$1", gone)
+
+	r := f.call(reader, "GET", "/spaces/"+open+"/files", nil)
+	f.want(r, 200, "space files")
+	var got []string
+	for _, row := range r.items() {
+		got = append(got, fmt.Sprintf("%v@%v", row["filename"], row["path"]))
+	}
+	if s := strings.Join(got, " "); s != "loose.txt@[Loose] task.txt@[Contracts Alpha Collect] folder.txt@[Contracts]" {
+		t.Fatalf("rows = %s", s)
+	}
+	if s := fmt.Sprint(r.body["counts"]); s != "map[all:3 direct:0 projects:1 subitems:3]" {
+		t.Fatalf("counts = %s", s)
+	}
+	if s := f.call(reader, "GET", "/spaces/"+open+"/files?project="+alpha+"&q=task&limit=1", nil); s.body["total"] != float64(1) {
+		t.Fatalf("filtered = %v", s.body)
+	}
+	f.want(f.call(reader, "GET", "/spaces/"+open+"/files?limit=0", nil), 422, "bad page")
+	f.want(f.call(outsider, "GET", "/spaces/"+open+"/files", nil), 404, "no access to the Space")
+	f.want(f.call(reader, "GET", "/spaces/"+other+"/files", nil), 404, "another Space")
+	f.want(f.call(reader, "GET", "/spaces/not-an-id/files", nil), 404, "malformed id")
+	f.want(f.call(admin, "POST", "/views", map[string]any{"scope_space_id": open, "type": "files", "name": "Files", "visibility": "public"}), 201, "files view on a Space")
+	f.want(f.call(admin, "POST", "/views", map[string]any{"scope_space_id": open, "type": "chart", "name": "Chart", "visibility": "public"}), 422, "chart on a Space")
+}

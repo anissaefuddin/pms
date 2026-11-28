@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 func (s *Server) ProjectFileRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{projectId}/files", s.requireUser(s.listProjectFiles))
+	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/files", s.requireUser(s.listSpaceFiles))
 }
 
 // fileCandidates bounds one listing before the permission filter.
@@ -28,6 +30,19 @@ const subtreeCTE = `WITH RECURSIVE t(id,parent,depth) AS (
  SELECT $1::uuid,NULL::uuid,0
  UNION SELECT l.item_id,l.parent_item_id,t.depth+1 FROM t JOIN item_locations l ON l.parent_item_id=t.id AND l.deleted_root_id IS NULL
   JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL WHERE t.depth<30)`
+
+// spaceCTE is every live item with a place in a Space, with its parent there.
+const spaceCTE = `WITH t(id,parent,depth) AS (
+ SELECT l.item_id,l.parent_item_id,0 FROM item_locations l JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL
+ WHERE l.space_id=$1::uuid AND l.deleted_root_id IS NULL)`
+
+// fileScope says whose files a listing gathers.
+type fileScope struct {
+	cte    string    // defines t(id,parent,depth) from $1
+	id     uuid.UUID // $1
+	root   string    // the item being viewed; empty for a Space, which holds no files itself
+	within *string   // judge permissions through this Space only
+}
 
 type filesQuery struct {
 	q, scope, kind, review, project string
@@ -82,6 +97,31 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, items.ErrNotFound)
 		return
 	}
+	s.listFiles(w, r, fileScope{cte: subtreeCTE, id: project, root: project.String()}, func(ctx context.Context, tx pgx.Tx) error {
+		_, err := approvalCaps(ctx, tx, actorOf(r), project, policy.View)
+		return err
+	})
+}
+
+// listSpaceFiles lists the attachments of every item in a Space. It needs the Space itself: a share on single items is not enough.
+func (s *Server) listSpaceFiles(w http.ResponseWriter, r *http.Request) {
+	space, err := uuid.Parse(r.PathValue("spaceId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	id := space.String()
+	s.listFiles(w, r, fileScope{cte: spaceCTE, id: space, within: &id}, func(ctx context.Context, tx pgx.Tx) error {
+		access, found, err := policy.SpaceAccessFor(ctx, tx, actorOf(r), id)
+		if err == nil && (!found || !access.Caps.Has(policy.View)) {
+			err = items.ErrNotFound
+		}
+		return err
+	})
+}
+
+// listFiles answers both listings once gate has let the viewer into the scope.
+func (s *Server) listFiles(w http.ResponseWriter, r *http.Request, scope fileScope, gate func(context.Context, pgx.Tx) error) {
 	query, ok := parseFilesQuery(r.URL.Query())
 	if !ok {
 		writeError(w, http.StatusUnprocessableEntity, "invalid file filter or page")
@@ -95,11 +135,11 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 	actor := actorOf(r)
-	if _, err := approvalCaps(ctx, tx, actor, project, policy.View); err != nil {
+	if err := gate(ctx, tx); err != nil {
 		writeItemError(w, err)
 		return
 	}
-	rows, err := tx.Query(ctx, subtreeCTE+`
+	rows, err := tx.Query(ctx, scope.cte+`
  , outcomes(attachment_id,attachment_version,created_at,outcome) AS (
   -- WA-D08: one outcome per approval pinned to a file version, using the same rule as the approval list.
   SELECT a.attachment_id,a.attachment_version,a.created_at,(`+approvalOutcome+`)
@@ -115,7 +155,7 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
  JOIN items i ON i.id=a.item_id AND i.deleted_at IS NULL JOIN users u ON u.id=a.uploader_id
  LEFT JOIN LATERAL (SELECT o.outcome FROM outcomes o WHERE o.attachment_id=a.id AND o.attachment_version=a.current_version
    ORDER BY (o.outcome='pending') DESC, o.created_at DESC LIMIT 1) r ON TRUE
- WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC,a.id LIMIT $2`, project, fileCandidates)
+ WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC,a.id LIMIT $2`, scope.id, fileCandidates)
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -130,9 +170,9 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// The shallowest way to each item gives its location.
-	nodeRows, err := tx.Query(ctx, subtreeCTE+`
+	nodeRows, err := tx.Query(ctx, scope.cte+`
  SELECT DISTINCT ON (t.id) t.id::text, coalesce(t.parent::text,''), i.title, i.type::text
- FROM t JOIN items i ON i.id=t.id ORDER BY t.id,t.depth,t.parent`, project)
+ FROM t JOIN items i ON i.id=t.id ORDER BY t.id,t.depth,t.parent NULLS FIRST`, scope.id)
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -147,7 +187,7 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	root := project.String()
+	root := scope.root
 	var ids []string
 	asked := map[string]bool{}
 	chains := make([][]string, len(all))
@@ -160,7 +200,7 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	caps, err := policy.ItemsCaps(ctx, tx, actor, ids, nil)
+	caps, err := policy.ItemsCaps(ctx, tx, actor, ids, scope.within)
 	if err != nil {
 		writeItemError(w, err)
 		return

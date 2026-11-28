@@ -25,8 +25,11 @@ const SCOPES = [["", "all"], ["direct", "direct"], ["subitems", "subitems"]] as 
 const noFilters = { q: "", scope: "", kind: "", review: "", project: "" };
 const selectClass = "block h-9 rounded-md border border-input bg-background px-2 focus-visible:outline-ring";
 
-/** Files view of a project or folder: the documents of the item and everything below it that the viewer may see. */
-export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item: Item) => void }) {
+/**
+ * Files view of a Space, project or folder: the documents of its items that the viewer may see. A Space holds no files itself, so
+ * without `project` there is nothing to add to, no direct/subitem split and no folder link.
+ */
+export function ProjectFiles({ project, spaceId, onOpen }: { project?: Item; spaceId: string; onOpen: (item: Item) => void }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const client = useQueryClient();
@@ -35,27 +38,30 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
   const search = useDeferredValue(filters.q.trim());
   const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
   for (const [key, value] of Object.entries({ ...filters, q: search })) if (value) params.set(key, value);
+  const owner = project?.id ?? spaceId;
   const files = useQuery({
-    queryKey: ["project-files", project.id, params.toString()], placeholderData: keepPreviousData,
-    queryFn: () => api<Listing>(`/api/v1/items/${project.id}/files?${params}`),
+    queryKey: ["project-files", owner, params.toString()], placeholderData: keepPreviousData,
+    queryFn: () => api<Listing>(`/api/v1/${project ? "items" : "spaces"}/${owner}/files?${params}`),
   });
   // The folder link of this item, shown only when the server says it is valid for the item's Customer.
-  const dms = useQuery({ queryKey: ["pydio-reference", project.id, project.version], queryFn: () => api<{ state: string; open_url?: string }>(`/api/v1/items/${project.id}/pydio-reference`), retry: false });
+  const dms = useQuery({ queryKey: ["pydio-reference", owner, project?.version], enabled: !!project, queryFn: () => api<{ state: string; open_url?: string }>(`/api/v1/items/${owner}/pydio-reference`), retry: false });
   if (files.isPending) return <p role="status">{t("items.loading")}</p>;
   if (files.isError) return <p role="alert">{t("items.loadError")}</p>;
   const data = files.data;
-  const folder = project.type === "folder";
+  const folder = project?.type === "folder";
   const here = t(folder ? "views.files.thisFolder" : "views.files.thisProject");
   const change = (update: Partial<typeof noFilters>) => { setFilters((current) => ({ ...current, ...update })); setPage(0); };
   const filtered = Object.values(filters).some(Boolean);
   const dmsURL = dms.data?.state === "linked" ? dms.data.open_url : undefined;
-  const add = project.my_capabilities.includes("attach") && <AddFile itemId={project.id} destination={t(folder ? "views.files.addedToFolder" : "views.files.addedToProject")}
-    onAdded={() => Promise.all([client.invalidateQueries({ queryKey: ["project-files", project.id] }), client.invalidateQueries({ queryKey: ["item-attachments", project.id] })])} />;
+  const add = project?.my_capabilities.includes("attach") && <AddFile itemId={owner} destination={t(folder ? "views.files.addedToFolder" : "views.files.addedToProject")}
+    onAdded={() => Promise.all([client.invalidateQueries({ queryKey: ["project-files", owner] }), client.invalidateQueries({ queryKey: ["item-attachments", owner] })])} />;
   const dmsLink = dmsURL && <a href={dmsURL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline">
     <ExternalLink aria-hidden="true" className="size-4" />{t(folder ? "views.files.openFolder" : "views.files.openProject")}</a>;
   if (!data.counts.all) return <div className="space-y-3" data-files-view>{add}
-    <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t("views.files.emptyHint")} />{dmsLink}</div>;
-  const stats = [["total", data.counts.all], ["direct", data.counts.direct], ["subitems", data.counts.subitems], ...(folder ? [["projects", data.counts.projects] as const] : [])] as const;
+    <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t(project ? "views.files.emptyHint" : "views.files.emptySpaceHint")} />{dmsLink}</div>;
+  const stats = [["total", data.counts.all] as const,
+    ...(project ? [["direct", data.counts.direct] as const, ["subitems", data.counts.subitems] as const] : []),
+    ...(!project || folder ? [["projects", data.counts.projects] as const] : [])];
   const first = page * PAGE;
   return <div className="space-y-3" data-files-view>
     <div role="group" aria-label={t("views.files.summary")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -76,11 +82,11 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
       {filtered && <Button variant="outline" onClick={() => change(noFilters)}>{t("views.clearFilters")}</Button>}
       <div className="ms-auto">{add}</div>
     </div>
-    <div role="group" aria-label={t("views.files.scope")} className="flex flex-wrap gap-1 border-b">
+    {project && <div role="group" aria-label={t("views.files.scope")} className="flex flex-wrap gap-1 border-b">
       {SCOPES.map(([scope, key]) =>
         <button key={key} type="button" aria-pressed={filters.scope === scope} onClick={() => change({ scope })}
           className={`px-3 py-1.5 text-sm ${filters.scope === scope ? "border-b-2 border-foreground font-medium" : "text-muted-foreground"}`}>{t(`views.files.tabs.${key}`, { number: data.counts[key] })}</button>)}
-    </div>
+    </div>}
     {data.items.length === 0 ? <p role="status" className="py-4 text-sm text-muted-foreground">{t("views.files.noMatch")}</p>
       : <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t("views.files.listRegion")}><table aria-label={t("views.types.files")} className="w-full text-left text-sm">
         <thead><tr>
@@ -95,7 +101,7 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
           <td className="p-2">{file.version && !file.link_url ? t("views.files.versionNumber", { version: file.version }) : "—"}</td>
           {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
           <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
-          <td className="p-2">{file.item_id === project.id ? here
+          <td className="p-2">{file.item_id === project?.id ? here
             : <button type="button" className="text-left underline" onClick={() => onOpen({ id: file.item_id, title: file.item_title } as Item)}>{file.path.join(" › ") || file.item_title}</button>}</td>
           <td className="p-2 whitespace-nowrap">{file.link_url ? t("views.files.dash") : t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })}</td>
           <td className="p-2">{file.uploader.name}</td>

@@ -169,7 +169,8 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, fol
         <DialogTitle>{t("views.chooseType")}</DialogTitle>
         <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label={t("views.chooseType")}>
           {viewTypes.map((type) => {
-            const available = !projectOnlyTypes.includes(type) || project || (folder && type === "files");
+            // A Space and a folder have a Files view too.
+            const available = !projectOnlyTypes.includes(type) || project || (type === "files" && (folder || "scope_space_id" in scope));
             return <button key={type} type="button" disabled={!available} aria-disabled={!available || undefined}
               onClick={() => { setChoosing(false); setAdding(type); }}
               className="flex items-start gap-3 rounded-lg border bg-card p-3 text-left hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60">
