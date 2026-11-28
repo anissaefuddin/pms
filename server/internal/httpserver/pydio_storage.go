@@ -120,7 +120,8 @@ func (b *pydioStorageBody) normalize() error {
 // checkFolders proves that the account can write, read and delete in every folder.
 func checkFolders(client storage.Cells, folders ...string) error {
 	for _, folder := range folders {
-		key := folder + "/_pms-check/" + uuid.NewString() + "/check.txt"
+		// One _pms-check folder per storage folder: Cells keeps folders after their files are deleted.
+		key := folder + "/_pms-check/" + uuid.NewString() + ".txt"
 		const text = "PMS storage check"
 		if _, err := client.PutAt(key, strings.NewReader(text), 1<<10); err != nil {
 			return err

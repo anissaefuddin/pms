@@ -87,6 +87,8 @@ Terpisah dari tautan folder. API khusus admin (belum ada di UI): `GET/PUT /api/v
 
 Batas saat ini: lampiran dari form publik dan gambar preview tetap di `PMS_STORAGE`; `backup.sh` tidak mencakup file di Pydio (backup Pydio terpisah); mengganti alamat membuat file lama dicari di alamat baru; file yang tidak terpakai di Pydio tidak disapu otomatis.
 
+**Hasil uji ke Cells dev (28 Nov 2026), lewat folder pribadi akun uji:** pengaktifan dengan uji tulis, baca, hapus; unggah dan unduh identik (termasuk 60 MB bertahap dan ZIP); versi baru; preview; hapus terverifikasi; semuanya lulus. Cells menjawab 403 sesaat setelah unggahan bertahap, dan adapter menunggunya sampai sekitar 13 detik. Cells menyimpan folder kosong setelah file dihapus (termasuk `_pms-check`). Hak akses workspace buatan admin belum diuji.
+
 Akun Cells: satu akun layanan dengan hak baca dan tulis **hanya** pada folder penyimpanan, tanpa dibagikan ke pengguna biasa.
 
 ## Langkah

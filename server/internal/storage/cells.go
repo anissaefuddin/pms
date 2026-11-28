@@ -18,7 +18,7 @@ import (
 
 // Pydio Cells storage through its S3 gateway (bucket "io", path style), verified against Cells 5 (tahap 0):
 // one request fails above about 100 MB behind the public proxy, a PUT silently replaces an existing object, conditional PUT is
-// ignored and a DELETE can answer success while the file stays.
+// ignored, a DELETE can answer success while the file stays, and a file answers 403 for a moment after a multipart upload.
 
 // ErrUnavailable means Pydio did not do what was asked. The message never carries the address or the folder path.
 var ErrUnavailable = errors.New("pydio storage is unavailable")
@@ -118,16 +118,28 @@ func (c Cells) PutAt(key string, src io.Reader, maxBytes int64) (File, error) {
 	return File{Key: key, Size: n, SHA256: sum}, nil
 }
 
+// settle repeats a check while Cells catches up with a change, for about 13 seconds in all.
+func settle(check func() error) error {
+	err := check()
+	for wait := 100 * time.Millisecond; err != nil && wait <= 6400*time.Millisecond; wait *= 2 {
+		time.Sleep(wait)
+		err = check()
+	}
+	return err
+}
+
 func (c Cells) verify(key string, size int64) error {
-	res, err := c.request(http.MethodHead, key, emptySHA256, nil, 0)
-	if err != nil {
-		return err
-	}
-	res.Body.Close()
-	if res.ContentLength != size {
-		return fmt.Errorf("%w: stored size differs from the upload", ErrUnavailable)
-	}
-	return nil
+	return settle(func() error {
+		res, err := c.request(http.MethodHead, key, emptySHA256, nil, 0)
+		if err != nil {
+			return err
+		}
+		res.Body.Close()
+		if res.ContentLength != size {
+			return fmt.Errorf("%w: stored size differs from the upload", ErrUnavailable)
+		}
+		return nil
+	})
 }
 
 func (c Cells) multipart(key string, file io.ReaderAt, size int64) (err error) {
@@ -214,13 +226,15 @@ func (c Cells) Remove(key string) error {
 		return err
 	}
 	res.Body.Close()
-	res, err = c.request(http.MethodHead, key, emptySHA256, nil, 0)
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	res.Body.Close()
-	return fmt.Errorf("%w: the file is still there after delete", ErrUnavailable)
+	return settle(func() error {
+		res, err := c.request(http.MethodHead, key, emptySHA256, nil, 0)
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		res.Body.Close()
+		return fmt.Errorf("%w: the file is still there after delete", ErrUnavailable)
+	})
 }

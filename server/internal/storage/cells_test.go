@@ -76,3 +76,14 @@ func TestCellsFailuresAreErrorsWithoutPaths(t *testing.T) {
 		t.Fatalf("closed gateway: %v", err)
 	}
 }
+
+// Seen on real Cells: right after a multipart upload the file answers 403 for a moment.
+func TestCellsWaitsForAMultipartFileToAppear(t *testing.T) {
+	g := cellstest.New(t, "tok", "pms-files")
+	g.Lag = 3
+	c := storage.NewCells(g.URL, "tok")
+	c.PartSize = 4
+	if _, err := c.PutAt("pms-files/late.bin", strings.NewReader("0123456789"), 99); err != nil {
+		t.Fatalf("a file that appears after a moment is stored: %v", err)
+	}
+}

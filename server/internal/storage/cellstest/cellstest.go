@@ -28,12 +28,15 @@ type Gateway struct {
 	parts   map[int][]byte
 	// Down answers 503; KeepOnDelete answers 204 without deleting, as Cells does for a token without the right.
 	Down, KeepOnDelete bool
-	Requests           []string
+	// Lag is how many HEAD requests answer 403 after a multipart upload completes, as Cells does until it has indexed the file.
+	Lag      int
+	lagging  map[string]int
+	Requests []string
 }
 
 // New serves over TLS and makes storage trust it for the length of the test. Only workspaces named in writable accept files.
 func New(t *testing.T, token string, writable ...string) *Gateway {
-	g := &Gateway{Token: token, objects: map[string][]byte{}, parts: map[int][]byte{}}
+	g := &Gateway{Token: token, objects: map[string][]byte{}, parts: map[int][]byte{}, lagging: map[string]int{}}
 	g.Server = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		g.mu.Lock()
 		defer g.mu.Unlock()
@@ -83,6 +86,7 @@ func New(t *testing.T, token string, writable ...string) *Gateway {
 				all = append(all, g.parts[n]...)
 			}
 			g.objects[key] = all
+			g.lagging[key] = g.Lag
 			fmt.Fprint(w, "<CompleteMultipartUploadResult/>")
 		case r.Method == http.MethodPut:
 			g.objects[key] = body
@@ -91,6 +95,9 @@ func New(t *testing.T, token string, writable ...string) *Gateway {
 				delete(g.objects, key)
 			}
 			w.WriteHeader(http.StatusNoContent)
+		case r.Method == http.MethodHead && g.lagging[key] > 0:
+			g.lagging[key]--
+			w.WriteHeader(http.StatusForbidden)
 		default:
 			data, ok := g.objects[key]
 			if !ok {
