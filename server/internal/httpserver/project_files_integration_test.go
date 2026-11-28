@@ -1,6 +1,10 @@
 package httpserver_test
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 func TestProjectFiles(t *testing.T) {
 	f := newFixture(t)
@@ -34,4 +38,127 @@ VALUES (gen_random_uuid(),$1,$2,'gone.txt','text/plain',1,'k4',decode(repeat('00
 		}
 	}
 	f.want(f.call(outsider, "GET", path, nil), 404, "no access to the project")
+}
+
+// The Files view of a folder or project: where each file sits, counts that only include visible files, and server-side filtering.
+func TestFilesListIsCountedFilteredAndPaged(t *testing.T) {
+	f := newFixture(t)
+	admin, reader := f.person("admin"), f.person("regular")
+	open, hidden := f.space("Open"), f.space("Hidden")
+	f.share(open, "user", reader.id, "read")
+	f.share(open, "user", admin.id, "full")
+	f.share(hidden, "user", admin.id, "full")
+	item := func(kind, title, space, parent string) string {
+		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1::item_type,$2,$3) RETURNING id::text", kind, title, admin.id)
+		var under any
+		if parent != "" {
+			under = parent
+		}
+		f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", id, space, under)
+		return id
+	}
+	folder := item("folder", "Asset Integrity", open, "")
+	alpha := item("project", "Alpha", open, folder)
+	task := item("task", "Data Collection", open, alpha)
+	beta := item("project", "Beta", open, folder)
+	secret := item("project", "Secret", hidden, folder)
+	n := 0
+	attach := func(owner, name, link string) {
+		n++
+		var url any
+		if link != "" {
+			url = link
+		}
+		f.exec(`INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,link_url,created_at)
+VALUES (gen_random_uuid(),$1,$2,$3,'text/plain',1,$4,decode(repeat('00',32),'hex'),$5,timestamptz '2026-11-01' + make_interval(mins => $6))`, owner, admin.id, name, fmt.Sprint("key", n), url, n)
+	}
+	attach(folder, "Standard.pdf", "")
+	attach(folder, "Reference", "https://example.com/ref")
+	attach(alpha, "Charter.docx", "")
+	attach(task, "Drawing.pdf", "")
+	attach(beta, "Contract.pdf", "")
+	attach(secret, "Hidden.pdf", "")
+
+	get := func(p *person, query string) reply {
+		t.Helper()
+		r := f.call(p, "GET", "/items/"+folder+"/files"+query, nil)
+		f.want(r, 200, "files"+query)
+		return r
+	}
+	names := func(r reply) string {
+		var out []string
+		for _, row := range r.items() {
+			out = append(out, row["filename"].(string))
+		}
+		return strings.Join(out, ",")
+	}
+	all := get(reader, "")
+	if got := fmt.Sprint(all.body["counts"]); got != "map[all:5 direct:2 projects:2 subitems:3]" {
+		t.Fatalf("counts = %s", got)
+	}
+	if got := fmt.Sprint(get(admin, "").body["counts"]); got != "map[all:6 direct:2 projects:3 subitems:4]" {
+		t.Fatalf("admin counts = %s", got)
+	}
+	if strings.Contains(fmt.Sprint(all.body), "Secret") {
+		t.Fatalf("a hidden project must not be named: %v", all.body)
+	}
+	paths := map[string]string{}
+	for _, row := range all.items() {
+		paths[row["filename"].(string)] = fmt.Sprint(row["path"])
+	}
+	if paths["Standard.pdf"] != "[]" || paths["Charter.docx"] != "[Alpha]" || paths["Drawing.pdf"] != "[Alpha Data Collection]" {
+		t.Fatalf("paths = %v", paths)
+	}
+	for query, want := range map[string]string{
+		"?scope=direct":           "Reference,Standard.pdf",
+		"?scope=subitems":         "Contract.pdf,Drawing.pdf,Charter.docx",
+		"?q=PDF":                  "Contract.pdf,Drawing.pdf,Standard.pdf",
+		"?kind=link":              "Reference",
+		"?kind=file&scope=direct": "Standard.pdf",
+		"?project=" + alpha:       "Drawing.pdf,Charter.docx",
+		"?project=" + secret:      "",
+		"?review=approved":        "",
+		"?limit=2":                "Contract.pdf,Drawing.pdf",
+		"?limit=2&offset=4":       "Standard.pdf",
+		"?limit=2&offset=40":      "",
+	} {
+		if got := names(get(reader, query)); got != want {
+			t.Errorf("%s: %q, want %q", query, got, want)
+		}
+	}
+	page := get(reader, "?q=pdf&limit=1")
+	if page.body["total"] != float64(3) || fmt.Sprint(page.body["counts"]) != "map[all:5 direct:2 projects:2 subitems:3]" {
+		t.Fatalf("total follows the filter, counts do not: %v", page.body)
+	}
+	var projects []string
+	for _, p := range all.body["projects"].([]any) {
+		m := p.(map[string]any)
+		projects = append(projects, fmt.Sprintf("%v:%v", m["title"], m["files"]))
+	}
+	if got := strings.Join(projects, ","); got != "Alpha:2,Beta:1" {
+		t.Fatalf("projects = %s", got)
+	}
+	for _, bad := range []string{"?scope=x", "?kind=x", "?review=x", "?project=x", "?limit=0", "?limit=201", "?offset=-1", "?limit=a"} {
+		f.want(f.call(reader, "GET", "/items/"+folder+"/files"+bad, nil), 422, bad)
+	}
+}
+
+// A folder may keep a Files view; Timelog and Chart stay project views.
+func TestFoldersMayHaveAFilesView(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.space("Views")
+	f.share(space, "user", admin.id, "full")
+	folder := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('folder','Docs',$1) RETURNING id::text", admin.id)
+	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Task',$1) RETURNING id::text", admin.id)
+	for _, id := range []string{folder, task} {
+		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
+	}
+	create := func(item, kind string) reply {
+		return f.call(admin, "POST", "/views", map[string]any{"scope_item_id": item, "type": kind, "name": kind, "visibility": "public"})
+	}
+	f.want(create(folder, "files"), 201, "files on a folder")
+	f.want(create(folder, "chart"), 422, "chart on a folder")
+	f.want(create(folder, "timelog"), 422, "timelog on a folder")
+	f.want(create(task, "files"), 404, "a task has no views")
 }

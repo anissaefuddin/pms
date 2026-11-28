@@ -30,7 +30,7 @@ Month grid with **Previous month**, **Today**, **Next month**. Drag an item to a
 
 ## Timelog, Files, Chart
 - **Timelog:** time entries of the project, see [Time tracking](time-tracking.md).
-- **Files:** every file in the project (File, Item, Size, Uploaded by, Added).
+- **Files** (projects and folders): the documents of the item and everything below it that you may see, with totals (direct, in subitems, and for folders the projects that have files). **Search files**, filter by **Project**, **Type** and **Review**, switch between **All**, **Direct** and **Subitems**, 50 rows per page. **Location** names where each file sits and opens that item. **Add file** (needs permission to attach) uploads a file or adds an external link to the folder or project you are viewing. **Open folder in Pydio** appears when the item has a valid Pydio folder link. Only the newest 5,000 files are checked.
 - **Chart:** **Items by status** bar chart.
 
 ## Workload

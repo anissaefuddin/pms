@@ -139,15 +139,15 @@ func Create(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput) 
 	switch in.Type {
 	case "table", "board", "gantt", "calendar":
 	case "timelog", "files", "chart":
-		var project bool
-		if in.ItemID == nil {
-			return View{}, Invalid("Timelog, files and chart views require a project")
+		var itemType string
+		if in.ItemID != nil {
+			if err := tx.QueryRow(ctx, "SELECT type::text FROM items WHERE id=$1", *in.ItemID).Scan(&itemType); err != nil {
+				return View{}, err
+			}
 		}
-		if err := tx.QueryRow(ctx, "SELECT type='project' FROM items WHERE id=$1", *in.ItemID).Scan(&project); err != nil {
-			return View{}, err
-		}
-		if !project {
-			return View{}, Invalid("Timelog, files and chart views require a project")
+		// A folder gathers the documents below it too; time logs and charts stay project views.
+		if itemType != "project" && !(in.Type == "files" && itemType == "folder") {
+			return View{}, Invalid("Timelog and chart views require a project; a files view requires a project or folder")
 		}
 	default:
 		return View{}, Invalid("type must be table, board, gantt, calendar, timelog, files, or chart")

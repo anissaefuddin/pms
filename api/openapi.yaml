@@ -5369,7 +5369,16 @@ paths:
     get:
       tags: [collaboration]
       operationId: listProjectFiles
-      summary: File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+      summary: File lintas item dalam project atau folder (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses = 404
+      description: counts dan projects menghitung semua file yang boleh dilihat; q, scope, kind, review, dan project menyaring baris; tanpa limit semua baris yang cocok dikembalikan.
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 200 }, description: 'Bagian dari nama file, tanpa beda huruf besar kecil' }
+        - { name: scope, in: query, schema: { type: string, enum: [direct, subitems] }, description: direct = menempel pada item ini; subitems = pada turunannya }
+        - { name: kind, in: query, schema: { type: string, enum: [file, link] } }
+        - { name: review, in: query, schema: { type: string, enum: [not_requested, in_review, approved, rejected, cancelled] } }
+        - { name: project, in: query, schema: { type: string, format: uuid }, description: Project terdekat pemilik file }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, maximum: 5000 } }
       responses:
         '200':
           description: OK
@@ -5377,12 +5386,32 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [items]
+                required: [items, total, counts, projects, truncated]
                 properties:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/ProjectFile' }
+                  total: { type: integer, description: Jumlah baris yang cocok dengan saringan }
+                  counts:
+                    type: object
+                    required: [all, direct, subitems, projects]
+                    properties:
+                      all: { type: integer }
+                      direct: { type: integer }
+                      subitems: { type: integer }
+                      projects: { type: integer, description: Project turunan yang memiliki file }
+                  projects:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, files]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        files: { type: integer }
+                  truncated: { type: boolean, description: Hanya 5000 file terbaru yang diperiksa }
         '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/attachment-links:
     post:
       tags: [collaboration]
@@ -9833,9 +9862,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/Attachment'
         - type: object
-          required: [item_title]
+          required: [item_title, path]
           properties:
             item_title: { type: string }
+            path: { type: array, items: { type: string }, description: 'Judul dari bawah item yang dibuka sampai pemilik file; kosong bila menempel langsung. Leluhur yang tidak boleh dilihat tidak disebut' }
             review_status:
               type: string
               enum: [not_requested, in_review, approved, rejected, cancelled]

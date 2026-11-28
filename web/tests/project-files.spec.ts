@@ -19,7 +19,7 @@ test("project Files lists files across items and Chart counts items by status; p
     [`GET /items/${projectId}/children`]: { body: { items: [task] } },
     "POST /analytics/query": { body: { total: 1, rows: [{ group: { key: "s1", label: "In review" }, break: null, value: 1 }] } },
     [`GET /items/${projectId}/views`]: { body: { items: views } },
-    [`GET /items/${projectId}/files`]: { body: { items: [{ id: "f1", item_id: taskId, item_title: "Banner", filename: "banner.png", content_type: "image/png", size_bytes: 2048, uploader: { id: "u", name: "Ada Lovelace" }, created_at: ts }] } },
+    [`GET /items/${projectId}/files`]: { body: { items: [{ id: "f1", item_id: taskId, item_title: "Banner", filename: "banner.png", content_type: "image/png", size_bytes: 2048, uploader: { id: "u", name: "Ada Lovelace" }, created_at: ts, path: ["Banner"] }], total: 1, truncated: false, counts: { all: 1, direct: 0, subitems: 1, projects: 0 }, projects: [] } },
   } });
   await page.goto(`/spaces/${marketing.id}`);
   await page.getByRole("button", { name: "Campaign", exact: true }).click();
