@@ -25,12 +25,13 @@ const projectOnlyTypes: readonly SavedView["type"][] = ["timelog", "files", "cha
 /** Tab terlihat sebelum sisanya masuk menu "All views". Tetap sederhana: pengukuran lebar layar belum dipakai. shortcut: tetap 6 tab, naik ke pengukuran lebar bila perlu. */
 const VISIBLE_TABS = 6;
 
-export function ViewTabs({ views, selected, scope, canEdit, project = false, onSelect, onRefresh }: {
+export function ViewTabs({ views, selected, scope, canEdit, project = false, folder = false, onSelect, onRefresh }: {
   views: SavedView[];
   selected: SavedView;
   scope: { scope_space_id: string } | { scope_item_id: string };
   canEdit: boolean;
   project?: boolean;
+  folder?: boolean;
   onSelect: (id: string) => void;
   onRefresh: () => Promise<void>;
 }) {
@@ -168,7 +169,7 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
         <DialogTitle>{t("views.chooseType")}</DialogTitle>
         <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label={t("views.chooseType")}>
           {viewTypes.map((type) => {
-            const available = !projectOnlyTypes.includes(type) || project;
+            const available = !projectOnlyTypes.includes(type) || project || (folder && type === "files");
             return <button key={type} type="button" disabled={!available} aria-disabled={!available || undefined}
               onClick={() => { setChoosing(false); setAdding(type); }}
               className="flex items-start gap-3 rounded-lg border bg-card p-3 text-left hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60">

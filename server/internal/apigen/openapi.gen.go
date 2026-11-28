@@ -3438,6 +3438,69 @@ func (e GetProjectTimeSummary200JSONResponseBodyScope) Valid() bool {
 	}
 }
 
+// Defines values for ListProjectFilesParamsScope.
+const (
+	ListProjectFilesParamsScopeDirect   ListProjectFilesParamsScope = "direct"
+	ListProjectFilesParamsScopeSubitems ListProjectFilesParamsScope = "subitems"
+)
+
+// Valid indicates whether the value is a known member of the ListProjectFilesParamsScope enum.
+func (e ListProjectFilesParamsScope) Valid() bool {
+	switch e {
+	case ListProjectFilesParamsScopeDirect:
+		return true
+	case ListProjectFilesParamsScopeSubitems:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProjectFilesParamsKind.
+const (
+	File ListProjectFilesParamsKind = "file"
+	Link ListProjectFilesParamsKind = "link"
+)
+
+// Valid indicates whether the value is a known member of the ListProjectFilesParamsKind enum.
+func (e ListProjectFilesParamsKind) Valid() bool {
+	switch e {
+	case File:
+		return true
+	case Link:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProjectFilesParamsReview.
+const (
+	ListProjectFilesParamsReviewApproved     ListProjectFilesParamsReview = "approved"
+	ListProjectFilesParamsReviewCancelled    ListProjectFilesParamsReview = "cancelled"
+	ListProjectFilesParamsReviewInReview     ListProjectFilesParamsReview = "in_review"
+	ListProjectFilesParamsReviewNotRequested ListProjectFilesParamsReview = "not_requested"
+	ListProjectFilesParamsReviewRejected     ListProjectFilesParamsReview = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ListProjectFilesParamsReview enum.
+func (e ListProjectFilesParamsReview) Valid() bool {
+	switch e {
+	case ListProjectFilesParamsReviewApproved:
+		return true
+	case ListProjectFilesParamsReviewCancelled:
+		return true
+	case ListProjectFilesParamsReviewInReview:
+		return true
+	case ListProjectFilesParamsReviewNotRequested:
+		return true
+	case ListProjectFilesParamsReviewRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListCreatedByMe200JSONResponseBodyItemsType.
 const (
 	ListCreatedByMe200JSONResponseBodyItemsTypeFolder  ListCreatedByMe200JSONResponseBodyItemsType = "folder"
@@ -6387,6 +6450,9 @@ type ProjectFile struct {
 	// LinkUrl Terisi untuk lampiran tautan (tanpa berkas)
 	LinkUrl *string `json:"link_url,omitempty"`
 
+	// Path Judul dari bawah item yang dibuka sampai pemilik file; kosong bila menempel langsung. Leluhur yang tidak boleh dilihat tidak disebut
+	Path []string `json:"path"`
+
 	// ReviewStatus WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
 	ReviewStatus *ProjectFileReviewStatus `json:"review_status,omitempty"`
 	SizeBytes    int64                    `json:"size_bytes"`
@@ -8186,6 +8252,31 @@ type CreateBaselineJSONBody struct {
 type StartProjectExcelExportJSONBody struct {
 	SpaceId openapi_types.UUID `json:"space_id"`
 }
+
+// ListProjectFilesParams defines parameters for ListProjectFiles.
+type ListProjectFilesParams struct {
+	// Q Bagian dari nama file, tanpa beda huruf besar kecil
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// Scope direct = menempel pada item ini; subitems = pada turunannya
+	Scope  *ListProjectFilesParamsScope  `form:"scope,omitempty" json:"scope,omitempty"`
+	Kind   *ListProjectFilesParamsKind   `form:"kind,omitempty" json:"kind,omitempty"`
+	Review *ListProjectFilesParamsReview `form:"review,omitempty" json:"review,omitempty"`
+
+	// Project Project terdekat pemilik file
+	Project *openapi_types.UUID `form:"project,omitempty" json:"project,omitempty"`
+	Limit   *int                `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset  *int                `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListProjectFilesParamsScope defines parameters for ListProjectFiles.
+type ListProjectFilesParamsScope string
+
+// ListProjectFilesParamsKind defines parameters for ListProjectFiles.
+type ListProjectFilesParamsKind string
+
+// ListProjectFilesParamsReview defines parameters for ListProjectFiles.
+type ListProjectFilesParamsReview string
 
 // CreateGanttSnapshotJSONBody defines parameters for CreateGanttSnapshot.
 type CreateGanttSnapshotJSONBody struct {
@@ -10169,9 +10260,9 @@ type ServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
-	// ListProjectFiles File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+	// ListProjectFiles File lintas item dalam project atau folder (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses = 404
 	// (GET /items/{projectId}/files)
-	ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
+	ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID, params ListProjectFilesParams)
 	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
 	// (GET /items/{projectId}/gantt-snapshots)
 	ListGanttSnapshots(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
@@ -16435,8 +16526,102 @@ func (siw *ServerInterfaceWrapper) ListProjectFiles(w http.ResponseWriter, r *ht
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectFilesParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scope" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scope", r.URL.Query(), &params.Scope, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scope"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scope", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "review" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "review", r.URL.Query(), &params.Review, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "review"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "review", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "project" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "project", r.URL.Query(), &params.Project, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "project"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListProjectFiles(w, r, projectId)
+		siw.Handler.ListProjectFiles(w, r, projectId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -34444,6 +34629,7 @@ func (response StartProjectExcelExport429ApplicationProblemPlusJSONResponse) Vis
 
 type ListProjectFilesRequestObject struct {
 	ProjectId openapi_types.UUID `json:"projectId"`
+	Params    ListProjectFilesParams
 }
 
 type ListProjectFilesResponseObject interface {
@@ -34451,7 +34637,26 @@ type ListProjectFilesResponseObject interface {
 }
 
 type ListProjectFiles200JSONResponse struct {
-	Items []ProjectFile `json:"items"`
+	Counts struct {
+		All    int `json:"all"`
+		Direct int `json:"direct"`
+
+		// Projects Project turunan yang memiliki file
+		Projects int `json:"projects"`
+		Subitems int `json:"subitems"`
+	} `json:"counts"`
+	Items    []ProjectFile `json:"items"`
+	Projects []struct {
+		Files int                `json:"files"`
+		Id    openapi_types.UUID `json:"id"`
+		Title string             `json:"title"`
+	} `json:"projects"`
+
+	// Total Jumlah baris yang cocok dengan saringan
+	Total int `json:"total"`
+
+	// Truncated Hanya 5000 file terbaru yang diperiksa
+	Truncated bool `json:"truncated"`
 }
 
 func (response ListProjectFiles200JSONResponse) VisitListProjectFilesResponse(w http.ResponseWriter) error {
@@ -34478,6 +34683,20 @@ func (response ListProjectFiles404ApplicationProblemPlusJSONResponse) VisitListP
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProjectFiles422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListProjectFiles422ApplicationProblemPlusJSONResponse) VisitListProjectFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -47040,7 +47259,7 @@ type StrictServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(ctx context.Context, request StartProjectExcelExportRequestObject) (StartProjectExcelExportResponseObject, error)
-	// ListProjectFiles File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+	// ListProjectFiles File lintas item dalam project atau folder (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses = 404
 	// (GET /items/{projectId}/files)
 	ListProjectFiles(ctx context.Context, request ListProjectFilesRequestObject) (ListProjectFilesResponseObject, error)
 	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
@@ -53161,10 +53380,11 @@ func (sh *strictHandler) StartProjectExcelExport(w http.ResponseWriter, r *http.
 }
 
 // ListProjectFiles operation middleware
-func (sh *strictHandler) ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+func (sh *strictHandler) ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID, params ListProjectFilesParams) {
 	var request ListProjectFilesRequestObject
 
 	request.ProjectId = projectId
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ListProjectFiles(ctx, request.(ListProjectFilesRequestObject))

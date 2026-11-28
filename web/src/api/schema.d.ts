@@ -3865,7 +3865,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404 */
+        /**
+         * File lintas item dalam project atau folder (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses = 404
+         * @description counts dan projects menghitung semua file yang boleh dilihat; q, scope, kind, review, dan project menyaring baris; tanpa limit semua baris yang cocok dikembalikan.
+         */
         get: operations["listProjectFiles"];
         put?: never;
         post?: never;
@@ -7641,6 +7644,8 @@ export interface components {
         };
         ProjectFile: components["schemas"]["Attachment"] & {
             item_title: string;
+            /** @description Judul dari bawah item yang dibuka sampai pemilik file; kosong bila menempel langsung. Leluhur yang tidak boleh dilihat tidak disebut */
+            path: string[];
             /**
              * @description WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
              * @enum {string}
@@ -16200,7 +16205,18 @@ export interface operations {
     };
     listProjectFiles: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Bagian dari nama file, tanpa beda huruf besar kecil */
+                q?: string;
+                /** @description direct = menempel pada item ini; subitems = pada turunannya */
+                scope?: "direct" | "subitems";
+                kind?: "file" | "link";
+                review?: "not_requested" | "in_review" | "approved" | "rejected" | "cancelled";
+                /** @description Project terdekat pemilik file */
+                project?: string;
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path: {
                 projectId: string;
@@ -16217,10 +16233,28 @@ export interface operations {
                 content: {
                     "application/json": {
                         items: components["schemas"]["ProjectFile"][];
+                        /** @description Jumlah baris yang cocok dengan saringan */
+                        total: number;
+                        counts: {
+                            all: number;
+                            direct: number;
+                            subitems: number;
+                            /** @description Project turunan yang memiliki file */
+                            projects: number;
+                        };
+                        projects: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            files: number;
+                        }[];
+                        /** @description Hanya 5000 file terbaru yang diperiksa */
+                        truncated: boolean;
                     };
                 };
             };
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     createAttachmentLink: {

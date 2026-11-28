@@ -18,9 +18,9 @@ test("link attachments open their URL; file attachments keep the download link",
     [`GET /items/${projectId}/children`]: { body: { items: [] } },
     [`GET /items/${projectId}/views`]: { body: { items: [{ id: view, name: "Files", type: "files", is_default: true, visibility: "public", position: 0 }] } },
     [`GET /items/${projectId}/files`]: { body: { items: [
-      { id: "f1", item_id: projectId, item_title: "Campaign", filename: "brief.pdf", content_type: "application/pdf", size_bytes: 2048, version: 2, uploader, created_at: timestamp },
-      { id: "l1", item_id: projectId, item_title: "Campaign", filename: "Design board", content_type: "text/uri-list", size_bytes: 0, link_url: "https://example.com/board", uploader, created_at: timestamp },
-    ] } },
+      { id: "f1", item_id: projectId, item_title: "Campaign", filename: "brief.pdf", content_type: "application/pdf", size_bytes: 2048, version: 2, uploader, created_at: timestamp, path: [] },
+      { id: "l1", item_id: projectId, item_title: "Campaign", filename: "Design board", content_type: "text/uri-list", size_bytes: 0, link_url: "https://example.com/board", uploader, created_at: timestamp, path: [] },
+    ], total: 2, truncated: false, counts: { all: 2, direct: 2, subitems: 0, projects: 0 }, projects: [] } },
     "GET /workflows": { body: { items: [{ id: "wf", is_default: true, statuses: [status] }] } },
   } });
   await page.goto(`/tasks/${projectId}?view=${view}`);

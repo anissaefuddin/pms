@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useDeferredValue, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
@@ -7,36 +9,108 @@ import type { Item } from "@/lib/items";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilesIllustration, ProjectIllustration } from "@/components/ui/empty-illustrations";
 import { statusDotClass } from "@/lib/status-colors";
+import { AddFile } from "@/components/project-files-add";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-type ProjectFile = components["schemas"]["ProjectFile"];
+type Listing = {
+  items: components["schemas"]["ProjectFile"][]; total: number; truncated: boolean;
+  counts: { all: number; direct: number; subitems: number; projects: number }; projects: { id: string; title: string; files: number }[];
+};
 const reviewKey: Record<string, string> = { not_requested: "notRequested", in_review: "inReview", approved: "approved", rejected: "rejected", cancelled: "cancelled" };
 
+const PAGE = 50;
+const REVIEWS = Object.keys(reviewKey);
+const SCOPES = [["", "all"], ["direct", "direct"], ["subitems", "subitems"]] as const;
+const noFilters = { q: "", scope: "", kind: "", review: "", project: "" };
+const selectClass = "block h-9 rounded-md border border-input bg-background px-2 focus-visible:outline-ring";
+
+/** Files view of a project or folder: the documents of the item and everything below it that the viewer may see. */
 export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item: Item) => void }) {
   const { t } = useTranslation();
   const profile = useProfile();
-  const files = useQuery({ queryKey: ["project-files", project.id], queryFn: () => api<{ items: ProjectFile[] }>(`/api/v1/items/${project.id}/files`) });
+  const client = useQueryClient();
+  const [filters, setFilters] = useState(noFilters);
+  const [page, setPage] = useState(0);
+  const search = useDeferredValue(filters.q.trim());
+  const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
+  for (const [key, value] of Object.entries({ ...filters, q: search })) if (value) params.set(key, value);
+  const files = useQuery({
+    queryKey: ["project-files", project.id, params.toString()], placeholderData: keepPreviousData,
+    queryFn: () => api<Listing>(`/api/v1/items/${project.id}/files?${params}`),
+  });
+  // The folder link of this item, shown only when the server says it is valid for the item's Customer.
+  const dms = useQuery({ queryKey: ["pydio-reference", project.id, project.version], queryFn: () => api<{ state: string; open_url?: string }>(`/api/v1/items/${project.id}/pydio-reference`), retry: false });
   if (files.isPending) return <p role="status">{t("items.loading")}</p>;
   if (files.isError) return <p role="alert">{t("items.loadError")}</p>;
-  if (!files.data.items.length) return <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t("views.files.emptyHint")} />;
-  return <table aria-label={t("views.types.files")} className="w-full text-left text-sm">
-    <thead><tr>
-      <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.type")}</th><th className="p-2">{t("views.files.version")}</th><th className="p-2">{t("items.reviewLabel")}</th><th className="p-2">{t("views.files.item")}</th><th className="p-2">{t("views.files.size")}</th>
-      <th className="p-2">{t("views.files.uploader")}</th><th className="p-2">{t("views.files.added")}</th></tr></thead>
-    <tbody>{files.data.items.map((file) => <tr key={file.id} className="border-t">
-      {/* Link attachments have no file to download: they open their URL instead (E2). */}
-      <td className="p-2">{file.link_url
-        ? <a className="underline" href={file.link_url} rel="noopener noreferrer" target="_blank">{file.filename || t("views.files.linkOnly")}</a>
-        : <a className="underline" href={`/api/v1/attachments/${file.id}/download`} download>{file.filename}</a>}</td>
-      <td className="p-2 text-muted-foreground">{file.link_url ? t("views.files.linkOnly") : file.content_type}</td>
-      <td className="p-2">{file.version ? t("views.files.versionNumber", { version: file.version }) : "—"}</td>
-      {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
-      <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
-      <td className="p-2"><button type="button" className="underline" onClick={() => onOpen({ id: file.item_id, title: file.item_title } as Item)}>{file.item_title}</button></td>
-      <td className="p-2">{file.link_url ? t("views.files.dash") : t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })}</td>
-      <td className="p-2">{file.uploader.name}</td>
-      <td className="p-2">{formatDate(file.created_at, profile)}</td>
-    </tr>)}</tbody>
-  </table>;
+  const data = files.data;
+  const folder = project.type === "folder";
+  const here = t(folder ? "views.files.thisFolder" : "views.files.thisProject");
+  const change = (update: Partial<typeof noFilters>) => { setFilters((current) => ({ ...current, ...update })); setPage(0); };
+  const filtered = Object.values(filters).some(Boolean);
+  const dmsURL = dms.data?.state === "linked" ? dms.data.open_url : undefined;
+  const add = project.my_capabilities.includes("attach") && <AddFile itemId={project.id} destination={t(folder ? "views.files.addedToFolder" : "views.files.addedToProject")}
+    onAdded={() => Promise.all([client.invalidateQueries({ queryKey: ["project-files", project.id] }), client.invalidateQueries({ queryKey: ["item-attachments", project.id] })])} />;
+  const dmsLink = dmsURL && <a href={dmsURL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline">
+    <ExternalLink aria-hidden="true" className="size-4" />{t(folder ? "views.files.openFolder" : "views.files.openProject")}</a>;
+  if (!data.counts.all) return <div className="space-y-3" data-files-view>{add}
+    <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t("views.files.emptyHint")} />{dmsLink}</div>;
+  const stats = [["total", data.counts.all], ["direct", data.counts.direct], ["subitems", data.counts.subitems], ...(folder ? [["projects", data.counts.projects] as const] : [])] as const;
+  const first = page * PAGE;
+  return <div className="space-y-3" data-files-view>
+    <div role="group" aria-label={t("views.files.summary")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {stats.map(([key, value]) => <div key={key} className="rounded-lg border bg-card px-3 py-2">
+        <p className="text-xs text-muted-foreground">{t(`views.files.stats.${key}`)}</p><p className="text-2xl font-semibold tabular-nums">{value}</p></div>)}
+    </div>
+    <div className="flex flex-wrap items-end gap-2">
+      <Input type="search" aria-label={t("views.files.search")} placeholder={t("views.files.search")} maxLength={200} value={filters.q} onChange={(event) => change({ q: event.target.value })} className="w-full sm:w-64" />
+      {data.projects.length > 0 && <label className="text-xs text-muted-foreground">{t("views.files.project")}
+        <select className={`${selectClass} max-w-56 text-sm text-foreground`} aria-label={t("views.files.project")} value={filters.project} onChange={(event) => change({ project: event.target.value })}>
+          <option value="">{t("views.files.any")}</option>{data.projects.map((p) => <option key={p.id} value={p.id}>{p.title} ({p.files})</option>)}</select></label>}
+      <label className="text-xs text-muted-foreground">{t("views.files.type")}
+        <select className={`${selectClass} text-sm text-foreground`} aria-label={t("views.files.type")} value={filters.kind} onChange={(event) => change({ kind: event.target.value })}>
+          <option value="">{t("views.files.any")}</option><option value="file">{t("views.files.fileOnly")}</option><option value="link">{t("views.files.linkOnly")}</option></select></label>
+      <label className="text-xs text-muted-foreground">{t("items.reviewLabel")}
+        <select className={`${selectClass} text-sm text-foreground`} aria-label={t("items.reviewLabel")} value={filters.review} onChange={(event) => change({ review: event.target.value })}>
+          <option value="">{t("views.files.any")}</option>{REVIEWS.map((key) => <option key={key} value={key}>{t(`items.reviewState.${reviewKey[key]}`)}</option>)}</select></label>
+      {filtered && <Button variant="outline" onClick={() => change(noFilters)}>{t("views.clearFilters")}</Button>}
+      <div className="ms-auto">{add}</div>
+    </div>
+    <div role="group" aria-label={t("views.files.scope")} className="flex flex-wrap gap-1 border-b">
+      {SCOPES.map(([scope, key]) =>
+        <button key={key} type="button" aria-pressed={filters.scope === scope} onClick={() => change({ scope })}
+          className={`px-3 py-1.5 text-sm ${filters.scope === scope ? "border-b-2 border-foreground font-medium" : "text-muted-foreground"}`}>{t(`views.files.tabs.${key}`, { number: data.counts[key] })}</button>)}
+    </div>
+    {data.items.length === 0 ? <p role="status" className="py-4 text-sm text-muted-foreground">{t("views.files.noMatch")}</p>
+      : <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t("views.files.listRegion")}><table aria-label={t("views.types.files")} className="w-full text-left text-sm">
+        <thead><tr>
+          <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.type")}</th><th className="p-2">{t("views.files.version")}</th><th className="p-2">{t("items.reviewLabel")}</th><th className="p-2">{t("views.files.location")}</th><th className="p-2">{t("views.files.size")}</th>
+          <th className="p-2">{t("views.files.uploader")}</th><th className="p-2">{t("views.files.added")}</th></tr></thead>
+        <tbody>{data.items.map((file) => <tr key={file.id} className="border-t">
+          {/* Link attachments have no file to download: they open their URL instead (E2). */}
+          <td className="p-2">{file.link_url
+            ? <a className="underline" href={file.link_url} rel="noopener noreferrer" target="_blank">{file.filename || t("views.files.linkOnly")}</a>
+            : <a className="underline" href={`/api/v1/attachments/${file.id}/download`} download>{file.filename}</a>}</td>
+          <td className="p-2 text-muted-foreground">{file.link_url ? t("views.files.linkOnly") : file.content_type}</td>
+          <td className="p-2">{file.version && !file.link_url ? t("views.files.versionNumber", { version: file.version }) : "—"}</td>
+          {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
+          <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
+          <td className="p-2">{file.item_id === project.id ? here
+            : <button type="button" className="text-left underline" onClick={() => onOpen({ id: file.item_id, title: file.item_title } as Item)}>{file.path.join(" › ") || file.item_title}</button>}</td>
+          <td className="p-2 whitespace-nowrap">{file.link_url ? t("views.files.dash") : t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })}</td>
+          <td className="p-2">{file.uploader.name}</td>
+          <td className="p-2 whitespace-nowrap">{formatDate(file.created_at, profile)}</td>
+        </tr>)}</tbody>
+      </table></div>}
+    {data.truncated && <p className="text-sm text-muted-foreground">{t("views.files.truncated")}</p>}
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      {data.items.length > 0 && <p className="text-muted-foreground">{t("views.files.showing", { from: first + 1, to: first + data.items.length, total: data.total })}</p>}
+      {(page > 0 || first + data.items.length < data.total) && <div className="flex gap-1">
+        <Button variant="outline" size="sm" disabled={page === 0 || files.isPlaceholderData} onClick={() => setPage(page - 1)}>{t("views.files.previous")}</Button>
+        <Button variant="outline" size="sm" disabled={first + data.items.length >= data.total || files.isPlaceholderData} onClick={() => setPage(page + 1)}>{t("views.files.next")}</Button></div>}
+      <div className="ms-auto">{dmsLink}</div>
+    </div>
+  </div>;
 }
 
 /** F-01: items by status over the whole project subtree (tasks only, milestones excluded), counted by the server like the header KPIs. */

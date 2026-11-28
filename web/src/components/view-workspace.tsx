@@ -264,7 +264,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   return <section className="min-w-0 space-y-2 text-[13px]">
     <div className="flex items-start gap-2">
       <div className="min-w-0 flex-1"><ViewTabs views={available} selected={active} canEdit={canEdit}
-        project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
+        project={parent?.type === "project"} folder={parent?.type === "folder"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
         onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} /></div>
       {actions}
     </div>
