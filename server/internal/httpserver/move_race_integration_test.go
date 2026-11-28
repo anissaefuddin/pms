@@ -27,7 +27,8 @@ func TestConcurrentMovesRecordExactlyTheSuccessfulOnes(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			target := spaces[i%len(spaces)]
+			// Never S1, where the item starts: a no-op move can win the race, answer 200 and record nothing.
+			target := spaces[1+i%(len(spaces)-1)]
 			res := f.call(admin, "PUT", path, map[string]any{"locations": []any{map[string]any{"space_id": target, "parent_item_id": nil}}})
 			codes[i] = res.status
 		}(i)
@@ -58,7 +59,7 @@ func TestConcurrentMovesRecordExactlyTheSuccessfulOnes(t *testing.T) {
 		t.Fatalf("a history event must describe a real change: %s empty", empty)
 	}
 	// The chain is consistent: the first event starts where the item was created (S1).
-	first := f.queryID(`SELECT changes->'locations'->'from'->0->>'space_id' FROM activity WHERE item_id=$1 AND action='update' AND changes ? 'locations' ORDER BY created_at, id LIMIT 1`, item)
+	first := f.queryID(`SELECT changes->'locations'->'from'->0->>'space_id' FROM activity WHERE item_id=$1 AND action='update' AND changes ? 'locations' ORDER BY id LIMIT 1`, item)
 	if first != spaces[0] {
 		t.Fatalf("the first recorded move starts in %s, want %s", first, spaces[0])
 	}
