@@ -52,13 +52,14 @@ ORDER BY (space_id IS NULL), position LIMIT 1`, body.Locations[0].SpaceID).Scan(
 		writeItemError(w, err)
 		return
 	}
-	roots, err := s.pydioCustomerRoots(ctx, r.PathValue("itemId"))
+	rt := s.pydioNow(ctx)
+	roots, err := s.pydioCustomerRoots(ctx, rt, r.PathValue("itemId"))
 	if err != nil {
 		writeItemError(w, err)
 		return
 	}
 	var link string
-	if json.Unmarshal(body.Fields[fieldID], &link) != nil || link == "" || s.pydio == nil {
+	if json.Unmarshal(body.Fields[fieldID], &link) != nil || link == "" || rt.client == nil {
 		writeJSON(w, http.StatusOK, pydioReference{State: "not_configured"})
 		return
 	}
@@ -66,7 +67,7 @@ ORDER BY (space_id IS NULL), position LIMIT 1`, body.Locations[0].SpaceID).Scan(
 		writeJSON(w, http.StatusOK, pydioReference{State: "roots_unavailable"})
 		return
 	}
-	if _, err := pydio.ValidateLink(link, s.pydio.Base, roots); err != nil {
+	if _, err := pydio.ValidateLink(link, rt.client.Base, roots); err != nil {
 		writeJSON(w, http.StatusOK, pydioReference{State: "invalid"})
 		return
 	}
@@ -75,11 +76,11 @@ ORDER BY (space_id IS NULL), position LIMIT 1`, body.Locations[0].SpaceID).Scan(
 
 // pydioCustomerRoots returns the approved folder roots of the item's Customer. Internal items and Customers without an approved
 // mapping have none (PROMPT #033: explicit mapping only). The caller has already checked access to the item.
-func (s *Server) pydioCustomerRoots(ctx context.Context, itemID string) ([]string, error) {
+func (s *Server) pydioCustomerRoots(ctx context.Context, rt pydioRuntime, itemID string) ([]string, error) {
 	var customer string
 	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(c.code,'') FROM items i
 LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1::uuid`, itemID).Scan(&customer); err != nil || customer == "" {
 		return nil, err
 	}
-	return s.cfg.PydioCustomerRoots[customer], nil
+	return rt.customerRoots[customer], nil
 }

@@ -104,8 +104,7 @@ func Load() (Config, error) {
 		}
 	}
 	if cfg.PydioLinkURL != "" {
-		u, err := url.Parse(cfg.PydioLinkURL)
-		if err != nil || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+		if !CheckPydioOrigin(cfg.PydioLinkURL) {
 			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must be the Cells address without credentials or a path, for example https://dms.example.com")
 		}
 		// Deny by default: without roots a link could point anywhere. Link-first needs no Pydio credential (B4 standalone linking).
@@ -113,13 +112,8 @@ func Load() (Config, error) {
 			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL needs PMS_PYDIO_LINK_ROOTS")
 		}
 		for _, root := range cfg.PydioLinkRoots {
-			if root == "" || strings.HasPrefix(root, "/") || strings.HasSuffix(root, "/") || strings.Contains(root, "\\") {
-				return Config{}, fmt.Errorf("PMS_PYDIO_LINK_ROOTS entries must be workspace paths such as projects, without leading or trailing slashes")
-			}
-			for _, seg := range strings.Split(root, "/") {
-				if seg == "" || seg == "." || seg == ".." {
-					return Config{}, fmt.Errorf("PMS_PYDIO_LINK_ROOTS entries must not contain empty or dot segments")
-				}
+			if !CheckPydioRoot(root) {
+				return Config{}, fmt.Errorf("PMS_PYDIO_LINK_ROOTS entries must be workspace paths such as projects, without leading or trailing slashes, empty or dot segments")
 			}
 		}
 	}
@@ -133,13 +127,8 @@ func Load() (Config, error) {
 				return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS: each Customer needs a code and at least one root")
 			}
 			for _, root := range roots {
-				if root == "" || strings.HasPrefix(root, "/") || strings.HasSuffix(root, "/") || strings.Contains(root, "\\") {
-					return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS entries must be workspace paths without leading or trailing slashes")
-				}
-				for _, seg := range strings.Split(root, "/") {
-					if seg == "" || seg == "." || seg == ".." {
-						return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS entries must not contain empty or dot segments")
-					}
+				if !CheckPydioRoot(root) {
+					return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS entries must be workspace paths without leading or trailing slashes, empty or dot segments")
 				}
 			}
 		}

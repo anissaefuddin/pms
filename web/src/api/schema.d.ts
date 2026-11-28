@@ -1166,6 +1166,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pydio/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan */
+        get: operations["getPydioSettings"];
+        /** Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit */
+        put: operations["putPydioSettings"];
+        post?: never;
+        /** Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi */
+        delete: operations["deletePydioSettings"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/custom-roles": {
         parameters: {
             query?: never;
@@ -5620,6 +5639,34 @@ export interface components {
             your_ip: string;
             /** @description PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan */
             override_active: boolean;
+        };
+        PydioSettingsInput: {
+            version: number;
+            enabled: boolean;
+            /** @description Alamat https Cells tanpa kredensial dan path */
+            base_url: string;
+            /** @description Path workspace yang boleh ditautkan */
+            roots: string[];
+            /** @description Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots */
+            customer_roots: {
+                [key: string]: string[];
+            };
+        };
+        PydioSettings: {
+            /** @enum {string} */
+            source: "database" | "environment" | "none";
+            /** @description 0 bila belum ada pengaturan tersimpan */
+            version: number;
+            enabled: boolean;
+            base_url: string;
+            roots: string[];
+            customer_roots: {
+                [key: string]: string[];
+            };
+            /** @description PMS_PYDIO_LISTING; hanya diatur operator */
+            listing_enabled: boolean;
+            /** @description Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL */
+            listing_token_available: boolean;
         };
         SsoConfigInput: {
             name: string;
@@ -10399,6 +10446,77 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    getPydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pengaturan yang berlaku */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioSettings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    putPydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PydioSettingsInput"];
+            };
+        };
+        responses: {
+            /** @description Pengaturan tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioSettings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deletePydioSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listCustomRoles: {

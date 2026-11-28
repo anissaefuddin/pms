@@ -1681,6 +1681,44 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /pydio/settings:
+    get:
+      operationId: getPydioSettings
+      summary: Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+      responses:
+        '200':
+          description: Pengaturan yang berlaku
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioSettings' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putPydioSettings
+      summary: Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PydioSettingsInput' }
+      responses:
+        '200':
+          description: Pengaturan tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioSettings' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deletePydioSettings
+      summary: Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+      responses:
+        '204': { description: Dihapus }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /custom-roles:
     get:
       operationId: listCustomRoles
@@ -7942,6 +7980,32 @@ components:
             version: { type: integer }
             your_ip: { type: string, description: Alamat yang dilihat server untuk permintaan ini }
             override_active: { type: boolean, description: PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan }
+    PydioSettingsInput:
+      type: object
+      additionalProperties: false
+      required: [version, enabled, base_url, roots, customer_roots]
+      properties:
+        version: { type: integer, minimum: 0 }
+        enabled: { type: boolean }
+        base_url: { type: string, maxLength: 500, description: Alamat https Cells tanpa kredensial dan path }
+        roots: { type: array, minItems: 1, maxItems: 50, items: { type: string, maxLength: 500 }, description: Path workspace yang boleh ditautkan }
+        customer_roots:
+          type: object
+          maxProperties: 500
+          description: Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
+          additionalProperties: { type: array, minItems: 1, maxItems: 50, items: { type: string, maxLength: 500 } }
+    PydioSettings:
+      type: object
+      required: [source, version, enabled, base_url, roots, customer_roots, listing_enabled, listing_token_available]
+      properties:
+        source: { type: string, enum: [database, environment, none] }
+        version: { type: integer, description: 0 bila belum ada pengaturan tersimpan }
+        enabled: { type: boolean }
+        base_url: { type: string }
+        roots: { type: array, items: { type: string } }
+        customer_roots: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        listing_enabled: { type: boolean, description: PMS_PYDIO_LISTING; hanya diatur operator }
+        listing_token_available: { type: boolean, description: Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL }
     SsoConfigInput:
       type: object
       additionalProperties: false

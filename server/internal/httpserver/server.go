@@ -28,7 +28,6 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/items"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/policy"
-	"github.com/anissaefuddin/pms/server/internal/pydio"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
@@ -63,7 +62,7 @@ type Server struct {
 	events              *realtime.Hub
 	eventEpoch          string
 	sseConnections      prometheus.Gauge
-	pydio               *pydio.Client // nil when PMS_PYDIO_LINK_URL is not set
+	pydioCache          pydioCache
 }
 
 type contextKey string
@@ -135,7 +134,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), scimLimiter: newLimiter(600, time.Minute), requests: requests, duration: duration, pydio: pydio.New(cfg.PydioLinkURL, cfg.PydioLinkToken, cfg.PydioLinkRoots)}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), scimLimiter: newLimiter(600, time.Minute), requests: requests, duration: duration}
 	mux := http.NewServeMux()
 	s.events = realtime.New()
 	s.eventEpoch = uuid.NewString()
@@ -203,15 +202,17 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
-	// Every Pydio folder reference written by any path is checked against this instance's link settings (B4-02). Listing is separate.
+	// Every Pydio folder reference written by any path is checked against the link settings in force (B4-02). Listing is separate.
 	items.PydioFolderCheck = func(value string) error {
-		if s.pydio == nil {
+		rt := s.pydioNow(context.Background())
+		if rt.client == nil {
 			return items.ErrPydioFolderUnconfigured
 		}
-		_, err := pydio.ValidateLink(value, s.pydio.Base, s.pydio.Roots)
+		_, err := rt.client.Folder(value)
 		return err
 	}
 	s.pydioRoutes(mux)
+	s.pydioSettingsRoutes(mux)
 	s.connectorRoutes(mux)
 	s.OAuthRoutes(mux)
 	s.bookmarkRoutes(mux)

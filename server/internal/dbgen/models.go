@@ -1148,6 +1148,17 @@ type ProjectExcelImport struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
+type PydioSetting struct {
+	ID            int16              `json:"id"`
+	Enabled       bool               `json:"enabled"`
+	BaseUrl       string             `json:"base_url"`
+	Roots         []string           `json:"roots"`
+	CustomerRoots []byte             `json:"customer_roots"`
+	Version       int32              `json:"version"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy     pgtype.UUID        `json:"updated_by"`
+}
+
 type Report struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`

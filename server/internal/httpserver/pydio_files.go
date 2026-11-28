@@ -44,7 +44,8 @@ func (s *Server) listPydioFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// After the item check, so an unknown id is "not found" whether or not the feature is on.
-	if s.pydio == nil {
+	rt := s.pydioNow(r.Context())
+	if rt.client == nil || rt.client.Token == "" {
 		writeProblem(w, http.StatusServiceUnavailable, "pydio_not_configured", "Pydio file listing is not configured on this instance")
 		return
 	}
@@ -59,21 +60,21 @@ WHERE id=$1::uuid AND archived_at IS NULL AND config->>'pydio_folder'='true')`, 
 		writeItemError(w, items.ErrNotFound)
 		return
 	}
-	roots, err := s.pydioCustomerRoots(r.Context(), r.PathValue("itemId"))
+	roots, err := s.pydioCustomerRoots(r.Context(), rt, r.PathValue("itemId"))
 	if err != nil {
 		writeItemError(w, err)
 		return
 	}
-	key, err := s.pydio.Folder(link)
+	key, err := rt.client.Folder(link)
 	if err == nil {
 		// The instance roots do not prove that a folder belongs to this Customer. No mapping means no roots, so nothing passes.
-		_, err = pydio.ValidateLink(link, s.pydio.Base, roots)
+		_, err = pydio.ValidateLink(link, rt.client.Base, roots)
 	}
 	if err != nil {
 		writeProblem(w, http.StatusUnprocessableEntity, "pydio_link_not_allowed", err.Error())
 		return
 	}
-	list, err := s.pydio.List(r.Context(), key)
+	list, err := rt.client.List(r.Context(), key)
 	switch {
 	case errors.Is(err, pydio.ErrNotFound):
 		writeProblem(w, http.StatusNotFound, "pydio_folder_not_found", err.Error())

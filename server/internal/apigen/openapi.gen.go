@@ -2226,6 +2226,27 @@ func (e PublicDashboardLayout) Valid() bool {
 	}
 }
 
+// Defines values for PydioSettingsSource.
+const (
+	PydioSettingsSourceDatabase    PydioSettingsSource = "database"
+	PydioSettingsSourceEnvironment PydioSettingsSource = "environment"
+	PydioSettingsSourceNone        PydioSettingsSource = "none"
+)
+
+// Valid indicates whether the value is a known member of the PydioSettingsSource enum.
+func (e PydioSettingsSource) Valid() bool {
+	switch e {
+	case PydioSettingsSourceDatabase:
+		return true
+	case PydioSettingsSourceEnvironment:
+		return true
+	case PydioSettingsSourceNone:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RealtimeEventType.
 const (
 	CommentCreated      RealtimeEventType = "comment.created"
@@ -6421,6 +6442,41 @@ type PydioListing struct {
 	Truncated bool `json:"truncated"`
 }
 
+// PydioSettings defines model for PydioSettings.
+type PydioSettings struct {
+	BaseUrl       string              `json:"base_url"`
+	CustomerRoots map[string][]string `json:"customer_roots"`
+	Enabled       bool                `json:"enabled"`
+
+	// ListingEnabled PMS_PYDIO_LISTING; hanya diatur operator
+	ListingEnabled bool `json:"listing_enabled"`
+
+	// ListingTokenAvailable Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL
+	ListingTokenAvailable bool                `json:"listing_token_available"`
+	Roots                 []string            `json:"roots"`
+	Source                PydioSettingsSource `json:"source"`
+
+	// Version 0 bila belum ada pengaturan tersimpan
+	Version int `json:"version"`
+}
+
+// PydioSettingsSource defines model for PydioSettings.Source.
+type PydioSettingsSource string
+
+// PydioSettingsInput defines model for PydioSettingsInput.
+type PydioSettingsInput struct {
+	// BaseUrl Alamat https Cells tanpa kredensial dan path
+	BaseUrl string `json:"base_url"`
+
+	// CustomerRoots Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
+	CustomerRoots map[string][]string `json:"customer_roots"`
+	Enabled       bool                `json:"enabled"`
+
+	// Roots Path workspace yang boleh ditautkan
+	Roots   []string `json:"roots"`
+	Version int      `json:"version"`
+}
+
 // RealtimeEvent defines model for RealtimeEvent.
 type RealtimeEvent struct {
 	// AffectedItems Item yang dapat dilihat penerima dalam event item.updated untuk satu perubahan jadwal
@@ -9019,6 +9075,9 @@ type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
 // SubmitPublicFormMultipartRequestBody defines body for SubmitPublicForm for multipart/form-data ContentType.
 type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
 
+// PutPydioSettingsJSONRequestBody defines body for PutPydioSettings for application/json ContentType.
+type PutPydioSettingsJSONRequestBody = PydioSettingsInput
+
 // CreateRateJSONRequestBody defines body for CreateRate for application/json ContentType.
 type CreateRateJSONRequestBody CreateRateJSONBody
 
@@ -10146,6 +10205,15 @@ type ServerInterface interface {
 	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
 	// (GET /public/gantt/{token})
 	GetPublicGanttSnapshot(w http.ResponseWriter, r *http.Request, token string)
+	// DeletePydioSettings Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+	// (DELETE /pydio/settings)
+	DeletePydioSettings(w http.ResponseWriter, r *http.Request)
+	// GetPydioSettings Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+	// (GET /pydio/settings)
+	GetPydioSettings(w http.ResponseWriter, r *http.Request)
+	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+	// (PUT /pydio/settings)
+	PutPydioSettings(w http.ResponseWriter, r *http.Request)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(w http.ResponseWriter, r *http.Request)
@@ -17573,6 +17641,48 @@ func (siw *ServerInterfaceWrapper) GetPublicGanttSnapshot(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// DeletePydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) DeletePydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutPydioSettings operation middleware
+func (siw *ServerInterfaceWrapper) PutPydioSettings(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutPydioSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListRates operation middleware
 func (siw *ServerInterfaceWrapper) ListRates(w http.ResponseWriter, r *http.Request) {
 
@@ -22368,6 +22478,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/account/ownership", wrapper.TransferAccountOwnership)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/access-policy", wrapper.GetAccessPolicy)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/access-policy", wrapper.PutAccessPolicy)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/pydio/settings", wrapper.DeletePydioSettings)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pydio/settings", wrapper.GetPydioSettings)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/pydio/settings", wrapper.PutPydioSettings)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
@@ -35880,6 +35993,196 @@ func (response GetPublicGanttSnapshot404ApplicationProblemPlusJSONResponse) Visi
 	return err
 }
 
+type DeletePydioSettingsRequestObject struct {
+}
+
+type DeletePydioSettingsResponseObject interface {
+	VisitDeletePydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type DeletePydioSettings204Response struct {
+}
+
+func (response DeletePydioSettings204Response) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePydioSettings401ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioSettings403ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePydioSettings404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePydioSettings404ApplicationProblemPlusJSONResponse) VisitDeletePydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettingsRequestObject struct {
+}
+
+type GetPydioSettingsResponseObject interface {
+	VisitGetPydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetPydioSettings200JSONResponse PydioSettings
+
+func (response GetPydioSettings200JSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioSettings401ApplicationProblemPlusJSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioSettings403ApplicationProblemPlusJSONResponse) VisitGetPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettingsRequestObject struct {
+	Body *PutPydioSettingsJSONRequestBody
+}
+
+type PutPydioSettingsResponseObject interface {
+	VisitPutPydioSettingsResponse(w http.ResponseWriter) error
+}
+
+type PutPydioSettings200JSONResponse PydioSettings
+
+func (response PutPydioSettings200JSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutPydioSettings401ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings403ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings409ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings409ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPydioSettings422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPydioSettings422ApplicationProblemPlusJSONResponse) VisitPutPydioSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListRatesRequestObject struct {
 }
 
@@ -46218,6 +46521,15 @@ type StrictServerInterface interface {
 	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
 	// (GET /public/gantt/{token})
 	GetPublicGanttSnapshot(ctx context.Context, request GetPublicGanttSnapshotRequestObject) (GetPublicGanttSnapshotResponseObject, error)
+	// DeletePydioSettings Hapus pengaturan tersimpan (admin) sehingga environment berlaku lagi
+	// (DELETE /pydio/settings)
+	DeletePydioSettings(ctx context.Context, request DeletePydioSettingsRequestObject) (DeletePydioSettingsResponseObject, error)
+	// GetPydioSettings Pengaturan tautan folder Pydio yang berlaku (admin); sumber database, environment, atau none. Token tidak pernah dikembalikan
+	// (GET /pydio/settings)
+	GetPydioSettings(ctx context.Context, request GetPydioSettingsRequestObject) (GetPydioSettingsResponseObject, error)
+	// PutPydioSettings Simpan pengaturan (admin); menggantikan environment seluruhnya. version 0 untuk membuat, selain itu versi yang diedit
+	// (PUT /pydio/settings)
+	PutPydioSettings(ctx context.Context, request PutPydioSettingsRequestObject) (PutPydioSettingsResponseObject, error)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(ctx context.Context, request ListRatesRequestObject) (ListRatesResponseObject, error)
@@ -53305,6 +53617,85 @@ func (sh *strictHandler) GetPublicGanttSnapshot(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetPublicGanttSnapshotResponseObject); ok {
 		if err := validResponse.VisitGetPublicGanttSnapshotResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePydioSettings operation middleware
+func (sh *strictHandler) DeletePydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request DeletePydioSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePydioSettings(ctx, request.(DeletePydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePydioSettingsResponseObject); ok {
+		if err := validResponse.VisitDeletePydioSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioSettings operation middleware
+func (sh *strictHandler) GetPydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request GetPydioSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioSettings(ctx, request.(GetPydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioSettingsResponseObject); ok {
+		if err := validResponse.VisitGetPydioSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutPydioSettings operation middleware
+func (sh *strictHandler) PutPydioSettings(w http.ResponseWriter, r *http.Request) {
+	var request PutPydioSettingsRequestObject
+
+	var body PutPydioSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPydioSettings(ctx, request.(PutPydioSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPydioSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutPydioSettingsResponseObject); ok {
+		if err := validResponse.VisitPutPydioSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

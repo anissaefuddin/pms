@@ -39,6 +39,21 @@ Start gagal bila URL diisi tanpa root, bila URL memuat kredensial atau path, ata
 
 Cara PMS memanggil Pydio: S3 gateway Cells `GET {URL}/io?list-type=2&prefix=<workspace>/<path>/&delimiter=/&max-keys=200`, ditandatangani AWS SigV4 dengan token sebagai access key dan secret tetap `gatewaysecret` (bucket `io`, path-style), sesuai [dokumentasi Pydio](https://pydio.com/en/node/19626). Batas waktu 10 detik; maksimal 200 entri, sisanya lewat tautan "open the folder in Pydio".
 
+## Pengaturan oleh admin (API)
+
+`GET`, `PUT`, `DELETE /api/v1/pydio/settings` (khusus admin, tercatat di audit sebagai `pydio.configured` dan `pydio.removed`).
+
+| Keadaan | Yang berlaku |
+|---|---|
+| Belum ada pengaturan tersimpan | Environment di atas |
+| Ada pengaturan tersimpan | Pengaturan itu **seluruhnya** (URL, root, root per Customer), termasuk saat `enabled=false`. Environment diabaikan |
+| Pengaturan dihapus | Environment berlaku lagi |
+
+- Berlaku tanpa restart (cache 10 detik per proses).
+- Root per Customer harus berada di dalam root, dan kode Customer harus ada.
+- Mengubah URL atau root tidak mengubah nilai lama: referensi yang tidak lagi cocok tampil sebagai `invalid`.
+- `PMS_PYDIO_LISTING` dan token tetap milik operator. Token hanya dipakai bila URL tersimpan sama persis dengan `PMS_PYDIO_LINK_URL`.
+
 ## Langkah
 
 1. Di Pydio Cells: buat akun `pms-reader`, beri hak **read** saja pada workspace proyek, lalu buat personal access token.
