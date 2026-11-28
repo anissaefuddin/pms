@@ -16,6 +16,8 @@ const areaClass = "mt-1 block w-full rounded-lg border border-input bg-transpare
 
 // One folder per line; blank lines and surrounding spaces are ignored. The server validates every path.
 const folders = (text: string) => text.split("\n").map((line) => line.trim()).filter(Boolean);
+// Extensions may be separated by commas, spaces or lines. The server lowercases them and strips the leading dot.
+const extensions = (text: string) => text.split(/[\s,;]+/).filter(Boolean);
 
 // Pydio tab of Apps & Integrations: where folder links may point, per instance and per Customer. No credential is entered here.
 export function PydioSettingsTab() {
@@ -46,6 +48,8 @@ function SettingsForm({ settings, customers, reload }: { settings: Settings; cus
   const [roots, setRoots] = useState(settings.roots.join("\n"));
   const [rows, setRows] = useState(() => Object.entries(settings.customer_roots).sort(([a], [b]) => a.localeCompare(b))
     .map(([code, list]) => ({ code, folders: list.join("\n") })));
+  const [maxUpload, setMaxUpload] = useState(String(settings.max_upload_mb));
+  const [types, setTypes] = useState(settings.allowed_extensions.join(", "));
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -59,7 +63,8 @@ function SettingsForm({ settings, customers, reload }: { settings: Settings; cus
     try {
       const saved = await api<Settings>("/api/v1/pydio/settings", { method: "PUT", body: JSON.stringify({
         version: settings.version, enabled, base_url: baseUrl.trim(), roots: folders(roots),
-        customer_roots: Object.fromEntries(rows.map((row) => [row.code, folders(row.folders)])) }) });
+        customer_roots: Object.fromEntries(rows.map((row) => [row.code, folders(row.folders)])),
+        max_upload_mb: Number(maxUpload), allowed_extensions: extensions(types) }) });
       toast.success(t("apps.pydio.saved"));
       cache.setQueryData(KEY, saved);
     } catch (err) {
@@ -110,6 +115,17 @@ function SettingsForm({ settings, customers, reload }: { settings: Settings; cus
             <option value="">{t(unused.length ? "apps.pydio.chooseCustomer" : "apps.pydio.noCustomer")}</option>
             {unused.map((c) => <option key={c.id} value={c.code}>{c.code} · {c.name}</option>)}
           </select></label>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">{t("apps.pydio.uploads")}</legend>
+        <p className="text-xs text-muted-foreground">{t("apps.pydio.uploadsHint")}</p>
+        <label className="block text-sm">{t("apps.pydio.maxUpload")}
+          <Input type="number" required min={1} max={1024} step={1} value={maxUpload} onChange={(e) => setMaxUpload(e.target.value)} className="mt-1 max-w-40" /></label>
+        <div>
+          <label className="block text-sm">{t("apps.pydio.types")}
+            <textarea rows={2} spellCheck={false} value={types} onChange={(e) => setTypes(e.target.value)} placeholder={t("apps.pydio.typesExample")} className={areaClass} /></label>
+          <p className="mt-1 text-xs text-muted-foreground">{t("apps.pydio.typesHint")}</p>
+        </div>
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {conflict && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive">{t("apps.pydio.conflict")}

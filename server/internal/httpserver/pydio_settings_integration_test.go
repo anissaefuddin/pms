@@ -155,3 +155,52 @@ func TestPydioListingTokenStaysWithItsOwnAddress(t *testing.T) {
 		t.Fatalf("the same address keeps the token: %v", same.body)
 	}
 }
+
+// Upload limits default to 100 MB and every type, survive a client that does not send them, and are audited as stored.
+func TestPydioUploadLimits(t *testing.T) {
+	f := pydioFixture(t, false)
+	admin := f.person("admin")
+	f.createClient(admin, "PY-A")
+	limits := func(r reply) string {
+		return fmt.Sprint(r.body["max_upload_mb"], " ", r.body["allowed_extensions"])
+	}
+	put := func(version int, change map[string]any, want string) {
+		t.Helper()
+		r := f.call(admin, http.MethodPut, "/pydio/settings", pydioSettings(version, change))
+		f.want(r, http.StatusOK, "save")
+		if got := limits(r); got != want {
+			t.Fatalf("version %d: limits = %s, want %s", version, got, want)
+		}
+	}
+	if got := limits(f.call(admin, http.MethodGet, "/pydio/settings", nil)); got != "100 []" {
+		t.Fatalf("environment limits = %s", got)
+	}
+	many := make([]string, 101)
+	for i := range many {
+		many[i] = fmt.Sprintf("e%d", i)
+	}
+	for name, change := range map[string]map[string]any{
+		"zero":      {"max_upload_mb": 0},
+		"too large": {"max_upload_mb": 1025},
+		"dotted":    {"allowed_extensions": []string{"tar.gz"}},
+		"wildcard":  {"allowed_extensions": []string{"*"}},
+		"blank":     {"allowed_extensions": []string{" "}},
+		"too many":  {"allowed_extensions": many},
+	} {
+		if r := f.call(admin, http.MethodPut, "/pydio/settings", pydioSettings(0, change)); r.status != http.StatusUnprocessableEntity {
+			t.Fatalf("%s: status %d, want 422 (%v)", name, r.status, r.body)
+		}
+	}
+	put(0, nil, "100 []")
+	put(1, map[string]any{"max_upload_mb": 1024, "allowed_extensions": []string{".PDF", "pdf", " Docx "}}, "1024 [pdf docx]")
+	put(2, nil, "1024 [pdf docx]")
+	put(3, map[string]any{"max_upload_mb": nil, "allowed_extensions": nil}, "1024 [pdf docx]")
+	put(4, map[string]any{"max_upload_mb": 1}, "1 [pdf docx]")
+	put(5, map[string]any{"allowed_extensions": []string{}}, "1 []")
+	if got := f.queryID(`SELECT details->>'max_upload_mb' || ' ' || (details->>'allowed_extensions') FROM audit_events
+WHERE action='pydio.configured' ORDER BY id DESC LIMIT 1`); got != "1 []" {
+		t.Fatalf("audit = %s", got)
+	}
+	f.want(f.call(admin, http.MethodDelete, "/pydio/settings", nil), http.StatusNoContent, "remove")
+	put(0, map[string]any{"max_upload_mb": 250, "allowed_extensions": []string{"zip"}}, "250 [zip]")
+}

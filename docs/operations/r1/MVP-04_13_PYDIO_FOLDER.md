@@ -56,6 +56,20 @@ API yang dipakai: `GET`, `PUT`, `DELETE /api/v1/pydio/settings` (khusus admin, t
 - Mengubah URL atau root tidak mengubah nilai lama: referensi yang tidak lagi cocok tampil sebagai `invalid`.
 - `PMS_PYDIO_LISTING` dan token tetap milik operator. Token hanya dipakai bila URL tersimpan sama persis dengan `PMS_PYDIO_LINK_URL`.
 
+### Batas upload ke Pydio
+
+Upload file ke Pydio **belum tersedia**. Pengaturan ini baru disimpan dan ditampilkan; adapter upload nanti memeriksanya lewat `pydio.UploadLimits.Check`. Lampiran lokal tetap memakai `PMS_MAX_UPLOAD_MB`.
+
+| Field API | Default | Aturan |
+|---|---|---|
+| `max_upload_mb` | 100 | 1 sampai 1024, per file (1 MB = 1.048.576 byte) |
+| `allowed_extensions` | `[]` (semua tipe) | Paling banyak 100; disimpan huruf kecil tanpa titik; satu bagian (`gz`, bukan `tar.gz`) |
+
+- Tidak ada variabel environment: tanpa pengaturan tersimpan, default berlaku. Menghapus pengaturan mengembalikan default.
+- `PUT` yang tidak mengirim field ini (atau mengirim `null`) mempertahankan nilai tersimpan; `[]` berarti semua tipe.
+- Yang diperiksa hanya nama file, bukan isinya.
+- Uji ke Cells staging: upload tunggal lewat alamat publik gagal di atas 100 MB (HTTP 413 dari proxy), multipart berhasil sampai 500 MB. Batas di atas 100 MB memerlukan multipart di adapter.
+
 ## Langkah
 
 1. Di Pydio Cells: buat akun `pms-reader`, beri hak **read** saja pada workspace proyek, lalu buat personal access token.

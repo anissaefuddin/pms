@@ -6444,17 +6444,22 @@ type PydioListing struct {
 
 // PydioSettings defines model for PydioSettings.
 type PydioSettings struct {
-	BaseUrl       string              `json:"base_url"`
-	CustomerRoots map[string][]string `json:"customer_roots"`
-	Enabled       bool                `json:"enabled"`
+	// AllowedExtensions Kosong berarti semua tipe file
+	AllowedExtensions []string            `json:"allowed_extensions"`
+	BaseUrl           string              `json:"base_url"`
+	CustomerRoots     map[string][]string `json:"customer_roots"`
+	Enabled           bool                `json:"enabled"`
 
 	// ListingEnabled PMS_PYDIO_LISTING; hanya diatur operator
 	ListingEnabled bool `json:"listing_enabled"`
 
 	// ListingTokenAvailable Token environment berlaku hanya bila base_url sama dengan PMS_PYDIO_LINK_URL
-	ListingTokenAvailable bool                `json:"listing_token_available"`
-	Roots                 []string            `json:"roots"`
-	Source                PydioSettingsSource `json:"source"`
+	ListingTokenAvailable bool `json:"listing_token_available"`
+
+	// MaxUploadMb Batas per file untuk upload ke Pydio; 100 bila belum disimpan. Belum dipakai karena upload ke Pydio belum tersedia
+	MaxUploadMb int                 `json:"max_upload_mb"`
+	Roots       []string            `json:"roots"`
+	Source      PydioSettingsSource `json:"source"`
 
 	// Version 0 bila belum ada pengaturan tersimpan
 	Version int `json:"version"`
@@ -6465,12 +6470,18 @@ type PydioSettingsSource string
 
 // PydioSettingsInput defines model for PydioSettingsInput.
 type PydioSettingsInput struct {
+	// AllowedExtensions Ekstensi yang boleh diupload ke Pydio, disimpan huruf kecil tanpa titik. Daftar kosong berarti semua tipe; dihilangkan berarti nilai tersimpan dipertahankan
+	AllowedExtensions *[]string `json:"allowed_extensions,omitempty"`
+
 	// BaseUrl Alamat https Cells tanpa kredensial dan path
 	BaseUrl string `json:"base_url"`
 
 	// CustomerRoots Kode Customer ke daftar folder yang disetujui; tiap folder berada di dalam roots
 	CustomerRoots map[string][]string `json:"customer_roots"`
 	Enabled       bool                `json:"enabled"`
+
+	// MaxUploadMb Batas per file untuk upload ke Pydio. Dihilangkan berarti nilai tersimpan dipertahankan (100 saat membuat)
+	MaxUploadMb *int `json:"max_upload_mb,omitempty"`
 
 	// Roots Path workspace yang boleh ditautkan
 	Roots   []string `json:"roots"`

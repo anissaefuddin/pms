@@ -4,7 +4,7 @@ import { me, problem } from "./mock-api";
 import { mockSpaces } from "./spaces-mock";
 
 const fromEnv = { source: "environment", version: 0, enabled: true, base_url: "https://dms.example.com", roots: ["projects", "common-files/Clients"],
-  customer_roots: { ACME: ["projects/acme"] }, listing_enabled: false, listing_token_available: false };
+  customer_roots: { ACME: ["projects/acme"] }, max_upload_mb: 100, allowed_extensions: [], listing_enabled: false, listing_token_available: false };
 const customers = [
   { id: "c1", code: "ACME", name: "Acme", status: "active" },
   { id: "c2", code: "BETA", name: "Beta Corp", status: "active" },
@@ -39,10 +39,16 @@ test("an administrator saves the settings and returns to the environment", async
   await form.getByLabel("Add Customer").selectOption("BETA");
   await form.getByLabel("Folders for BETA").fill("projects/beta\n\n projects/beta-2 ");
   await form.getByRole("button", { name: "Remove ACME" }).click();
+  await expect(form.getByLabel("Maximum size per file (MB)")).toHaveValue("100");
+  await expect(form.getByLabel("Allowed file types")).toHaveValue("");
+  await expect(form.getByText("local attachments are not affected")).toBeVisible();
+  await form.getByLabel("Maximum size per file (MB)").fill("250");
+  await form.getByLabel("Allowed file types").fill("pdf, .DOCX\nxlsx");
   await form.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved settings", { exact: true })).toBeVisible();
   expect(calls.find((c) => c.method === "PUT" && c.path === "/pydio/settings")?.body).toEqual({ version: 0, enabled: true, base_url: "https://files.example.com",
-    roots: ["projects", "common-files/Clients"], customer_roots: { BETA: ["projects/beta", "projects/beta-2"] } });
+    roots: ["projects", "common-files/Clients"], customer_roots: { BETA: ["projects/beta", "projects/beta-2"] },
+    max_upload_mb: 250, allowed_extensions: ["pdf", ".DOCX", "xlsx"] });
 
   await page.getByRole("button", { name: "Use environment values" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Remove saved settings" }).click();
