@@ -83,3 +83,17 @@ func TestListSignsTheGatewayRequestAndShapesEntries(t *testing.T) {
 		t.Fatalf("missing folder err = %v, want ErrNotFound", err)
 	}
 }
+
+// The listing error is logged, so a transport failure must not carry the request URL: its query holds the folder path (B4-06).
+func TestListErrorDoesNotRepeatTheFolderPath(t *testing.T) {
+	gw := httptest.NewServer(http.NotFoundHandler())
+	c := New(gw.URL, "tok", []string{"projects"})
+	gw.Close() // nothing is listening: Do returns a *url.Error
+	_, err := c.List(context.Background(), "projects/Secret-Client")
+	if err == nil {
+		t.Fatal("want a transport error")
+	}
+	if msg := err.Error(); strings.Contains(msg, "Secret-Client") || strings.Contains(msg, "prefix=") {
+		t.Fatalf("error repeats the folder path: %s", msg)
+	}
+}

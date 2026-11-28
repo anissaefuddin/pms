@@ -28,7 +28,10 @@ type definition struct {
 	fields []field
 }
 
-var zero = 0
+var (
+	zero    = 0
+	flagged = true
+)
 
 var seeds = map[string]definition{
 	// MVP-03/MVP-04 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3): contract reference and the project's Pydio folder.
@@ -38,7 +41,7 @@ var seeds = map[string]definition{
 	"project-master": {group: "Contract Managers", fields: []field{
 		{input: items.CustomFieldCreate{Name: "Contract/PO Number", Type: "text"}},
 		// The canonical document reference: the pydio_folder flag makes writes check it against the Customer roots (B4-02).
-		{input: items.CustomFieldCreate{Name: "Pydio Folder", Type: "text", Config: items.CustomFieldConfig{PydioFolder: true}}},
+		{input: items.CustomFieldCreate{Name: "Pydio Folder", Type: "text", Config: items.CustomFieldConfig{PydioFolder: &flagged}}},
 		{input: items.CustomFieldCreate{Name: "Contract Value", Type: "currency", Config: items.CustomFieldConfig{Currency: "IDR", Decimals: &zero}}, restricted: true},
 	}},
 	// B5-04: the project code. A separate seed, because project-master has already run on instances that exist. It is an

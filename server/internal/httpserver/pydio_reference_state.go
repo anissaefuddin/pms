@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -51,9 +52,8 @@ ORDER BY (space_id IS NULL), position LIMIT 1`, body.Locations[0].SpaceID).Scan(
 		writeItemError(w, err)
 		return
 	}
-	var customer string
-	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(c.code,'') FROM items i
-LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1::uuid`, r.PathValue("itemId")).Scan(&customer); err != nil {
+	roots, err := s.pydioCustomerRoots(ctx, r.PathValue("itemId"))
+	if err != nil {
 		writeItemError(w, err)
 		return
 	}
@@ -62,9 +62,7 @@ LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1
 		writeJSON(w, http.StatusOK, pydioReference{State: "not_configured"})
 		return
 	}
-	// Internal items and Customers without an approved mapping get no link (PROMPT #033: explicit mapping only).
-	roots := s.cfg.PydioCustomerRoots[customer]
-	if customer == "" || len(roots) == 0 {
+	if len(roots) == 0 {
 		writeJSON(w, http.StatusOK, pydioReference{State: "roots_unavailable"})
 		return
 	}
@@ -73,4 +71,15 @@ LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1
 		return
 	}
 	writeJSON(w, http.StatusOK, pydioReference{State: "linked", OpenURL: link})
+}
+
+// pydioCustomerRoots returns the approved folder roots of the item's Customer. Internal items and Customers without an approved
+// mapping have none (PROMPT #033: explicit mapping only). The caller has already checked access to the item.
+func (s *Server) pydioCustomerRoots(ctx context.Context, itemID string) ([]string, error) {
+	var customer string
+	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(c.code,'') FROM items i
+LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1::uuid`, itemID).Scan(&customer); err != nil || customer == "" {
+		return nil, err
+	}
+	return s.cfg.PydioCustomerRoots[customer], nil
 }

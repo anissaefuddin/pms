@@ -105,8 +105,8 @@ func Load() (Config, error) {
 	}
 	if cfg.PydioLinkURL != "" {
 		u, err := url.Parse(cfg.PydioLinkURL)
-		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.Path != "" || u.RawQuery != "" {
-			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must be the Cells address without a path, for example https://dms.example.com")
+		if err != nil || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must be the Cells address without credentials or a path, for example https://dms.example.com")
 		}
 		// Deny by default: without roots a link could point anywhere. Link-first needs no Pydio credential (B4 standalone linking).
 		if len(cfg.PydioLinkRoots) == 0 {

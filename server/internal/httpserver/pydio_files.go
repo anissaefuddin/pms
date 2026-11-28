@@ -17,7 +17,8 @@ func (s *Server) pydioRoutes(mux *http.ServeMux) {
 }
 
 // listPydioFiles lists the Pydio folder a text field of the item links to (MVP-13). The link is read through items.Get,
-// so it follows item access and field grants: whoever cannot see the value cannot list the folder either.
+// so it follows item access and field grants: whoever cannot see the value cannot list the folder either. Only a field marked
+// pydio_folder is listed, and only inside both the instance roots and the approved roots of the item's Customer.
 func (s *Server) listPydioFiles(w http.ResponseWriter, r *http.Request) {
 	// Checked first, so a disabled instance reveals nothing: not the field, the item, or the link (B3-17 Workstream C).
 	if !s.cfg.PydioListing {
@@ -47,7 +48,27 @@ func (s *Server) listPydioFiles(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusServiceUnavailable, "pydio_not_configured", "Pydio file listing is not configured on this instance")
 		return
 	}
+	// Only a pydio_folder field has its values checked on write; any other text field could point anywhere the token can read.
+	var canonical bool
+	if err := s.pool.QueryRow(r.Context(), `SELECT EXISTS (SELECT 1 FROM custom_fields
+WHERE id=$1::uuid AND archived_at IS NULL AND config->>'pydio_folder'='true')`, fieldID).Scan(&canonical); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	if !canonical {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	roots, err := s.pydioCustomerRoots(r.Context(), r.PathValue("itemId"))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
 	key, err := s.pydio.Folder(link)
+	if err == nil {
+		// The instance roots do not prove that a folder belongs to this Customer. No mapping means no roots, so nothing passes.
+		_, err = pydio.ValidateLink(link, s.pydio.Base, roots)
+	}
 	if err != nil {
 		writeProblem(w, http.StatusUnprocessableEntity, "pydio_link_not_allowed", err.Error())
 		return

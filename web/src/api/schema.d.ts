@@ -408,7 +408,7 @@ export interface paths {
         };
         /**
          * Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
-         * @description Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Tautan harus berada di host PMS_PYDIO_LINK_URL dan di dalam PMS_PYDIO_LINK_ROOTS. Isi file tidak diproksikan; setiap entri membawa alamat Cells.
+         * @description Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Hanya field ber-config pydio_folder yang didaftar (lainnya 404). Tautan harus berada di host PMS_PYDIO_LINK_URL, di dalam PMS_PYDIO_LINK_ROOTS, dan di dalam root Customer item di PMS_PYDIO_CUSTOMER_ROOTS (selain itu 422). Isi file tidak diproksikan; setiap entri membawa alamat Cells.
          */
         get: operations["listPydioFiles"];
         put?: never;
@@ -7150,6 +7150,8 @@ export interface components {
             decimals?: number;
             /** @description Izinkan nilai Percent melebihi 100 */
             allow_over_100?: boolean;
+            /** @description Khusus Text: referensi folder Pydio, divalidasi saat ditulis. Dihilangkan pada update berarti tidak berubah */
+            pydio_folder?: boolean;
             /** @description Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if */
             expression?: string;
             /** @description Khusus Relation; batasi target ke satu tipe item (kosong = semua) */

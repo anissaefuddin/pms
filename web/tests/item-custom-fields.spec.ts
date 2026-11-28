@@ -143,7 +143,7 @@ test("a field with a view grant only is shown without an edit control, and a fie
 
 // MVP-04/MVP-13: a Pydio folder link in a text field opens in a new tab, and its files can be listed read-only.
 const linkId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
-const linkField: CustomField = { id: linkId, space_id: marketing.id, type: "text", name: "Pydio Folder", position: 0, options: [], config: {} };
+const linkField: CustomField = { id: linkId, space_id: marketing.id, type: "text", name: "Pydio Folder", position: 0, options: [], config: { pydio_folder: true } };
 
 test("shows a Pydio folder link and lists its files on demand", async ({ page }) => {
   const folder = "https://dms.example.com/projects/PTM";
@@ -178,6 +178,23 @@ test("explains a link that is not an allowed Pydio folder", async ({ page }) => 
   const section = page.getByRole("region", { name: "Custom fields" });
   await section.getByRole("button", { name: "Show Pydio files" }).click();
   await expect(section.getByRole("alert")).toHaveText("This link is not a project folder in the connected Pydio.");
+});
+
+test("says that listing is turned off", async ({ page }) => {
+  await mockItem(page, linkField, "https://dms.example.com/projects/PTM", "en-US", {
+    [`GET ${itemPath}/pydio-files`]: problem(503, "disabled", "pydio_listing_disabled"),
+  });
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await section.getByRole("button", { name: "Show Pydio files" }).click();
+  await expect(section.getByRole("alert")).toHaveText("Pydio file listing is turned off. Open the folder with its link.");
+});
+
+test("offers no listing for a link in an ordinary text field", async ({ page }) => {
+  const link = "https://example.com/spec";
+  await mockItem(page, { ...linkField, name: "Notes", config: {} }, link);
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await expect(section.getByRole("link", { name: link })).toBeVisible();
+  await expect(section.getByRole("button", { name: "Show Pydio files" })).toHaveCount(0);
 });
 
 test("a javascript: value stays plain text", async ({ page }) => {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -219,6 +220,22 @@ func TestPydioCustomerRootsMapping(t *testing.T) {
 		t.Setenv("PMS_PYDIO_CUSTOMER_ROOTS", bad)
 		if _, err := Load(); err == nil {
 			t.Fatalf("PMS_PYDIO_CUSTOMER_ROOTS=%s must be refused", bad)
+		}
+	}
+}
+
+// The link address is sent to browsers inside every listing and document link, so it must never carry credentials.
+func TestPydioLinkOriginRefusesCredentialsAndFragments(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("PMS_PYDIO_LINK_ROOTS", "projects")
+	for _, bad := range []string{"https://reader:secret@dms.example.com", "https://reader@dms.example.com", "https://dms.example.com#x", "https://dms.example.com?"} {
+		t.Setenv("PMS_PYDIO_LINK_URL", bad)
+		_, err := Load()
+		if err == nil {
+			t.Fatalf("%q must be refused", bad)
+		}
+		if strings.Contains(err.Error(), "secret") {
+			t.Fatalf("the error repeats the credential: %v", err)
 		}
 	}
 }

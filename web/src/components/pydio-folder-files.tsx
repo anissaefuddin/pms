@@ -23,7 +23,7 @@ export function PydioFolderFiles({ itemId, fieldId, profile }: { itemId: string;
     queryFn: () => api<Listing>(`/api/v1/items/${itemId}/pydio-files?field=${encodeURIComponent(fieldId)}`),
     enabled: open, retry: false, staleTime: 30_000,
   });
-  const failure = listing.error instanceof ApiError && ["pydio_not_configured", "pydio_link_not_allowed", "pydio_folder_not_found"].includes(listing.error.code ?? "")
+  const failure = listing.error instanceof ApiError && ["pydio_listing_disabled", "pydio_not_configured", "pydio_link_not_allowed", "pydio_folder_not_found"].includes(listing.error.code ?? "")
     ? t(`items.customFields.pydio.${listing.error.code}`) : t("items.customFields.pydio.error");
   return <div className="mt-1 text-sm">
     <Button type="button" variant="link" size="sm" className="h-auto px-0" aria-expanded={open} onClick={() => setOpen(!open)}>

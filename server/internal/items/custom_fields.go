@@ -287,6 +287,10 @@ func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 		field.Options = options
 	}
 	if input.Config != nil {
+		// The Pydio flag switches the value check on. A config that does not mention it must not switch the check off.
+		if input.Config.PydioFolder == nil {
+			input.Config.PydioFolder = field.Config.PydioFolder
+		}
 		if err := validateCustomFieldConfig(field.Type, *input.Config); err != nil {
 			return CustomField{}, err
 		}

@@ -5151,6 +5151,9 @@ type CustomFieldConfig struct {
 	// ProjectBudget Khusus Currency dan hanya menerima nilai pada Project
 	ProjectBudget *bool `json:"project_budget,omitempty"`
 
+	// PydioFolder Khusus Text: referensi folder Pydio, divalidasi saat ditulis. Dihilangkan pada update berarti tidak berubah
+	PydioFolder *bool `json:"pydio_folder,omitempty"`
+
 	// TargetTypeKey Khusus Relation; batasi target ke satu tipe item (kosong = semua)
 	TargetTypeKey *string `json:"target_type_key,omitempty"`
 }

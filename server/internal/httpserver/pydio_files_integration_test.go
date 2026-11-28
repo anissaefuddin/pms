@@ -24,6 +24,8 @@ func TestPydioFilesFollowItemAndFieldAccess(t *testing.T) {
 		switch r.URL.Query().Get("prefix") {
 		case "projects/broken/":
 			http.Error(w, "<Error>internal detail</Error>", http.StatusInternalServerError)
+		case "projects/OTHER/":
+			fmt.Fprint(w, `<ListBucketResult><Contents><Key>projects/OTHER/secret.pdf</Key><Size>5</Size><LastModified>2026-11-20T10:00:00Z</LastModified></Contents></ListBucketResult>`)
 		case "projects/PTM/":
 			fmt.Fprint(w, `<ListBucketResult><IsTruncated>false</IsTruncated><Contents><Key>projects/PTM/HAZOP.pdf</Key><Size>5</Size><LastModified>2026-11-20T10:00:00Z</LastModified></Contents></ListBucketResult>`)
 		default:
@@ -36,21 +38,34 @@ func TestPydioFilesFollowItemAndFieldAccess(t *testing.T) {
 	f := newFixtureWith(t, 1000, func(c *config.Config) {
 		c.PydioLinkURL, c.PydioLinkToken, c.PydioLinkRoots = gw.URL, "svc-token", []string{"projects"}
 		c.PydioListing = true // listing is an explicit opt-in (Workstream C); this test exercises the enabled path
+		c.PydioCustomerRoots = map[string][]string{"PY-A": {"projects/PTM", "projects/broken", "projects/gone"}, "PY-B": {"projects/OTHER"}}
 	})
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
-	space := f.space("PTM")
+	client := f.createClient(admin, "PY-A")["id"].(string)
+	f.addMember(admin, client, admin)
+	f.addMember(admin, client, member)
+	space := f.scopedSpace("PTM", "client", client)
+	f.share(space, "user", admin.id, "full")
 	f.share(space, "user", member.id, "read")
-	field := f.call(admin, http.MethodPost, "/custom-fields", map[string]any{"name": "Pydio Folder", "type": "text"})
-	f.want(field, http.StatusCreated, "Pydio Folder field")
-	fid := field.body["id"].(string)
-	f.want(f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields/"+fid+"/assignments", map[string]any{"scope_kind": "space", "scope_id": space}), http.StatusCreated, "assign")
+	textField := func(name string, config map[string]any) string {
+		field := f.call(admin, http.MethodPost, "/custom-fields", map[string]any{"name": name, "type": "text", "config": config})
+		f.want(field, http.StatusCreated, name+" field")
+		id := field.body["id"].(string)
+		f.want(f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields/"+id+"/assignments", map[string]any{"scope_kind": "space", "scope_id": space}), http.StatusCreated, "assign "+name)
+		return id
+	}
+	fid := textField("Pydio Folder", map[string]any{"pydio_folder": true})
+	plain := textField("Notes", map[string]any{})
+	setField := func(item, field, value string) reply {
+		version := f.queryID("SELECT version::text FROM items WHERE id=$1", item)
+		return f.call(admin, http.MethodPatch, "/items/"+item, map[string]any{"fields": map[string]any{field: value}}, "If-Match", fmt.Sprintf("%q", version))
+	}
 	project := func(link string) string {
 		r := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "P " + link, "locations": []map[string]any{{"space_id": space}}})
 		f.want(r, http.StatusCreated, "project")
 		id := r.body["id"].(string)
 		if link != "" {
-			version := f.queryID("SELECT version::text FROM items WHERE id=$1", id)
-			f.want(f.call(admin, http.MethodPatch, "/items/"+id, map[string]any{"fields": map[string]any{fid: link}}, "If-Match", fmt.Sprintf("%q", version)), http.StatusOK, "set link")
+			f.want(setField(id, fid, link), http.StatusOK, "set link")
 		}
 		return id
 	}
@@ -68,8 +83,20 @@ func TestPydioFilesFollowItemAndFieldAccess(t *testing.T) {
 	before := calls.Load()
 	f.want(files(outsider, ptm), http.StatusNotFound, "no access to the item, no listing")
 	f.want(files(member, project("")), http.StatusNotFound, "no link")
-	f.want(files(member, project(gw.URL+"/personal-files/admin")), http.StatusUnprocessableEntity, "outside the roots")
-	f.want(files(member, project("https://elsewhere.example.com/projects/PTM")), http.StatusUnprocessableEntity, "another host")
+	// Values stored before the write check existed: the listing refuses them on its own.
+	legacy := func(link string) string {
+		id := project("")
+		f.queryID("UPDATE items SET fields = fields || jsonb_build_object($2::text, $3::text) WHERE id=$1 RETURNING id::text", id, fid, link)
+		return id
+	}
+	f.want(files(member, legacy(gw.URL+"/personal-files/admin")), http.StatusUnprocessableEntity, "outside the roots")
+	f.want(files(member, legacy("https://elsewhere.example.com/projects/PTM")), http.StatusUnprocessableEntity, "another host")
+	// Inside the global roots but approved for another Customer.
+	f.want(files(member, project(gw.URL+"/projects/OTHER")), http.StatusUnprocessableEntity, "another Customer's folder")
+	// A text field without the pydio_folder flag is never listed, whatever it holds.
+	notes := project("")
+	f.want(setField(notes, plain, gw.URL+"/projects/PTM"), http.StatusOK, "link in a plain field")
+	f.want(f.call(member, http.MethodGet, "/items/"+notes+"/pydio-files?field="+plain, nil), http.StatusNotFound, "plain field, no listing")
 	if calls.Load() != before {
 		t.Fatalf("Pydio was called %d times for refused requests, want 0", calls.Load()-before)
 	}
@@ -94,4 +121,24 @@ func TestPydioFilesFollowItemAndFieldAccess(t *testing.T) {
 	offItem := off.call(offAdmin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "P", "locations": []map[string]any{{"space_id": offSpace}}}).body["id"].(string)
 	off.want(off.call(offAdmin, http.MethodPatch, "/items/"+offItem, map[string]any{"fields": map[string]any{offField: gw.URL + "/projects/PTM"}}, "If-Match", fmt.Sprintf("%q", off.queryID("SELECT version::text FROM items WHERE id=$1", offItem))), http.StatusOK, "set link")
 	off.want(off.call(offAdmin, http.MethodGet, "/items/"+offItem+"/pydio-files?field="+offField, nil), http.StatusServiceUnavailable, "feature off")
+}
+
+// A definition update that does not mention pydio_folder keeps it, so renaming or reconfiguring cannot silently switch the check off.
+func TestPydioFolderFlagSurvivesAFieldUpdate(t *testing.T) {
+	f := pydioFixture(t, false)
+	admin := f.person("admin")
+	field := f.call(admin, http.MethodPost, "/custom-fields", map[string]any{"name": "Documents", "type": "text", "config": map[string]any{"pydio_folder": true}})
+	f.want(field, http.StatusCreated, "field")
+	fid := field.body["id"].(string)
+	flag := func() any {
+		return f.queryID("SELECT COALESCE(config->>'pydio_folder','unset') FROM custom_fields WHERE id=$1", fid)
+	}
+	f.want(f.call(admin, http.MethodPatch, "/custom-fields/"+fid, map[string]any{"config": map[string]any{}}), http.StatusOK, "config without the flag")
+	if got := flag(); got != "true" {
+		t.Fatalf("an update without pydio_folder must keep it, got %v", got)
+	}
+	f.want(f.call(admin, http.MethodPatch, "/custom-fields/"+fid, map[string]any{"config": map[string]any{"pydio_folder": false}}), http.StatusOK, "explicit off")
+	if got := flag(); got != "false" {
+		t.Fatalf("an explicit false must turn the flag off, got %v", got)
+	}
 }

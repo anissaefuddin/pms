@@ -137,6 +137,11 @@ func (c *Client) List(ctx context.Context, key string) (Listing, error) {
 	storage.SignV4(req, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "us-east-1", c.Token, gatewaySecret, c.Now())
 	res, err := c.HTTP.Do(req)
 	if err != nil {
+		// A *url.Error repeats the request URL, whose query holds the folder path: log only the cause (B4-06).
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			err = urlErr.Err
+		}
 		return Listing{}, fmt.Errorf("pydio list: %w", err)
 	}
 	defer res.Body.Close()

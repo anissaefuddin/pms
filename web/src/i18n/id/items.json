@@ -135,6 +135,7 @@
       "listLabel": "File di folder Pydio",
       "truncated": "File lainnya: buka folder di Pydio",
       "error": "Pydio tidak menjawab. Coba lagi nanti.",
+      "pydio_listing_disabled": "Daftar file Pydio dinonaktifkan. Buka folder lewat tautannya.",
       "pydio_not_configured": "Daftar file Pydio belum diaktifkan untuk workspace ini.",
       "pydio_link_not_allowed": "Tautan ini bukan folder proyek di Pydio yang terhubung.",
       "pydio_folder_not_found": "Folder tidak ada di Pydio, atau PMS tidak boleh membacanya."

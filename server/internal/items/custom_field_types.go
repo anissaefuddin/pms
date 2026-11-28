@@ -30,7 +30,7 @@ type CustomFieldConfig struct {
 	Expression string `json:"expression,omitempty"`
 	// PydioFolder marks a Text field as the canonical Pydio folder reference of a project (B4-01). Its values are checked by
 	// PydioFolderCheck on every write. The field's stable UUID is the identity; no name matching is used.
-	PydioFolder bool `json:"pydio_folder,omitempty"`
+	PydioFolder *bool `json:"pydio_folder,omitempty"` // nil in an update = keep the current setting
 }
 
 type CustomFieldMarker struct {
@@ -50,12 +50,16 @@ func (config CustomFieldConfig) allowsOver100() bool {
 	return config.AllowOver100 != nil && *config.AllowOver100
 }
 
+func (config CustomFieldConfig) isPydioFolder() bool {
+	return config.PydioFolder != nil && *config.PydioFolder
+}
+
 func numericCustomField(kind string) bool {
 	return kind == "number" || kind == "currency" || kind == "percent" || kind == "duration"
 }
 
 func validateCustomFieldConfig(kind string, config CustomFieldConfig) error {
-	if config.PydioFolder && kind != "text" {
+	if config.isPydioFolder() && kind != "text" {
 		return Invalid("pydio_folder applies only to Text fields")
 	}
 	if config.ProjectBudget != nil && kind != "currency" {
@@ -171,7 +175,7 @@ func normalizeCustomFieldValue(field CustomField, raw json.RawMessage) (json.Raw
 		if json.Unmarshal(raw, &value) != nil || value == nil || utf8.RuneCountInString(*value) > 5000 || strings.ContainsRune(*value, 0) {
 			return invalid("enter text up to 5000 characters without null bytes")
 		}
-		if field.Config.PydioFolder && *value != "" {
+		if field.Config.isPydioFolder() && *value != "" {
 			// The message never repeats the value: a folder path may be confidential (B4-02).
 			if err := PydioFolderCheck(*value); err != nil {
 				return invalid("enter a folder reference inside the configured Pydio workspace, without credentials")

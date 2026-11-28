@@ -15,6 +15,8 @@
 |---|---|
 | Daftar hanya untuk orang yang boleh melihat tautannya | Tautan dibaca lewat `items.Get`: akses item (D-17.1) dan grant field (CF-D03). Tidak punya akses berarti 404 |
 | Folder hanya di Pydio yang dikonfigurasi dan di dalam root proyek | Host dan skema harus sama dengan `PMS_PYDIO_LINK_URL`; path harus berada di salah satu `PMS_PYDIO_LINK_ROOTS` (per segmen penuh); `..` ditolak, termasuk yang di-encode. Ditolak berarti 422, tanpa memanggil Pydio |
+| Hanya field referensi Pydio | Field harus ber-config `pydio_folder`; field text lain dijawab 404 |
+| Folder milik Customer item | Selain root global, tautan harus berada di root Customer item (`PMS_PYDIO_CUSTOMER_ROOTS`). Item internal atau Customer tanpa pemetaan dijawab 422 |
 | PMS tidak membuka isi file | Hanya metadata. Setiap entri membawa alamat Cells, jadi saat dibuka Pydio memeriksa hak pengguna sendiri |
 | Token PMS hanya membaca | Pakai akun Cells khusus yang hanya punya hak **baca** di workspace proyek. Root adalah lapis kedua bila akun itu bisa membaca lebih luas |
 | Rincian error Pydio tidak bocor | Kegagalan upstream dijawab 502 dengan pesan generik; detailnya hanya di log server |
@@ -27,11 +29,13 @@ Di `deploy/.env` (diteruskan oleh `docker-compose.yml`):
 
 | Variabel | Contoh | Catatan |
 |---|---|---|
-| `PMS_PYDIO_LINK_URL` | `https://dms.example.com` | Alamat Cells yang dibuka pengguna, tanpa path. Kosong = fitur mati (tombol menampilkan "not turned on") |
+| `PMS_PYDIO_LINK_URL` | `https://dms.example.com` | Alamat https Cells yang dibuka pengguna, tanpa kredensial dan path. Kosong = fitur mati |
 | `PMS_PYDIO_LINK_TOKEN` | — | Personal access token akun Cells read-only (`cells admin user token` atau dari UI). Simpan seperti secret lain, jangan di git |
 | `PMS_PYDIO_LINK_ROOTS` | `projects,common-files/Clients` | Wajib bila URL diisi. Slug workspace, opsional dengan subfolder |
+| `PMS_PYDIO_CUSTOMER_ROOTS` | `{"ACME":["projects/acme"]}` | Root per kode Customer. Tanpa entri, Customer itu tidak mendapat tautan dokumen maupun daftar file |
+| `PMS_PYDIO_LISTING` | `false` | Daftar file. Default mati dan belum diteruskan oleh `docker-compose.yml` (menunggu K-21 dan AC-15) |
 
-Start gagal bila URL diisi tanpa token atau root, atau bila URL memuat path.
+Start gagal bila URL diisi tanpa root, bila URL memuat kredensial atau path, atau bila `PMS_PYDIO_LISTING=true` tanpa token. Tautan saja tidak memerlukan token.
 
 Cara PMS memanggil Pydio: S3 gateway Cells `GET {URL}/io?list-type=2&prefix=<workspace>/<path>/&delimiter=/&max-keys=200`, ditandatangani AWS SigV4 dengan token sebagai access key dan secret tetap `gatewaysecret` (bucket `io`, path-style), sesuai [dokumentasi Pydio](https://pydio.com/en/node/19626). Batas waktu 10 detik; maksimal 200 entri, sisanya lewat tautan "open the folder in Pydio".
 
