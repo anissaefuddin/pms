@@ -6,7 +6,7 @@ Everything you work on is an **item**: a **Task**, **Project** or **Folder** (or
 ## Create an item
 1. Use the create control (**New item**; inside a view, **Add item**; on an item, **Add subitem**).
 2. In **Create item**, set **Type** (Project, Folder, Task, or custom types under *More*), **Name** (required), **Space**, **Parent** (or *Space root*).
-3. Projects also offer **Workflow** (*Default*), **Owner**, **Start date**, **Finish date**, **Default view** (Table or Board) and **Sharing**. A **Start from blueprint** option is described in [Forms and blueprints](forms-and-blueprints.md).
+3. Projects also offer **Workflow** (*Default*), **Owner**, **Start date**, **Finish date**, **Default view** (*Files* unless you choose Table, Board, Gantt, Calendar or Chart; Spaces also open on Files) and **Sharing**. A **Start from blueprint** option is described in [Forms and blueprints](forms-and-blueprints.md).
 4. Choose **Create item**.
 
 Which types are offered can be limited per Space: see [“+” menu](create-menu.md).

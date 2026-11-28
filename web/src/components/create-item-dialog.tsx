@@ -86,7 +86,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [assignees, setAssignees] = useState<PersonOption[]>(() => (initialAssignee ? [{ id: initialAssignee.id, name: initialAssignee.name }] : []));
   const [shares, setShares] = useState<Share[]>([]);
   const [sharingOpen, setSharingOpen] = useState(false);
-  const [view, setView] = useState<SupportedDefaultView>("table");
+  const [view, setView] = useState<SupportedDefaultView>("files");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [busy, setBusy] = useState(false);

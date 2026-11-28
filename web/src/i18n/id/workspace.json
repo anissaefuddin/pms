@@ -14,6 +14,7 @@
   "onboarding.project.label": "Nama proyek",
   "onboarding.project.task": "Tugas {{number}}",
   "onboarding.view.hint": "Bagaimana Anda ingin melihat pekerjaan Anda pertama kali?",
+  "onboarding.view.files": "File",
   "onboarding.view.table": "Tabel: daftar dengan kolom",
   "onboarding.view.board": "Papan: kolom menurut status",
   "onboarding.view.gantt": "Gantt: linimasa menurut tanggal",

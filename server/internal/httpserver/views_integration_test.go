@@ -14,7 +14,7 @@ func TestViewLifecycle(t *testing.T) {
 	f.share(space, "user", viewer.id, "read")
 	list := "/spaces/" + space + "/views"
 	root := f.call(admin, http.MethodGet, list, nil)
-	if root.status != 200 || len(root.items()) != 4 || root.items()[0]["is_default"] != true ||
+	if root.status != 200 || len(root.items()) != 5 || root.items()[4]["is_default"] != true || root.items()[4]["type"] != "files" ||
 		root.items()[0]["type"] != "table" || root.items()[1]["type"] != "board" {
 		t.Fatalf("seeded views: %d %v", root.status, root.body)
 	}
@@ -23,10 +23,10 @@ func TestViewLifecycle(t *testing.T) {
 	if personal.status != 201 || personal.body["type"] != "board" {
 		t.Fatalf("duplicate: %d %v", personal.status, personal.body)
 	}
-	if got := f.call(admin, http.MethodGet, list, nil); got.status != 200 || len(got.items()) != 4 {
+	if got := f.call(admin, http.MethodGet, list, nil); got.status != 200 || len(got.items()) != 5 {
 		t.Fatalf("public list: %d %v", got.status, got.body)
 	}
-	if got := f.call(viewer, http.MethodGet, list, nil); got.status != 200 || len(got.items()) != 5 {
+	if got := f.call(viewer, http.MethodGet, list, nil); got.status != 200 || len(got.items()) != 6 {
 		t.Fatalf("owner list: %d %v", got.status, got.body)
 	}
 	updated := f.call(admin, http.MethodPatch, "/views/"+board, map[string]any{"is_default": true, "name": "Planning", "position": 0})
@@ -47,7 +47,7 @@ func TestViewLifecycle(t *testing.T) {
 	projectID := project.body["id"].(string)
 	projectViews := "/items/" + projectID + "/views"
 	childViews := f.call(admin, http.MethodGet, projectViews, nil)
-	if childViews.status != 200 || len(childViews.items()) != 2 || childViews.items()[0]["type"] != "table" ||
+	if childViews.status != 200 || len(childViews.items()) != 3 || childViews.items()[0]["type"] != "table" || childViews.items()[2]["type"] != "files" ||
 		childViews.items()[1]["type"] != "board" || childViews.items()[1]["is_default"] != true {
 		t.Fatalf("project default view: %d %v", childViews.status, childViews.body)
 	}
@@ -66,10 +66,10 @@ func TestViewLifecycle(t *testing.T) {
 			if copy.status != 201 || copy.body["type"] != viewType {
 				t.Fatalf("duplicate: %d %v", copy.status, copy.body)
 			}
-			if got := f.call(admin, http.MethodGet, projectViews, nil); got.status != 200 || len(got.items()) != 3 {
+			if got := f.call(admin, http.MethodGet, projectViews, nil); got.status != 200 || len(got.items()) != 4 {
 				t.Fatalf("public list: %d %v", got.status, got.body)
 			}
-			if got := f.call(viewer, http.MethodGet, projectViews, nil); got.status != 200 || len(got.items()) != 4 {
+			if got := f.call(viewer, http.MethodGet, projectViews, nil); got.status != 200 || len(got.items()) != 5 {
 				t.Fatalf("owner list: %d %v", got.status, got.body)
 			}
 			updated := f.call(admin, http.MethodPatch, viewPath, map[string]any{"name": "Planning " + viewType, "is_default": true})
@@ -113,6 +113,13 @@ func TestDefaultViewTypesSeedChosenView(t *testing.T) {
 		}
 		if len(defaults) != 1 || defaults[0] != viewType {
 			t.Fatalf("%s: default views = %v (%d %v)", viewType, defaults, views.status, views.body)
+		}
+	}
+	for _, kind := range []string{"project", "folder"} {
+		created := f.call(admin, http.MethodPost, "/items", map[string]any{"type": kind, "title": "unchosen " + kind, "locations": []map[string]any{{"space_id": space}}})
+		f.want(created, http.StatusCreated, kind)
+		if got := f.queryID("SELECT string_agg(type::text, ',') FROM views WHERE scope_item_id=$1 AND is_default", created.body["id"]); got != "files" {
+			t.Fatalf("a %s without a chosen view opens on %q", kind, got)
 		}
 	}
 	if rejected := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "x", "default_view_type": "list",

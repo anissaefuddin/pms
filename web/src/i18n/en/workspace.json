@@ -14,6 +14,7 @@
   "onboarding.project.label": "Project name",
   "onboarding.project.task": "Task {{number}}",
   "onboarding.view.hint": "How do you want to look at your work first?",
+  "onboarding.view.files": "Files",
   "onboarding.view.table": "Table: a list with columns",
   "onboarding.view.board": "Board: columns by status",
   "onboarding.view.gantt": "Gantt: timeline of dates",

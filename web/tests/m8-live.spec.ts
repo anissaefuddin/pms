@@ -44,6 +44,7 @@ test("E2E-PAR-01/02: an admin defines a Bug type in the UI, and a Bug made from 
   expect(list.find((i) => i.title === "Crash on save")?.item_type.key).toBe("bug");
 
   await admin.goto(`/spaces/${e.PMS_FIXTURE_M8_WORK}`);
+  await admin.getByRole("radio", { name: "Table", exact: true }).click(); // a Space opens on Files
   await admin.getByRole("button", { name: "Columns", exact: true }).click();
   await admin.getByRole("checkbox", { name: "Type", exact: true }).check();
   await admin.getByRole("button", { name: "Save columns" }).click();

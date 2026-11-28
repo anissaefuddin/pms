@@ -156,7 +156,7 @@ func templateOfSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaceID
 		return t, err
 	}
 	rows, err := tx.Query(ctx, `SELECT type::text, name, config FROM views WHERE scope_space_id=$1::uuid AND scope_item_id IS NULL AND visibility='public'
-AND (type::text,name) NOT IN (('table','Table'),('board','Board'),('gantt','Gantt'),('calendar','Calendar')) ORDER BY position`, spaceID)
+AND (type::text,name) NOT IN (('table','Table'),('board','Board'),('gantt','Gantt'),('calendar','Calendar'),('files','Files')) ORDER BY position`, spaceID)
 	if err != nil {
 		return t, err
 	}

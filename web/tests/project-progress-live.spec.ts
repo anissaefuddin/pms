@@ -13,6 +13,7 @@ test("editing a nested task refreshes the Project panel and Space Table in other
     await editorContext.addCookies([{ name: "pms_session", value: editor!.split("=")[1], url: baseURL! }]);
     const taskPage = await editorContext.newPage();
     await Promise.all([page.goto(`/tasks/${project}`), overview.goto(`/spaces/${space}`), taskPage.goto(`/tasks/${task}`)]);
+    await overview.getByRole("radio", { name: "Table", exact: true }).click(); // a Space opens on Files
     await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8
     await page.getByText("More fields", { exact: true }).click(); // S-UIP.1.1
     const panel = page.getByRole("region", { name: "Project progress" });
