@@ -72,7 +72,13 @@ Berlaku saat [penyimpanan Pydio](#penyimpanan-file-di-pydio) aktif. Lampiran lok
 
 ## Penyimpanan file di Pydio
 
-Terpisah dari tautan folder. API khusus admin (belum ada di UI): `GET/PUT /api/v1/pydio/storage`, `POST /api/v1/pydio/storage/test`, `GET/PUT/DELETE /api/v1/items/{itemId}/pydio-folder`.
+Terpisah dari tautan folder. Hanya admin.
+
+| Pengaturan | Di aplikasi | API |
+|---|---|---|
+| Aktif, alamat, folder utama, token, field kode project, folder per Customer | **Settings → Apps & Integrations → Pydio → File storage**, tombol **Save storage** | `GET/PUT /api/v1/pydio/storage` |
+| Uji koneksi (memakai pengaturan tersimpan) | tombol **Test connection** | `POST /api/v1/pydio/storage/test` |
+| Folder sebuah project | halaman project → bagian **Documents** → **Change storage folder** | `GET/PUT/DELETE /api/v1/items/{itemId}/pydio-folder` |
 
 | Hal | Aturan |
 |---|---|

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AdminPageHeader, AdminStatus } from "@/components/admin/admin-ui";
+import { PydioStorageSection } from "@/components/PydioStorageSection";
 
 type Settings = components["schemas"]["PydioSettings"];
 const KEY = ["pydio-settings"] as const;
@@ -19,7 +20,8 @@ const folders = (text: string) => text.split("\n").map((line) => line.trim()).fi
 // Extensions may be separated by commas, spaces or lines. The server lowercases them and strips the leading dot.
 const extensions = (text: string) => text.split(/[\s,;]+/).filter(Boolean);
 
-// Pydio tab of Apps & Integrations: where folder links may point, per instance and per Customer. No credential is entered here.
+// Pydio tab of Apps & Integrations: where folder links may point, per instance and per Customer, then file storage.
+// Folder links need no credential; storage has its own form and write-only token.
 export function PydioSettingsTab() {
   const { t } = useTranslation();
   // Not refetched behind the administrator's back: a new version would replace what is being typed.
@@ -29,7 +31,7 @@ export function PydioSettingsTab() {
   if (settings.isError || customers.isError) return <p role="alert">{(settings.error ?? customers.error)?.message}</p>;
   const data = settings.data;
   return <div className="max-w-3xl space-y-5">
-    <AdminPageHeader description={t("apps.pydio.description")} />
+    <AdminPageHeader title={t("apps.pydio.linksTitle")} description={t("apps.pydio.description")} />
     <div className="flex flex-wrap items-center gap-2">
       <AdminStatus tone={data.enabled ? "success" : "neutral"} label={t(data.enabled ? "apps.pydio.on" : "apps.pydio.off")} />
       <AdminStatus tone="neutral" label={t(`apps.pydio.source.${data.source}`)} />
@@ -37,6 +39,7 @@ export function PydioSettingsTab() {
     </div>
     <p className="text-sm text-muted-foreground">{t(`apps.pydio.sourceHint.${data.source}`)} {t("apps.pydio.listingHint")}</p>
     <SettingsForm key={`${data.source}:${data.version}`} settings={data} customers={customers.data.items} reload={() => settings.refetch()} />
+    <PydioStorageSection customers={customers.data.items} linkAddress={data.base_url} />
   </div>;
 }
 

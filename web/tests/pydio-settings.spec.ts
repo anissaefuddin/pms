@@ -17,6 +17,8 @@ async function open(page: Page, initial: Record<string, unknown>, extra: Record<
     "PUT /pydio/settings": (body: any) => { settings = { ...fromEnv, ...body, source: "database", version: body.version + 1 }; return { body: settings }; },
     "DELETE /pydio/settings": () => { settings = fromEnv; return { status: 204, body: null }; },
     "GET /clients": { body: { items: customers } },
+    "GET /pydio/storage": { body: { version: 0, enabled: false, base_url: "", root: "", customer_roots: {}, code_field_id: null, token_set: false, key_configured: true } },
+    "GET /custom-fields": { body: { items: [] } },
     ...extra,
   } });
   await page.goto("/settings/apps");

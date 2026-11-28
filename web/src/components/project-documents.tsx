@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
 import { Button } from "@/components/ui/button";
+import { PydioProjectFolder } from "@/components/pydio-project-folder";
 
 type PydioReference = { state: "linked" | "not_configured" | "roots_unavailable" | "invalid"; open_url?: string };
 
@@ -38,5 +39,6 @@ export function ProjectDocuments({ item, onConfigure }: { item: Item; onConfigur
       {data.state === "invalid" && <span role="status" className="text-destructive">{t("views.documents.invalid")}</span>}
     </div>}
     {canEdit && <Button variant="outline" size="sm" onClick={onConfigure}><Settings2 />{t("views.documents.configure")}</Button>}
+    <PydioProjectFolder itemId={item.id} version={item.version} />
   </section>;
 }
