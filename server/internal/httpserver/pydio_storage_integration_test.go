@@ -12,6 +12,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/previews"
+	"github.com/anissaefuddin/pms/server/internal/pydiostore"
 	"github.com/anissaefuddin/pms/server/internal/storage/cellstest"
 	"github.com/google/uuid"
 )
@@ -285,5 +286,41 @@ func TestPydioStorageKeepsEachFileWhereItWasWritten(t *testing.T) {
 	}
 	if got := f.queryID("SELECT count(*)::text FROM attachment_versions"); got != count {
 		t.Fatalf("a failed upload must record nothing: %s -> %s", count, got)
+	}
+}
+
+// Unresolved ownership is quarantined: nobody reaches such an item through the API. Should its folder ever be asked for, it is
+// not the internal one, so the files can be found and sorted out.
+func TestPydioStorageKeepsUnresolvedOwnershipApart(t *testing.T) {
+	f := newStorageFixture(t)
+	g := cellstest.New(t, "cells-token", "pms-files", "cust-acme")
+	f.want(f.call(f.admin, "PUT", "/pydio/storage", f.settings(g.URL, 0, map[string]any{"customer_roots": map[string]any{"ACME": "cust-acme"}})), http.StatusOK, "turn on")
+	space := f.scopedSpace("Legacy", "internal", "")
+	f.share(space, "user", f.admin.id, "full")
+	item := func(kind, scope string) (string, string) {
+		id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ($1::item_type,$2,$3,$4) RETURNING id::text", kind, kind+" "+scope, f.admin.id, scope)
+		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
+		return id, f.queryID("SELECT seq::text FROM items WHERE id=$1", id)
+	}
+	internal, internalSeq := item("project", "internal")
+	unresolved, unresolvedSeq := item("project", "unresolved")
+	loose, looseSeq := item("task", "unresolved")
+	saved, _, err := pydiostore.Load(f.ctx, f.pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for id, want := range map[string]string{
+		internal:   "pms-files/_internal/P" + internalSeq,
+		unresolved: "pms-files/_unresolved/P" + unresolvedSeq,
+		loose:      "pms-files/_unresolved/_items/" + looseSeq,
+	} {
+		place, err := pydiostore.FolderOf(f.ctx, f.pool, saved, uuid.MustParse(id))
+		if err != nil || place.Folder != want || place.Source != "default" {
+			t.Errorf("folder = %+v %v, want %s", place, err, want)
+		}
+	}
+	f.want(f.call(f.admin, "GET", "/items/"+unresolved+"/pydio-folder", nil), http.StatusNotFound, "quarantined, also for an administrator")
+	if status, out := f.upload("/items/"+unresolved+"/attachments", "a.txt", []byte("x")); status != http.StatusNotFound || len(g.Keys()) != 0 {
+		t.Fatalf("no upload reaches an unresolved item: %d %v %v", status, out, g.Keys())
 	}
 }

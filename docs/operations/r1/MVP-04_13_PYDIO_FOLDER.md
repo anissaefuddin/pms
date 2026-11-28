@@ -85,7 +85,7 @@ Terpisah dari tautan folder. Hanya admin.
 | Aktif atau tidak | Aktif: lampiran baru ke Pydio. Mati: lampiran baru ke `PMS_STORAGE`. File lama selalu dibaca dari tempat ia ditulis |
 | Token | Wajib `PMS_CONNECTOR_KEY`; disimpan terenkripsi, tidak pernah dikembalikan. Alamat baru wajib token baru |
 | Menyalakan | PMS menulis, membaca, dan menghapus file uji di folder utama dan tiap folder Customer; gagal berarti tidak disimpan |
-| Folder | 1. folder project yang ditetapkan admin; 2. `<folder Customer>/<KODE>_<nomor>`; 3. `<folder utama>/<CUSTOMER atau _internal>/<KODE>_<nomor>`. Tanpa kode: `P<nomor>` |
+| Folder | 1. folder project yang ditetapkan admin; 2. `<folder Customer>/<KODE>_<nomor>`; 3. `<folder utama>/<CUSTOMER, _internal, atau _unresolved>/<KODE>_<nomor>`. Tanpa kode: `P<nomor>`. Item `unresolved` dikarantina (tidak bisa dibuka lewat aplikasi), jadi `_unresolved` hanya pengaman |
 | Subproject | Punya folder sendiri. Task mengikuti project terdekat di atasnya. Item di luar project: `_items/<nomor>` |
 | Path file | `<folder>/<id lampiran>/<id unggahan>/<nama file aman>`. Tidak dipindah saat kode atau lokasi berubah |
 | Gangguan Pydio | Upload dan download dijawab 502 `storage_unavailable`; tidak ada pindah diam-diam ke lokal |

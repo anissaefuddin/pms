@@ -131,21 +131,21 @@ func FolderOf(ctx context.Context, db querier, s Settings, item uuid.UUID) (Plac
 	}
 	var place Place
 	var seq int64
-	var code, customer string
+	var code, customer, scope string
 	err := db.QueryRow(ctx, `WITH RECURSIVE up(id, depth) AS (
     SELECT $1::uuid, 0
   UNION
     SELECT l.parent_item_id, up.depth+1 FROM up JOIN item_locations l ON l.item_id=up.id
     WHERE l.parent_item_id IS NOT NULL AND l.deleted_root_id IS NULL AND up.depth < 50
 )
-SELECT i.id::text, i.seq, COALESCE(i.fields->>$2,''), COALESCE(c.code,'') FROM up JOIN items i ON i.id=up.id
+SELECT i.id::text, i.seq, COALESCE(i.fields->>$2,''), COALESCE(c.code,''), i.scope_state FROM up JOIN items i ON i.id=up.id
 LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client'
-WHERE i.type='project' ORDER BY up.depth, i.seq LIMIT 1`, item, field).Scan(&place.ProjectID, &seq, &code, &customer)
+WHERE i.type='project' ORDER BY up.depth, i.seq LIMIT 1`, item, field).Scan(&place.ProjectID, &seq, &code, &customer, &scope)
 	inProject := true
 	if errors.Is(err, pgx.ErrNoRows) { // an item outside any project keeps a folder of its own
 		inProject = false
-		err = db.QueryRow(ctx, `SELECT i.seq, COALESCE(c.code,'') FROM items i
-LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1`, item).Scan(&seq, &customer)
+		err = db.QueryRow(ctx, `SELECT i.seq, COALESCE(c.code,''), i.scope_state FROM items i
+LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1`, item).Scan(&seq, &customer, &scope)
 	}
 	if err != nil {
 		return Place{}, err
@@ -173,9 +173,14 @@ LEFT JOIN clients c ON c.id=i.client_id AND i.scope_state='client' WHERE i.id=$1
 		place.Folder, place.Source = root+"/"+name, "customer"
 		return place, nil
 	}
+	// Customer codes are upper case, so these two names cannot collide with one.
 	owner := Segment(customer, 60)
-	if owner == "" {
+	switch {
+	case owner != "":
+	case scope == "internal":
 		owner = "_internal"
+	default: // ownership never decided: not internal, and kept where it can be found
+		owner = "_unresolved"
 	}
 	place.Folder, place.Source = s.Root+"/"+owner+"/"+name, "default"
 	return place, nil
