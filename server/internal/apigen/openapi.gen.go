@@ -3458,16 +3458,16 @@ func (e ListProjectFilesParamsScope) Valid() bool {
 
 // Defines values for ListProjectFilesParamsKind.
 const (
-	File ListProjectFilesParamsKind = "file"
-	Link ListProjectFilesParamsKind = "link"
+	ListProjectFilesParamsKindFile ListProjectFilesParamsKind = "file"
+	ListProjectFilesParamsKindLink ListProjectFilesParamsKind = "link"
 )
 
 // Valid indicates whether the value is a known member of the ListProjectFilesParamsKind enum.
 func (e ListProjectFilesParamsKind) Valid() bool {
 	switch e {
-	case File:
+	case ListProjectFilesParamsKindFile:
 		return true
-	case Link:
+	case ListProjectFilesParamsKindLink:
 		return true
 	default:
 		return false
@@ -4266,6 +4266,69 @@ func (e SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool {
 	case SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
 		return true
 	case SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceFilesParamsScope.
+const (
+	ListSpaceFilesParamsScopeDirect   ListSpaceFilesParamsScope = "direct"
+	ListSpaceFilesParamsScopeSubitems ListSpaceFilesParamsScope = "subitems"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceFilesParamsScope enum.
+func (e ListSpaceFilesParamsScope) Valid() bool {
+	switch e {
+	case ListSpaceFilesParamsScopeDirect:
+		return true
+	case ListSpaceFilesParamsScopeSubitems:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceFilesParamsKind.
+const (
+	ListSpaceFilesParamsKindFile ListSpaceFilesParamsKind = "file"
+	ListSpaceFilesParamsKindLink ListSpaceFilesParamsKind = "link"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceFilesParamsKind enum.
+func (e ListSpaceFilesParamsKind) Valid() bool {
+	switch e {
+	case ListSpaceFilesParamsKindFile:
+		return true
+	case ListSpaceFilesParamsKindLink:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceFilesParamsReview.
+const (
+	ListSpaceFilesParamsReviewApproved     ListSpaceFilesParamsReview = "approved"
+	ListSpaceFilesParamsReviewCancelled    ListSpaceFilesParamsReview = "cancelled"
+	ListSpaceFilesParamsReviewInReview     ListSpaceFilesParamsReview = "in_review"
+	ListSpaceFilesParamsReviewNotRequested ListSpaceFilesParamsReview = "not_requested"
+	ListSpaceFilesParamsReviewRejected     ListSpaceFilesParamsReview = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceFilesParamsReview enum.
+func (e ListSpaceFilesParamsReview) Valid() bool {
+	switch e {
+	case ListSpaceFilesParamsReviewApproved:
+		return true
+	case ListSpaceFilesParamsReviewCancelled:
+		return true
+	case ListSpaceFilesParamsReviewInReview:
+		return true
+	case ListSpaceFilesParamsReviewNotRequested:
+		return true
+	case ListSpaceFilesParamsReviewRejected:
 		return true
 	default:
 		return false
@@ -8777,6 +8840,31 @@ type ImportProjectExcelMultipartBody struct {
 	Mapping *string `json:"mapping,omitempty"`
 }
 
+// ListSpaceFilesParams defines parameters for ListSpaceFiles.
+type ListSpaceFilesParams struct {
+	// Q Bagian dari nama file, tanpa beda huruf besar kecil
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// Scope direct = menempel pada item ini; subitems = pada turunannya
+	Scope  *ListSpaceFilesParamsScope  `form:"scope,omitempty" json:"scope,omitempty"`
+	Kind   *ListSpaceFilesParamsKind   `form:"kind,omitempty" json:"kind,omitempty"`
+	Review *ListSpaceFilesParamsReview `form:"review,omitempty" json:"review,omitempty"`
+
+	// Project Project terdekat pemilik file
+	Project *openapi_types.UUID `form:"project,omitempty" json:"project,omitempty"`
+	Limit   *int                `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset  *int                `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ListSpaceFilesParamsScope defines parameters for ListSpaceFiles.
+type ListSpaceFilesParamsScope string
+
+// ListSpaceFilesParamsKind defines parameters for ListSpaceFiles.
+type ListSpaceFilesParamsKind string
+
+// ListSpaceFilesParamsReview defines parameters for ListSpaceFiles.
+type ListSpaceFilesParamsReview string
+
 // ListSpaceRootItemsParams defines parameters for ListSpaceRootItems.
 type ListSpaceRootItemsParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -10689,6 +10777,9 @@ type ServerInterface interface {
 	// ListSpaceViewFields Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut
 	// (GET /spaces/{spaceId}/fields)
 	ListSpaceViewFields(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
+	// ListSpaceFiles File seluruh item di satu Space; perlu akses ke Space (share pada item saja = 404), izin dinilai lewat Space itu
+	// (GET /spaces/{spaceId}/files)
+	ListSpaceFiles(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, params ListSpaceFilesParams)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -20787,6 +20878,126 @@ func (siw *ServerInterfaceWrapper) ListSpaceViewFields(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSpaceFilesParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scope" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scope", r.URL.Query(), &params.Scope, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scope"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scope", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "review" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "review", r.URL.Query(), &params.Review, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "review"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "review", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "project" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "project", r.URL.Query(), &params.Project, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "project"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "project", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceFiles(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceForms operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceForms(w http.ResponseWriter, r *http.Request) {
 
@@ -23091,6 +23302,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.ListAttachments)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.UploadAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/files", wrapper.ListProjectFiles)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/files", wrapper.ListSpaceFiles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachment-links", wrapper.CreateAttachmentLink)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.ListAttachmentVersions)
@@ -43387,6 +43599,80 @@ func (response ListSpaceViewFields404ApplicationProblemPlusJSONResponse) VisitLi
 	return err
 }
 
+type ListSpaceFilesRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	Params  ListSpaceFilesParams
+}
+
+type ListSpaceFilesResponseObject interface {
+	VisitListSpaceFilesResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceFiles200JSONResponse struct {
+	Counts struct {
+		All    int `json:"all"`
+		Direct int `json:"direct"`
+
+		// Projects Project turunan yang memiliki file
+		Projects int `json:"projects"`
+		Subitems int `json:"subitems"`
+	} `json:"counts"`
+	Items    []ProjectFile `json:"items"`
+	Projects []struct {
+		Files int                `json:"files"`
+		Id    openapi_types.UUID `json:"id"`
+		Title string             `json:"title"`
+	} `json:"projects"`
+
+	// Total Jumlah baris yang cocok dengan saringan
+	Total int `json:"total"`
+
+	// Truncated Hanya 5000 file terbaru yang diperiksa
+	Truncated bool `json:"truncated"`
+}
+
+func (response ListSpaceFiles200JSONResponse) VisitListSpaceFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFiles404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceFiles404ApplicationProblemPlusJSONResponse) VisitListSpaceFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFiles422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceFiles422ApplicationProblemPlusJSONResponse) VisitListSpaceFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceFormsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -47688,6 +47974,9 @@ type StrictServerInterface interface {
 	// ListSpaceViewFields Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut
 	// (GET /spaces/{spaceId}/fields)
 	ListSpaceViewFields(ctx context.Context, request ListSpaceViewFieldsRequestObject) (ListSpaceViewFieldsResponseObject, error)
+	// ListSpaceFiles File seluruh item di satu Space; perlu akses ke Space (share pada item saja = 404), izin dinilai lewat Space itu
+	// (GET /spaces/{spaceId}/files)
+	ListSpaceFiles(ctx context.Context, request ListSpaceFilesRequestObject) (ListSpaceFilesResponseObject, error)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(ctx context.Context, request ListSpaceFormsRequestObject) (ListSpaceFormsResponseObject, error)
@@ -57371,6 +57660,33 @@ func (sh *strictHandler) ListSpaceViewFields(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSpaceViewFieldsResponseObject); ok {
 		if err := validResponse.VisitListSpaceViewFieldsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceFiles operation middleware
+func (sh *strictHandler) ListSpaceFiles(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, params ListSpaceFilesParams) {
+	var request ListSpaceFilesRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceFiles(ctx, request.(ListSpaceFilesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceFiles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceFilesResponseObject); ok {
+		if err := validResponse.VisitListSpaceFilesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

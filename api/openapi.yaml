@@ -5493,6 +5493,55 @@ paths:
                   truncated: { type: boolean, description: Hanya 5000 file terbaru yang diperiksa }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/files:
+    parameters:
+      - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [collaboration]
+      operationId: listSpaceFiles
+      summary: File seluruh item di satu Space; perlu akses ke Space (share pada item saja = 404), izin dinilai lewat Space itu
+      description: counts.direct selalu 0 karena Space tidak memegang file; counts dan projects menghitung semua file yang boleh dilihat; q, scope, kind, review, dan project menyaring baris; tanpa limit semua baris yang cocok dikembalikan.
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 200 }, description: 'Bagian dari nama file, tanpa beda huruf besar kecil' }
+        - { name: scope, in: query, schema: { type: string, enum: [direct, subitems] }, description: direct = menempel pada item ini; subitems = pada turunannya }
+        - { name: kind, in: query, schema: { type: string, enum: [file, link] } }
+        - { name: review, in: query, schema: { type: string, enum: [not_requested, in_review, approved, rejected, cancelled] } }
+        - { name: project, in: query, schema: { type: string, format: uuid }, description: Project terdekat pemilik file }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, maximum: 5000 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, counts, projects, truncated]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProjectFile' }
+                  total: { type: integer, description: Jumlah baris yang cocok dengan saringan }
+                  counts:
+                    type: object
+                    required: [all, direct, subitems, projects]
+                    properties:
+                      all: { type: integer }
+                      direct: { type: integer }
+                      subitems: { type: integer }
+                      projects: { type: integer, description: Project turunan yang memiliki file }
+                  projects:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, files]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        files: { type: integer }
+                  truncated: { type: boolean, description: Hanya 5000 file terbaru yang diperiksa }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/attachment-links:
     post:
       tags: [collaboration]

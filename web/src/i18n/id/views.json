@@ -73,6 +73,7 @@
     "open": "Buka tautan",
     "versionNumber": "v{{version}}",
     "dash": "—",
+    "emptySpaceHint": "Lampirkan file ke item di Space ini untuk melihatnya di sini.",
     "location": "Lokasi",
     "thisFolder": "Folder ini",
     "thisProject": "Project ini",

@@ -3878,6 +3878,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * File seluruh item di satu Space; perlu akses ke Space (share pada item saja = 404), izin dinilai lewat Space itu
+         * @description counts.direct selalu 0 karena Space tidak memegang file; counts dan projects menghitung semua file yang boleh dilihat; q, scope, kind, review, dan project menyaring baris; tanpa limit semua baris yang cocok dikembalikan.
+         */
+        get: operations["listSpaceFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{itemId}/attachment-links": {
         parameters: {
             query?: never;
@@ -16220,6 +16242,60 @@ export interface operations {
             header?: never;
             path: {
                 projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ProjectFile"][];
+                        /** @description Jumlah baris yang cocok dengan saringan */
+                        total: number;
+                        counts: {
+                            all: number;
+                            direct: number;
+                            subitems: number;
+                            /** @description Project turunan yang memiliki file */
+                            projects: number;
+                        };
+                        projects: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            files: number;
+                        }[];
+                        /** @description Hanya 5000 file terbaru yang diperiksa */
+                        truncated: boolean;
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceFiles: {
+        parameters: {
+            query?: {
+                /** @description Bagian dari nama file, tanpa beda huruf besar kecil */
+                q?: string;
+                /** @description direct = menempel pada item ini; subitems = pada turunannya */
+                scope?: "direct" | "subitems";
+                kind?: "file" | "link";
+                review?: "not_requested" | "in_review" | "approved" | "rejected" | "cancelled";
+                /** @description Project terdekat pemilik file */
+                project?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                spaceId: string;
             };
             cookie?: never;
         };

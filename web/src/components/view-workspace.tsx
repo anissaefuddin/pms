@@ -270,7 +270,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     </div>
     {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
       table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}
-    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
+    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" ? <ProjectFiles key={parent?.id ?? spaceId} project={parent} spaceId={spaceId} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<div role="status" aria-label={t("views.gantt.loading")} className="h-[60vh] min-h-72 animate-pulse overflow-hidden rounded border bg-card p-3"><div className="mb-3 h-8 w-72 rounded bg-muted" /><div className="grid h-full grid-cols-[22rem_1fr] gap-px bg-border"><div className="space-y-px bg-card">{Array.from({ length: 9 }, (_, index) => <div key={index} className="h-11 bg-muted/60" />)}</div><div className="bg-[repeating-linear-gradient(90deg,transparent_0,transparent_35px,hsl(var(--border))_36px)]" /></div><span className="sr-only">{t("views.gantt.loading")}</span></div>}>

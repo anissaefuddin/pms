@@ -145,9 +145,9 @@ func Create(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput) 
 				return View{}, err
 			}
 		}
-		// A folder gathers the documents below it too; time logs and charts stay project views.
-		if itemType != "project" && !(in.Type == "files" && itemType == "folder") {
-			return View{}, Invalid("Timelog and chart views require a project; a files view requires a project or folder")
+		// A Space and a folder gather the documents below them too; time logs and charts stay project views.
+		if itemType != "project" && !(in.Type == "files" && (in.SpaceID != nil || itemType == "folder")) {
+			return View{}, Invalid("Timelog and chart views require a project; a files view requires a Space, project, or folder")
 		}
 	default:
 		return View{}, Invalid("type must be table, board, gantt, calendar, timelog, files, or chart")
