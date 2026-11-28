@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/storage"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -47,20 +48,34 @@ type Page struct {
 
 type Worker struct {
 	river.WorkerDefaults[Args]
-	Pool  *pgxpool.Pool
-	Store storage.Storage
+	Pool   *pgxpool.Pool
+	Config config.Config
 }
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
-	return Generate(ctx, w.Pool, w.Store, job.Args.AttachmentID, job.Args.Version)
+	return w.Generate(ctx, job.Args.AttachmentID, job.Args.Version)
+}
+
+// Generate reads the source from the backend it was recorded in and stores the pages in the configured one.
+func (w *Worker) Generate(ctx context.Context, id uuid.UUID, version int) error {
+	source := func(backend string) (storage.Storage, error) { return storage.For(w.Config, backend) }
+	return generate(ctx, w.Pool, source, storage.FromConfig(w.Config), id, version)
 }
 
 // Generate fills attachment_previews for one version. Unsupported or oversized input is "skipped", a broken file "failed";
 // neither is retried. Only database or storage errors are returned (River retries those).
 func Generate(ctx context.Context, pool *pgxpool.Pool, store storage.Storage, id uuid.UUID, version int) error {
-	var media, key string
+	return generate(ctx, pool, func(string) (storage.Storage, error) { return store, nil }, store, id, version)
+}
+
+func generate(ctx context.Context, pool *pgxpool.Pool, sourceOf func(backend string) (storage.Storage, error), store storage.Storage, id uuid.UUID, version int) error {
+	var media, key, backend string
 	var size int64
-	err := pool.QueryRow(ctx, "SELECT content_type,storage_key,size_bytes FROM attachment_versions WHERE attachment_id=$1 AND version=$2", id, version).Scan(&media, &key, &size)
+	err := pool.QueryRow(ctx, "SELECT content_type,storage_key,size_bytes,coalesce(storage_backend,'') FROM attachment_versions WHERE attachment_id=$1 AND version=$2", id, version).Scan(&media, &key, &size, &backend)
+	if err != nil {
+		return err
+	}
+	source, err := sourceOf(backend)
 	if err != nil {
 		return err
 	}
@@ -69,10 +84,10 @@ func Generate(ctx context.Context, pool *pgxpool.Pool, store storage.Storage, id
 	case size > MaxSourceBytes:
 		status, note = "skipped", "file is larger than the preview limit"
 	case media == "application/pdf":
-		pages, status, note = renderPDF(ctx, store, key, size)
+		pages, status, note = renderPDF(ctx, source, store, key, size)
 	case media == "image/png" || media == "image/jpeg" || media == "image/gif":
 		var p Page
-		if p, status, note = renderImage(store, key); status == "ready" {
+		if p, status, note = renderImage(source, store, key); status == "ready" {
 			pages = []Page{p}
 		}
 	default:
@@ -87,8 +102,8 @@ ON CONFLICT (attachment_id,version) DO UPDATE SET status=$3,pages=$4,note=$5,upd
 	return err
 }
 
-func renderImage(store storage.Storage, key string) (Page, string, string) {
-	f, err := store.Open(key)
+func renderImage(source, store storage.Storage, key string) (Page, string, string) {
+	f, err := source.Open(key)
 	if err != nil {
 		return Page{}, "failed", "file cannot be read"
 	}
@@ -97,7 +112,7 @@ func renderImage(store storage.Storage, key string) (Page, string, string) {
 	if err != nil || cfg.Width < 1 || cfg.Height < 1 || cfg.Width*cfg.Height > MaxPixels {
 		return Page{}, "skipped", "image is invalid or too large to preview"
 	}
-	g, err := store.Open(key)
+	g, err := source.Open(key)
 	if err != nil {
 		return Page{}, "failed", "file cannot be read"
 	}
@@ -146,7 +161,7 @@ func fit(src image.Image) image.Image {
 var _ = []any{jpeg.Decode, gif.Decode} // register the decoders
 
 // renderPDF needs poppler's pdftoppm; without it PDFs are skipped. Pages beyond MaxPDFPages are not rendered.
-func renderPDF(ctx context.Context, store storage.Storage, key string, size int64) ([]Page, string, string) {
+func renderPDF(ctx context.Context, source, store storage.Storage, key string, size int64) ([]Page, string, string) {
 	bin, err := exec.LookPath("pdftoppm")
 	if err != nil {
 		return nil, "skipped", "pdftoppm is not installed"
@@ -156,7 +171,7 @@ func renderPDF(ctx context.Context, store storage.Storage, key string, size int6
 		return nil, "failed", "no temporary directory"
 	}
 	defer os.RemoveAll(dir)
-	src, err := store.Open(key)
+	src, err := source.Open(key)
 	if err != nil {
 		return nil, "failed", "file cannot be read"
 	}

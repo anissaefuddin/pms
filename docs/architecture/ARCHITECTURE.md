@@ -180,6 +180,7 @@ type Storage interface {
 ```
 
 - Backend lain: `PMS_STORAGE=s3|pydio` memakai `ObjectStore` (D-83); contoh di bawah menjelaskan `LocalStorage`.
+- Tiap lampiran dan versinya mencatat backend tempat filenya ditulis (`storage_backend`, migrasi 00367). Kosong = file sebelum kolom itu atau lampiran tautan: dibaca dari `PMS_STORAGE`. File yang tercatat di backend lain tetap dibaca dari sana selama backend itu masih dikonfigurasi; jangan memindahkan file antar backend hanya dengan mengganti `PMS_STORAGE`.
 - MVP: `LocalStorage` menulis ke `PMS_FILES_DIR`. Key berupa `ab/cd/<uuid>` (dua level direktori dari UUID). Nama file asli hanya disimpan di database.
 - **File tidak pernah ditimpa**; tiap upload mendapat key baru. Karena itu backup database lebih dulu lalu file selalu konsisten (OPS-01).
 - **Upload (SEC-01):** batas ukuran `PMS_MAX_UPLOAD_MB` (default 100) dicek lewat `http.MaxBytesReader` dan batas byte file saat streaming. Tipe konten ditentukan oleh isi file. Format yang diterima adalah PDF, PNG, JPEG, GIF, WebP, teks biasa, dan ZIP. Pemeriksaan executable memakai nama dan isi, termasuk isi entri ZIP tingkat atas. SHA-256 dihitung saat streaming dan disimpan.

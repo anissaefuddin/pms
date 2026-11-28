@@ -588,6 +588,7 @@ type Attachment struct {
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 	CurrentVersion int32              `json:"current_version"`
 	LinkUrl        pgtype.Text        `json:"link_url"`
+	StorageBackend pgtype.Text        `json:"storage_backend"`
 }
 
 type AttachmentAnnotation struct {
@@ -613,15 +614,16 @@ type AttachmentPreview struct {
 }
 
 type AttachmentVersion struct {
-	AttachmentID pgtype.UUID        `json:"attachment_id"`
-	Version      int32              `json:"version"`
-	UploaderID   pgtype.UUID        `json:"uploader_id"`
-	Filename     string             `json:"filename"`
-	ContentType  string             `json:"content_type"`
-	SizeBytes    int64              `json:"size_bytes"`
-	StorageKey   string             `json:"storage_key"`
-	Sha256       []byte             `json:"sha256"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	AttachmentID   pgtype.UUID        `json:"attachment_id"`
+	Version        int32              `json:"version"`
+	UploaderID     pgtype.UUID        `json:"uploader_id"`
+	Filename       string             `json:"filename"`
+	ContentType    string             `json:"content_type"`
+	SizeBytes      int64              `json:"size_bytes"`
+	StorageKey     string             `json:"storage_key"`
+	Sha256         []byte             `json:"sha256"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	StorageBackend pgtype.Text        `json:"storage_backend"`
 }
 
 type AuditEvent struct {

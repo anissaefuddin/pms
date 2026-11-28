@@ -295,6 +295,7 @@ func (b blockedFile) Error() string { return b.message }
 type stagedFile struct {
 	Filename, Media string
 	File            storage.File
+	Backend         string // where File was written; empty for a link, which has no bytes
 }
 
 // stageAttachment applies the attachment rules (name, executable and type checks, size limit, ZIP inspection)
@@ -335,7 +336,7 @@ func (s *Server) stageAttachment(part *multipart.Part, max int64) (stagedFile, e
 			return stagedFile{}, err
 		}
 	}
-	return stagedFile{Filename: filename, Media: media, File: file}, nil
+	return stagedFile{Filename: filename, Media: media, File: file, Backend: storage.Name(s.cfg)}, nil
 }
 
 func insertAttachment(ctx context.Context, tx pgx.Tx, itemID uuid.UUID, uploader string, f stagedFile) (uuid.UUID, error) {
@@ -343,10 +344,10 @@ func insertAttachment(ctx context.Context, tx pgx.Tx, itemID uuid.UUID, uploader
 	if err != nil {
 		return id, err
 	}
-	_, err = tx.Exec(ctx, `WITH a AS (INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
-VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex')))
-INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
-VALUES($1,1,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, itemID, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
+	_, err = tx.Exec(ctx, `WITH a AS (INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,storage_backend)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'),NULLIF($9,'')))
+INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256,storage_backend)
+VALUES($1,1,$3::uuid,$4,$5,$6,$7,decode($8,'hex'),NULLIF($9,''))`, id, itemID, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256, f.Backend)
 	return id, err
 }
 
@@ -357,12 +358,12 @@ func insertAttachmentVersion(ctx context.Context, tx pgx.Tx, id uuid.UUID, uploa
 	if err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
-VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, next, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256,storage_backend)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'),NULLIF($9,''))`, id, next, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256, f.Backend); err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `UPDATE attachments SET current_version=$2,filename=$3,content_type=$4,size_bytes=$5,storage_key=$6,sha256=decode($7,'hex') WHERE id=$1`,
-		id, next, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
+	_, err = tx.Exec(ctx, `UPDATE attachments SET current_version=$2,filename=$3,content_type=$4,size_bytes=$5,storage_key=$6,sha256=decode($7,'hex'),storage_backend=NULLIF($8,'') WHERE id=$1`,
+		id, next, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256, f.Backend)
 	return err
 }
 
@@ -481,7 +482,7 @@ func (s *Server) attachmentResource(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 	var item uuid.UUID
-	var uploader, key, filename string
+	var uploader, key, filename, backend string
 	var link *string
 	var size int64
 	version := r.PathValue("version") // empty = current
@@ -492,9 +493,11 @@ func (s *Server) attachmentResource(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	err = tx.QueryRow(ctx, `SELECT a.item_id,a.uploader_id::text,coalesce(v.storage_key,a.storage_key),coalesce(v.filename,a.filename),coalesce(v.size_bytes,a.size_bytes),a.link_url
+	// The backend belongs to the row the key comes from: a version without one must not borrow the current version's.
+	err = tx.QueryRow(ctx, `SELECT a.item_id,a.uploader_id::text,coalesce(v.storage_key,a.storage_key),coalesce(v.filename,a.filename),coalesce(v.size_bytes,a.size_bytes),a.link_url,
+coalesce(CASE WHEN v.attachment_id IS NULL THEN a.storage_backend ELSE v.storage_backend END,'')
 FROM attachments a LEFT JOIN attachment_versions v ON v.attachment_id=a.id AND v.version=$2
-WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id, n).Scan(&item, &uploader, &key, &filename, &size, &link)
+WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id, n).Scan(&item, &uploader, &key, &filename, &size, &link, &backend)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = items.ErrNotFound
 	}
@@ -531,7 +534,12 @@ WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id,
 		writeItemError(w, items.Invalid("a link attachment has no file to download; open "+*link))
 		return
 	}
-	file, err := s.attachmentStore().Open(key)
+	store, err := storage.For(s.cfg, backend)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	file, err := store.Open(key)
 	if err != nil {
 		writeItemError(w, err)
 		return
